@@ -1,0 +1,43 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
+{% block content %}
+
+    <div class ="row>
+    <div class="col-md-12">
+      <div class="box box-solid">
+        <div class="box-header with-border">
+          <h3 class="box-title"> {{rse}}: Project allocation</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
+        <!-- /.box-body -->
+      </div>
+      <!-- /.box -->
+    </div>
+    </div>
+ 
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+<script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
+<script type="text/javascript">
+    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'day');
+    if( g.getDivId() != null ) {
+        {% for a in allocations %}
+            g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}{{a.id}}, '{{a.project}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, '',  1, '', '', '', g));
+        {% endfor %}
+        
+        g.Draw();
+    }
+</script>
+{% endblock %}
