@@ -10,35 +10,31 @@
 {% block title %}RSE Group Administration Tool - Project View {% endblock %}
 {% block content %}
 
-    <div class ="row>
-    <div class="col-md-12">
-      <div class="box box-solid">
-        <div class="box-header with-border">
-          <h3 class="box-title"> {{proj.name}}: RSE allocation</h3>
+    <div class ="row">
+        <div class="col-md-12">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {{proj.name}}: RSE allocation</h3>
+            </div>
+            <div class="box-body">
+              <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
+            </div>
+          </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-          <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-        <!-- /.box-body -->
-      </div>
-      <!-- /.box -->
-    </div>
     </div>
     
-    <div class ="row>
-    <div class="col-md-12">
-      <div class="box box-solid">
-        <div class="box-header with-border">
-          <h3 class="box-title"> {{proj.name}}: Reporting </h3>
+    <div class ="row">
+        <div class="col-md-12">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {{proj.name}}: Reporting </h3>
+            </div>
+            <div class="box-body">
+              <p><strong>Duration: </strong>{{ proj_days }} days</p>
+              <p><strong>Committed: </strong>{{ committed_days }} days</p>
+            </div>
+          </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-          <p><strong>Duration: </strong>{{ proj_days }} days</p>
-          <p><strong>Committed: </strong>{{ committed_days }} days</p>
-        <!-- /.box-body -->
-      </div>
-      <!-- /.box -->
-    </div>
     </div>
 
    

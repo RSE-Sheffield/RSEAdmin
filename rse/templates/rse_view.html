@@ -10,19 +10,41 @@
 {% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
 {% block content %}
 
-    <div class ="row>
-    <div class="col-md-12">
-      <div class="box box-solid">
-        <div class="box-header with-border">
-          <h3 class="box-title"> {{rse}}: Project allocation</h3>
+    <div class ="row">
+        <div class="col-md-12">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {{rse}}: Project allocation</h3>
+            </div>
+            <div class="box-body">
+              <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
+            </div>
+          </div>
         </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-          <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-        <!-- /.box-body -->
-      </div>
-      <!-- /.box -->
     </div>
+    
+    <div class ="row">
+        <div class="col-md-4">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> Commitment Summary</h3>
+            </div>
+            <div class="box-body">
+              Overview
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-8">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> Commitment Overview</h3>
+            </div>
+            <div class="box-body">
+              <canvas id="commitmentChart" width="100%"></canvas>
+            </div>
+          </div>
+        </div>
     </div>
  
 {% endblock %}
