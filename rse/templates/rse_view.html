@@ -51,6 +51,8 @@
 
 {% block javascript %}
 {{ block.super}}
+
+<!-- Gantt chart  -->
 <script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
 <script type="text/javascript">
     var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'day');
@@ -61,5 +63,45 @@
         
         g.Draw();
     }
+</script>
+
+<!-- Commitment graph -->
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/chart.js' %}"></script>
+<script type="text/javascript">
+    var ctx = document.getElementById("commitmentChart").getContext('2d');
+    var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    data: [
+                        {
+                            "x": new Date("09-06-1984"), 
+                            "y": 10.0
+                        },
+                        {
+                            "x": new Date("09-06-1985"),
+                            "y": 1.0
+                        },
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        }
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                        }
+                    }]                    
+                }
+            }
+        });
+
 </script>
 {% endblock %}
