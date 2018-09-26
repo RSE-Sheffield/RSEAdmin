@@ -30,7 +30,7 @@
               <h3 class="box-title"> Commitment Summary</h3>
             </div>
             <div class="box-body">
-              Overview
+             
             </div>
           </div>
         </div>
@@ -73,24 +73,31 @@
     var myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                datasets: [{
+                datasets: [
+                {
+                    steppedLine: 'before',
                     data: [
-                        {
-                            "x": new Date("09-06-1984"), 
-                            "y": 10.0
-                        },
-                        {
-                            "x": new Date("09-06-1985"),
-                            "y": 1.0
-                        },
+                        {% for date, value in plot_events %}
+                            {
+                                "x": new Date("{{date | date:'Y-m-d'}}"), 
+                                "y": {{value}}
+                            },
+                        {% endfor %}
                     ],
-                }]
+                },
+                ]
             },
             options: {
                 scales: {
                     yAxes: [{
+                        stacked: true,
                         ticks: {
-                            beginAtZero:true
+                            beginAtZero:true,
+                            max: 100,
+                            min: 0,
+                            callback: function(label, index, labels) {
+                                return label+'%';
+                            },
                         }
                     }],
                     xAxes: [{
@@ -99,7 +106,10 @@
                             unit: 'month',
                         }
                     }]                    
-                }
+                },
+                legend:{
+                    display:false,
+                },
             }
         });
 
