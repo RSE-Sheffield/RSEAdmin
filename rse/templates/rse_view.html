@@ -1,38 +1,74 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
+{% load humanize %}
 
 
 {% block stylesheets %}
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
 {% block content %}
 
-    <div class ="row">
-        <div class="col-md-12">
-          <div class="box box-solid">
-            <div class="box-header with-border">
-              <h3 class="box-title"> {{rse}}: Project allocation</h3>
-            </div>
-            <div class="box-body">
-              <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-            </div>
-          </div>
-        </div>
-    </div>
-    
+   
     <div class ="row">
         <div class="col-md-4">
+        
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> Filter</h3>
+            </div>
+            <div class="box-body">
+                  <div class="form-group">
+                    <label>Date range:</label>
+                    <div class="input-group">
+                      <div class="input-group-addon">
+                        <i class="fa fa-clock-o"></i>
+                      </div>
+                      <input type="text" name="dateRange" class="form-control pull-right">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-success">Funded Only</button>
+                  <button type="submit" class="btn btn-default">Funded and Under Review</button>
+                  <button type="submit" class="btn btn-default">All Projects</button>
+                  
+                  
+            </div>
+          </div>
+        
           <div class="box box-solid">
             <div class="box-header with-border">
               <h3 class="box-title"> Commitment Summary</h3>
             </div>
             <div class="box-body">
-             
+              <table class="table table-striped">
+                <tr>
+                  <td><strong>Report Duration (days)</strong></td><td style="text-align: right;">{{ report_duration }} </td>
+                </tr>
+                <tr>
+                  <td><strong>Report Duration Billable (rounded days)</strong></td><td style="text-align: right;">{{ report_duration_billable | floatformat:0}} </td>
+                </tr>
+                <tr>
+                  <td><strong>Staff Salary (per billable day)</strong></td><td style="text-align: right;">£ {{ salary_per_day | floatformat:2 | intcomma}} </td>
+                </tr>
+                <tr>
+                  <td><strong>Total Staff Cost</strong></td><td style="text-align: right;">£ {{ staff_cost | floatformat:2 | intcomma}} </td>
+                </tr>
+                <tr>
+                  <td><strong>Total Staff Salary Recovered</strong></td><td style="text-align: right;">£ {{ staff_recovered | floatformat:2 | intcomma }} </td>
+                </tr>
+                <tr>
+                  <td><strong>Total Staff Salary Recovered (%)</strong></td><td style="text-align: right;">{{ staff_recovered_percent | floatformat:2 }}%</td>
+                </tr>
+                <tr>
+                  <td><strong>Total Shortfall (Liability)</strong></td><td style="text-align: right;">£ {{ staff_shortfall | floatformat:2 | intcomma}} </td>
+                </tr>
+              </table>
             </div>
           </div>
+          
         </div>
         
         <div class="col-md-8">
@@ -42,6 +78,19 @@
             </div>
             <div class="box-body">
               <canvas id="commitmentChart" width="100%"></canvas>
+            </div>
+          </div>
+        </div>
+    </div>
+    
+     <div class ="row">
+        <div class="col-md-12">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {{rse}}: Project allocation</h3>
+            </div>
+            <div class="box-body">
+              <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
             </div>
           </div>
         </div>
@@ -113,5 +162,11 @@
             }
         });
 
+</script>
+
+<!-- Date Range Picker -->
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+<script>
+$('input[name="dateRange"]').daterangepicker();
 </script>
 {% endblock %}
