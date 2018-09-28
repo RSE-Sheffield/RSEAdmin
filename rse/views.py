@@ -48,20 +48,35 @@ def rse_view(request, rse_username):
     allocations = RSEAllocation.objects.filter(rse = rse)
     dict['allocations'] = allocations
     
-    # create list of start and end dates
+    # create list of start and end dates and sort
     starts = [[item.start, item.percentage] for item in allocations]
     ends = [[item.end, -item.percentage] for item in allocations]
-    # sort date events
     events = sorted(starts + ends, key=lambda x: x[0])
-    # 
+    # accumulate effort
     pdates, deltas = zip(*events)
-    effort = it.accumulate(deltas)
-    plot_events = list(zip(pdates, effort))    
+    effort = list(it.accumulate(deltas))
     
+    # add plot events for changes in FTE
+    plot_events = list(zip(pdates, effort))    
     dict['plot_events'] = plot_events
     
-    plot_events = [[e[0], (e[1])] for e in events]
-   
+    # Calculate commitment summary 
+    #TODO: Calculation should not be able to span financial year?
+    durations = [(d1 - d2).days for d1,d2 in zip(pdates[1:], pdates[:-1])]
+    fte = [(duration*percentage/100) for duration,percentage in zip(durations, list(effort)[:-1])]
+    # TODO: Salary should be based off grade points and change with financial year
+    salary_per_day = 30000/220 # estimated
+    staff_cost = (pdates[-1] - pdates[0]).days * salary_per_day
+    staff_recovered = sum([fte*salary_per_day for fte in fte])
+    
+    # Overview data
+    dict['report_duration'] = (pdates[-1] - pdates[0]).days
+    dict['report_duration_billable'] = dict['report_duration'] * 220/360
+    dict['salary_per_day'] = salary_per_day
+    dict['staff_cost'] = staff_cost
+    dict['staff_recovered'] = staff_recovered
+    dict['staff_recovered_percent'] = (staff_recovered / staff_cost)*100
+    dict['staff_shortfall'] = staff_cost - staff_recovered
         
     return render(request, 'rse_view.html', dict)
     
