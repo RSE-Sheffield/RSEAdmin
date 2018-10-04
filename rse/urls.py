@@ -17,10 +17,10 @@ urlpatterns = [
     # project allocation view
     url(r'^project/(?P<project_id>[0-9]+)$', views.project_view, name='project_view'),
     
-    #rse allocation view
+    #rse team view all
     url(r'^rse/all', views.team_view, name='team_view'),
-    
-    #team allocation view
+      
+    #rse allocation view
     url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),
     
 ]
