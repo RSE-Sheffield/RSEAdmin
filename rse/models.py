@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from datetime import timedelta, datetime, date
 from django.db.models import Max
+from math import ceil, floor
 
 #depreciated: TODO clear migrations adn delete
 class PercentageField(models.FloatField):
@@ -41,7 +42,7 @@ class SalaryBand(models.Model):
     def __str__(self):
         return str(self.grade) + '.' + str(self.grade_point) + ' (' + str(self.year) + '): ' + '£' + str(self.salary)
         
-    # Get the next salary band if it increments (TODO: Some tests)
+    # Get the next salary band if it increments
     def salaryBandAfterIncrement(self):
         # Handle increment
         g = self.grade
@@ -64,6 +65,26 @@ class SalaryBand(models.Model):
                 return sbs[0]
             else:
                 raise ObjectDoesNotExist('Incomplete salary data in database. Could not find a valid increment for current salary band.')
+                
+    @staticmethod
+    def spansFinancialYear(start, end):
+        # next financial year end from start date
+        if start.month>=8:
+            n_fy_end = date(start.year+1, 7, 31)
+        else:
+            n_fy_end = date(start.year, 7, 31)
+            
+        return end > n_fy_end
+    
+    def startDate(self):
+        """
+        The start date of the financial year
+        """
+        return date(self.year.year, 8, 1)
+        
+    def endDate(self):
+        return self.startDate() + timedelta(days=364)
+        
     
 class Client(models.Model):
     name = models.CharField(max_length=100)
@@ -82,37 +103,41 @@ class RSE(models.Model):
     
     # Gets the last salary grade change before the specified date (i.e. the last appropriate grade change) or now
     def lastSalaryGradeChange(self, date=datetime.now()):
-        sgc = SalaryGradeChange.objects.filter(rse=self, salary_band__year__lte=date.year).order_by('-salary_band__year')
-        if not sgc:
-            raise ValueError('No Salary Data exists before specified date period for this RSE')
-        else:
-            return sgc[0] 
+        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
+        for sgc in sgcs:
+            if sgc.salary_band.startDate() <= date:
+                return sgc
+        # unable to find any data
+        raise ValueError('No Salary Data exists before specified date period for this RSE') 
             
     def futureSalaryBand(self, date):
         # gets the last valid salary grade change event 
         # predicts salary data for provided date by incrementing 
         # this may be based on real grade changes in the future or estimated from current financial year increments
         return self.lastSalaryGradeChange(date).salaryBandAtFutureDate(date)
-        
-    def staffCost(self, start, end):
-        # init running cost
-        cost = 0     
+    
+    def salaryCost(self, days, salary, percentage=100.0):
+        return (days/365.0)*float(salary)*(float(percentage)/100.0) 
 
-        # Calculate cost per year
-        s = start                                   # current start date being calculated
-        while s.year < end.year:
-            ye = date(s.year, 12, 31)      # year end
-            d = ye - s                              # duration in days 
-            sb = self.futureSalaryBand(s)                # get latest salary for this period
-            cost += (d.days/365.0)*float(sb.salary)             # increment by salary cost for this period
-            
+    def staffCost(self, start, end, percentage=100.0):
+        # Add one to end as end day is inclusive or cost calculation (e.g. start date from 9:00 end date until 5pm)
+        end = end + timedelta(days=1)
+
+        # Calculate cost per year by splitting into financial year periods to obtain correct salary info
+        cost = 0  
+        s = start   
+        while SalaryBand.spansFinancialYear(s, end):
+            sb = self.futureSalaryBand(s)               # salary band at date s
+            ye = sb.endDate() + timedelta(days=1)           # financial year end for date s (for cost calculations this needs to include this day)
+            d = ye - s                                      # duration in days 
+            cost += self.salaryCost(d.days, sb.salary, percentage)      # increment by salary cost for this period (for allocation percentage)
             # increment to next financial year
-            s = date(s.year+1, 1, 1)       #Y,m,d
+            s = ye
         
         # final (partial) year calculation
-        d = end - s                             # duration in days
-        sb = self.futureSalaryBand(s)                # get latest salary for this period
-        cost += (d.days/365.0)*float(sb.salary)             # increment by salary cost for this period
+        d = end - s                                 # duration in days
+        sb = self.futureSalaryBand(s)           # get latest salary for this period
+        cost += self.salaryCost(d.days, sb.salary, percentage)  # increment by salary cost for this period
 
         return cost
         
@@ -120,23 +145,31 @@ class RSE(models.Model):
 class SalaryGradeChange(models.Model):
     rse = models.ForeignKey(RSE, on_delete=models.DO_NOTHING)
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
-    # assume grade change only occurs on 1st January
+    # assume grade change only occurs on 1st August
     
     # Gets the incremented salary given some point in the future
     def salaryBandAtFutureDate(self, date):
+
         # check for obvious stupid
-        if date.year < self.salary_band.year.year:
-            raise ('Future salary can not be calculated from dates in the past')
+        if date < self.salary_band.startDate():
+            raise ValueError('Future salary can not be calculated from dates in the past')
         
-        # easy case if year matches last salary band
-        if date.year == self.salary_band.year.year:
+        # easy case if date is in the same financial year
+        if not SalaryBand.spansFinancialYear(self.salary_band.startDate(), date):
             return self.salary_band
             
-        # if year is later than salary band grade change then calculate future increment
-        increments = date.year - self.salary_band.year.year
+        # check if there is a salary grade change at a later date
+        sgc = self.rse.lastSalaryGradeChange(date)
+        if not sgc.id == self.id:
+            # there is a more recent salary grade change so use it
+            return sgc.salaryBandAtFutureDate(date)
+        
+        # loop financial years to increment salary where appropriate
         sb = self.salary_band
+        increments = floor((date - sb.startDate()).days/365.0)
         for _ in range(increments):
             sb = sb.salaryBandAfterIncrement()
+            
         return sb
     
     
@@ -191,31 +224,14 @@ class RSEAllocation(models.Model):
     def duration(self):
         return (self.end - self.start).days
         
+        
     def staffCost(self, start=None, end=None):
-        # if no time period then use defaults for project (limit time periods to allocation)
+        # if no time period then use defaults for project
+        # limit specified time period to allocation
         if start is None or start < self.start:
             start = self.start
         if end is None or end > self.end:
             end = self.end
-
-        # init running cost
-        cost = 0     
-
-        # Calculate cost per year
-        s = start                   # current start date being calculated
-        while s.year < end.year:
-            ye = date(s.year, 12, 31)              # year end
-            d = ye - s                                      # duration in days 
-            sb = self.rse.futureSalaryBand(s)               # get latest salary for this period
-            cost += (d.days/365.0)*float(sb.salary)*float(self.percentage)     # increment by salary cost for this period (for allocation percentage)
             
-            # increment to next financial year
-            s = date(s.year+1, 1, 1)       #Y,m,d
-        
-        # final (partial) year calculation
-        d = end - s                             # duration in days
-        sb = self.rse.futureSalaryBand(s)       # get latest salary for this period
-        cost += (d.days/365.0)*float(sb.salary) # increment by salary cost for this period
-
-        return cost
+        return self.rse.staffCost(start, end, self.percentage)
         
