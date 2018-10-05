@@ -97,7 +97,6 @@ def rse_view(request, rse_username):
     
     # Overview data
     dict['report_duration'] = (pdates[-1] - pdates[0]).days
-    dict['report_duration_billable'] = dict['report_duration'] * 220/360
     dict['staff_cost'] = staff_cost
     dict['staff_recovered'] = staff_recovered
     dict['staff_recovered_percent'] = (staff_recovered / staff_cost)*100
