@@ -71,13 +71,13 @@ def rse_view(request, rse_username):
     
     # Clip allocations by filter date
     f_bnone = lambda f, a, b: a if b is None else f(a, b) #lambda function returns a if b is None or f(a,b) if b is not none
-    starts = [[f_bnone(max, item.start, from_date), item.percentage] for item in allocations]
-    ends = [[f_bnone(min, item.end, until_date), -item.percentage] for item in allocations]
+    starts = [[f_bnone(max, item.start, from_date), item.percentage, item] for item in allocations]
+    ends = [[f_bnone(min, item.end, until_date), -item.percentage, item] for item in allocations]
     
     # create list of start and end dates and sort
     events = sorted(starts + ends, key=lambda x: x[0])
     # accumulate effort
-    pdates, deltas = zip(*events)
+    pdates, deltas, allocs = zip(*events)
     effort = list(it.accumulate(deltas))
     
     # Set date range to min and max from allocations if none was specified
@@ -87,7 +87,7 @@ def rse_view(request, rse_username):
         until_date = pdates[-1]
     
     # add plot events for changes in FTE
-    plot_events = list(zip(pdates, effort))    
+    plot_events = list(zip(pdates, effort, allocs))    
     dict['plot_events'] = plot_events
     
     # Calculate commitment summary 

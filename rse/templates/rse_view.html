@@ -135,9 +135,9 @@
                 {
                     steppedLine: 'before',
                     data: [
-                        {% for date, value in plot_events %}
+                        {% for date, value, alloc in plot_events %}
                             {
-                                "x": new Date("{{date | date:'Y-m-d'}}"), 
+                                "x": moment("{{date | date:'Y-m-d'}}"), 
                                 "y": {{value}}
                             },
                         {% endfor %}
@@ -162,12 +162,28 @@
                         type: 'time',
                         time: {
                             unit: 'month',
+                            displayFormats: {
+                                quarter: 'D MMM YYYY'
+                            }
                         }
                     }]                    
                 },
                 legend:{
                     display:false,
                 },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += Math.round(tooltipItem.yLabel * 100) / 100;
+                            return label;
+                        }
+                    }
+                }
             }
         });
 
