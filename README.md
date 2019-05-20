@@ -41,6 +41,13 @@ the admin interface will be available at [http://127.0.0.1:8080/admin](http://12
 
 At present only the admin interface contains useful functionality.
 
+To log into the admin interface you need a Django superuser account.  
+If you don't already have one:
+
+```sh
+python manage.py createsuperuser
+```
+
 [adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
 [conda]: https://docs.conda.io/en/latest/
 [django]: https://www.djangoproject.com/
