@@ -2,21 +2,46 @@
 
 This is a (work in progress) tool for tracking grant applications, RSE commitment and reporting on group overheads and costings.
 
-The tool is a web app written in Django (Python) using the AdminLTE theme.
+The tool is a web app written using the [Django][django] web framework (Python) 
+and the [AdminLTE][adminlte2] theme.
 
-## Installation
+## Running from a virtualenv
 
-The best way to configure Django is to build a conda environment using the provided `environment.yml.` 
-i.e. create a conda environment as follows:
+The easiest way to instantiate the environment required to run the app is to 
+create and activate a new [virtualenv][virtualenv]:
 
-    conda env create --name DjangoRSE -f environment.yml
+```sh
+mkdir ~/.venvs
+python3 -m virtualenv ~/.venvs/RSEAdmin
+source ~/.venvs/RSEAdmin/bin/activate
+pip install -r requirements.txt
+```
+
+## Running from a conda environment on Windows
+
+Alternatively you can create a conda environment for running the Django app in:
+
+```sh
+conda create --name RSEAdmin --file environment.yml
+conda activate RSEAdmin
+```
+
+Note that the above only works on Windows as [environment.yml](environment.yml) contains OS-specific dependencies.
     
 ## Running the site
 
-Activate your conda environment and use Django to launch a development server.
+After activating your virtualenv or conda environment you can start a Django development server:
 
-    conda activate DjangoRSE
-    python manage.py runserver 8080
+```sh
+python manage.py runserver 8080
+```
     
-The website will be viewable at [http://127.0.0.1:8080](http://127.0.0.1:8080) and 
+The website will then be viewable at [http://127.0.0.1:8080](http://127.0.0.1:8080) and 
 the admin interface will be available at [http://127.0.0.1:8080/admin](http://127.0.0.1:8080/admin).
+
+At present only the admin interface contains useful functionality.
+
+[adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
+[conda]: https://docs.conda.io/en/latest/
+[django]: https://www.djangoproject.com/
+[virtualenv]: https://virtualenv.pypa.io/en/latest/
