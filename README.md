@@ -28,25 +28,32 @@ conda activate RSEAdmin
 
 Note that the above only works on Windows as [environment.yml](environment.yml) contains OS-specific dependencies.
     
-## Running the site
+## Starting a development Django server
 
 After activating your virtualenv or conda environment you can start a Django development server:
 
 ```sh
 python manage.py runserver 8080
 ```
+
+## Navigating the site
     
-The website will then be viewable at [http://127.0.0.1:8080](http://127.0.0.1:8080) and 
-the admin interface will be available at [http://127.0.0.1:8080/admin](http://127.0.0.1:8080/admin).
+The website will then be viewable at [http://127.0.0.1:8080](http://127.0.0.1:8080).
 
-At present only the admin interface contains useful functionality.
+Key URLs include:
 
-To log into the admin interface you need a Django superuser account.  
+* `/admin` - the admin interface
+* `/project/<project_id>` - project-specific overview
+* `/rse/all` - project allocations for all RSEs
+* `/rse/<rse_username>` - project allocations for specific RSE
+
+NB to log into the admin interface you need a Django superuser account.  
 If you don't already have one:
 
 ```sh
 python manage.py createsuperuser
 ```
+
 
 [adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
 [conda]: https://docs.conda.io/en/latest/
