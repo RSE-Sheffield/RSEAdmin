@@ -54,6 +54,13 @@ If you don't already have one:
 python manage.py createsuperuser
 ```
 
+## Testing
+
+Run all tests for all Django Apps associated with this Django Project:
+
+```sh
+python manage.py test
+```
 
 [adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
 [conda]: https://docs.conda.io/en/latest/
