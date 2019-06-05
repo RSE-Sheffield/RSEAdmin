@@ -5,35 +5,19 @@ This is a (work in progress) tool for tracking grant applications, RSE commitmen
 The tool is a web app written using the [Django][django] web framework (Python) 
 and the [AdminLTE][adminlte2] theme.
 
-## Running from a virtualenv
+## Installing and running using Poetry
 
-The easiest way to instantiate the environment required to run the app is to 
-create and activate a new [virtualenv][virtualenv]:
+Simpler than using [conda][conda]  or manually creating a [virtualenv][virtualenv].
 
-```sh
-mkdir ~/.venvs
-python3 -m virtualenv ~/.venvs/RSEAdmin
-source ~/.venvs/RSEAdmin/bin/activate
-pip install -r requirements.txt
-```
+ 1. Install [Poetry][poetry], a tool for Python project management 
+ 1. Clone this repo
+ 1. `poetry install` to install project dependencies in an isolated hidden virtualenv 
+    Dependencies are determined using info from `pyproject.toml`
 
-## Running from a conda environment on Windows
-
-Alternatively you can create a conda environment for running the Django app in:
-
-```sh
-conda create --name RSEAdmin --file environment.yml
-conda activate RSEAdmin
-```
-
-Note that the above only works on Windows as [environment.yml](environment.yml) contains OS-specific dependencies.
-    
 ## Starting a development Django server
 
-After activating your virtualenv or conda environment you can start a Django development server:
-
 ```sh
-python manage.py runserver 8080
+poetry run python manage.py runserver 8080
 ```
 
 ## Navigating the site
@@ -42,16 +26,16 @@ The website will then be viewable at [http://127.0.0.1:8080](http://127.0.0.1:80
 
 Key URLs include:
 
-* `/admin` - the admin interface
-* `/project/<project_id>` - project-specific overview
-* `/rse/all` - project allocations for all RSEs
-* `/rse/<rse_username>` - project allocations for specific RSE
+  * `/admin` - the admin interface
+  * `/project/<project_id>` - project-specific overview
+  * `/rse/all` - project allocations for all RSEs
+  * `/rse/<rse_username>` - project allocations for specific RSE
 
 NB to log into the admin interface you need a Django superuser account.  
 If you don't already have one:
 
 ```sh
-python manage.py createsuperuser
+poetry run python manage.py createsuperuser
 ```
 
 ## Testing
@@ -59,10 +43,11 @@ python manage.py createsuperuser
 Run all tests for all Django Apps associated with this Django Project:
 
 ```sh
-python manage.py test
+poetry run python manage.py test
 ```
 
 [adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
 [conda]: https://docs.conda.io/en/latest/
 [django]: https://www.djangoproject.com/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/
+[poetry]: https://poetry.eustace.io/

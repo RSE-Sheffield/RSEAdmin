@@ -1,2 +1,0 @@
-Django~=1.11.3
-django-adminlte2~=0.4.1
