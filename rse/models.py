@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from math import floor
+from typing import Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -205,8 +206,11 @@ class Project(models.Model):
         return self.name
 
     @property
-    def duration(self):
-        return (self.end - self.start).days
+    def duration(self) -> Optional[int]:
+        dur = None
+        if self.end and self.start:
+            dur = (self.end - self.start).days
+        return dur
 
     def clean(self):
         if self.status != 'P' and not self.proj_costing_id:
