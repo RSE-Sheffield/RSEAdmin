@@ -228,7 +228,7 @@ class RSEAllocation(models.Model):
     end = models.DateField()
 
     def __str__(self) -> str:
-        return f"{self.rse_user} on {self.project} at {self.percentage}%"
+        return f"{self.rse} on {self.project} at {self.percentage}%"
 
     @property
     def duration(self):
