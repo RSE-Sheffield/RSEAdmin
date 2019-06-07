@@ -182,7 +182,7 @@ class Project(models.Model):
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created = models.DateTimeField()
 
-    funder_id = models.CharField(max_length=50, null=True)
+    proj_costing_id = models.CharField(max_length=50, null=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
@@ -209,8 +209,8 @@ class Project(models.Model):
         return (self.end - self.start).days
 
     def clean(self):
-        if self.status != 'P' and not self.funder_id:
-            raise ValidationError(_('funder_id cannot be null if the grant has passed the preparation stage.'))
+        if self.status != 'P' and not self.proj_costing_id:
+            raise ValidationError(_('proj_costing_id cannot be null if the grant has passed the preparation stage.'))
 
 
 class RSEAllocation(models.Model):

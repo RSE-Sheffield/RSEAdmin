@@ -80,7 +80,7 @@ class SalaryCalculationTests(TestCase):
         c.save()
         p = Project(creator=self.user,
                     created=datetime.now(),
-                    funder_id="12345",
+                    proj_costing_id="12345",
                     name="test_project",
                     description="none",
                     client=c,
@@ -211,11 +211,11 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(a.staff_cost(), 1500.5)
 
     def test_project_(self):
-        """Assert a Project's funder_id can be null unless in preparation."""
+        """Assert a Project's proj_costing_id can be null unless in preparation."""
         try:
             p_good = Project(creator=self.user,
                              created=datetime.now(),
-                             funder_id=None,
+                             proj_costing_id=None,
                              name="test_project",
                              description="none",
                              client=Client.objects.all()[0],
@@ -228,7 +228,7 @@ class SalaryCalculationTests(TestCase):
             self.fail("p_good.clean() raised a ValidationError unexpectedly")
         p_bad = Project(creator=self.user,
                         created=datetime.now(),
-                        funder_id=None,
+                        proj_costing_id=None,
                         name="test_project",
                         description="none",
                         client=Client.objects.all()[0],
