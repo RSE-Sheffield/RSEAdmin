@@ -210,7 +210,7 @@ class SalaryCalculationTests(TestCase):
         a = RSEAllocation.objects.all()[1]
         self.assertEqual(a.staff_cost(), 1500.5)
 
-    def test_project_(self):
+    def test_project_costing_id_validation(self):
         """Assert a Project's proj_costing_id can be null unless in preparation."""
         try:
             p_good = Project(creator=self.user,
@@ -234,6 +234,20 @@ class SalaryCalculationTests(TestCase):
                         client=Client.objects.all()[0],
                         start=date(2010, 1, 1),
                         end=date(2050, 1, 1),
+                        percentage=50,
+                        status='F')
+        self.assertRaises(ValidationError, p_bad.clean)
+
+    def test_project_date_validation(self):
+        """Assert a Project's end date cannot be earlier than the start date."""
+        p_bad = Project(creator=self.user,
+                        created=datetime.now(),
+                        proj_costing_id="funder1",
+                        name="test_project",
+                        description="none",
+                        client=Client.objects.all()[0],
+                        start=date(2050, 1, 1),
+                        end=date(2010, 1, 1),
                         percentage=50,
                         status='F')
         self.assertRaises(ValidationError, p_bad.clean)

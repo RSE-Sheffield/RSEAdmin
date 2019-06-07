@@ -210,7 +210,9 @@ class Project(models.Model):
 
     def clean(self):
         if self.status != 'P' and not self.proj_costing_id:
-            raise ValidationError(_('proj_costing_id cannot be null if the grant has passed the preparation stage.'))
+            raise ValidationError(_('Project proj_costing_id cannot be null if the grant has passed the preparation stage.'))
+        if self.start and self.end and self.end < self.start:
+            raise ValidationError(_('Project end cannot be earlier than project start.'))
 
 
 class RSEAllocation(models.Model):
