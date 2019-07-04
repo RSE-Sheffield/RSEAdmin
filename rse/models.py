@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from math import floor
 from typing import Optional
 
@@ -28,7 +28,7 @@ class SalaryBand(models.Model):
     grade = models.IntegerField(default=1)
     grade_point = models.IntegerField(default=1)
     salary = models.DecimalField(max_digits=8, decimal_places=2)
-    year = models.ForeignKey(Financial, on_delete=models.DO_NOTHING)
+    year = models.ForeignKey(FinancialYear, on_delete=models.DO_NOTHING)
     increments = models.BooleanField(default=True)                          # Increments if in normal range
 
     def __str__(self) -> str:
@@ -109,11 +109,11 @@ class RSE(models.Model):
     employed_until = models.DateTimeField()
     
     @property
-    def current_employment(_self)
+    def current_employment(_self):
         """
         Is the staff member currently employed
         """
-        return employed_from < datetime.now() and employed_until > datetime.now()
+        return self.employed_from < datetime.now() and self.employed_until > datetime.now()
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name}"
@@ -282,7 +282,7 @@ class AllocatedProject(Project):
         ('U', 'UKRI'),
         ('E', 'EU'),
     )
-    overheads = models.CharField(max_length=1, choices=STATUS_CHOICES, default='N')  # Overhead type
+    overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
 
     def duration(self) -> Optional[int]:
         """
