@@ -179,6 +179,7 @@ class SalaryGradeChange(models.Model):
                 f"({self.salary_band.year})")
 
 
+# TODO: Make abstract
 class Project(models.Model):
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created = models.DateTimeField()
