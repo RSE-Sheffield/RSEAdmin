@@ -1,0 +1,11 @@
+Metadata-Version: 1.2
+Name: rseadmin
+Version: 0.1.0
+Summary: RSE Sheffield resource allocation and finance tool
+Home-page: UNKNOWN
+Author: Paul Richmond
+Author-email: p.richmond@sheffield.ac.uk
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.6
