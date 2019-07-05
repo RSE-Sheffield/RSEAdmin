@@ -1,4 +1,5 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
+from django.utils import timezone
 from math import floor
 from typing import Optional
 
@@ -38,7 +39,7 @@ class SalaryBand(models.Model):
     def salary_band_after_increment(self):
         """
         Provides the next salary band object after a single increment. 
-        Normal behavior is to use the next years financial data. If there is no next year financial data then the current years financial data is used. Grades which increments will use the next available grade point. 
+        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used. Grades which increments will use the next available grade point. 
         Grades which do not increment (exceptional range) will use the same grade point if no next year data is available.
         """
         
@@ -105,20 +106,20 @@ class RSE(models.Model):
     RSE represents a RSE staff member within the RSE team
     """
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
-    employed_from = models.DateTimeField()
-    employed_until = models.DateTimeField()
+    employed_from = models.DateField()
+    employed_until = models.DateField()
     
     @property
     def current_employment(_self):
         """
         Is the staff member currently employed
         """
-        return self.employed_from < datetime.now() and self.employed_until > datetime.now()
+        return self.employed_from < timezone.now() and self.employed_until > timezone.now()
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name}"
 
-    def lastSalaryGradeChange(self, date: date = datetime.now()):
+    def lastSalaryGradeChange(self, date: date = timezone.now()):
         """
         Gets the last salary grade change before the specified date (i.e. the last appropriate grade change)
         """
@@ -284,7 +285,7 @@ class AllocatedProject(Project):
     )
     overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
 
-    def duration(self) -> Optional[int]:
+    def duration(self) -> int:
         """
         Duration is determined by start and end dates
         """
@@ -307,12 +308,12 @@ class ServiceProject(Project):
     days = models.IntegerField(default=1)                           # duration in days
     rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate 
     
-    def duration(self) -> Optional[int]:
+    def duration(self) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are 220 TRAC working days) to a FTE duration
         """
-        return days * (360.0/ 220.0)
+        return floor(days * (360.0/ 220.0))
         
     def value(self) -> float:
         """
