@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils.timezone import make_aware
 
 from rse.models import (
         Client,
