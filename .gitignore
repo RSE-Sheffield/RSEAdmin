@@ -3,3 +3,4 @@
 __pycache__
 static-root
 .mypy_cache/
+*egg-info
