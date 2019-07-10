@@ -138,11 +138,11 @@ class SalaryCalculationTests(TestCase):
         # salary grade point should be based of 2019 data as no 2020 data exists
         self.assertEqual(sb12.salary, 2002)
 
-    def test_salary_increment_first_year(self):
+    def test_salary_increment(self):
         """
-        Check the incremented salary band for a salary band with data available for the next financial year.
+        Check the incremented salary band for a salary band which will increment 1st January (normal grade point range)
 
-        The correct behaviour is that the salary band should be incremented using the next financial years data. i.e. G1.1 from 2017 should be incremented to G1.2 2018.
+        The correct behaviour is that the salary band should be incremented using the same financial years data. i.e. G1.1 from 2017 should be incremented to G1.2 2017.
         """
         # Get initial test data from DB
         sb11 = SalaryBand.objects.filter(grade=1, grade_point=1, year__year=2017)[0]
@@ -151,24 +151,55 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb11.salary, 1000)
         sb12 = sb11.salary_band_after_increment()
         
-        # salary grade point should be based of 2018 data
-        self.assertEqual(sb12.salary, 2001)
+        # salary grade point should increment
+        self.assertEqual(sb12.grade, 1)
+        self.assertEqual(sb12.grade_point, 2)
+        self.assertEqual(sb12.year.year, 2017)
 
-    def test_salary_increment(self):
+    def test_salary_nonincrement(self):
         """
-        Check that a non incrementing salary band remains on the same grade point but uses the next financial years data.
+        Check that a non incrementing salary band remains on the same grade point. Should not change the financial year.
 
-        The correct behaviour is that the salary band should not be incremented but the next years financial data should be used. i.e. G1.4 from 2017 should be incremented to G1.4 2018.
+        The correct behaviour is that the salary band should be exactly the same. i.e. G1.4 from 2017 should be remain the same.
         """
         # Get initial test data from DB
         sb14_2017 = SalaryBand.objects.filter(grade=1, grade_point=4, year__year=2017)[0]
-        
-        # Sanity check for salary of first 2017 salary band at grade 1.4
-        self.assertEqual(sb14_2017.salary, 4000)
-        sb14_2018 = sb14_2017.salary_band_after_increment()
+        sb14_2017b = sb14_2017.salary_band_after_increment()
         
         # salary grade point should remain the same but use 2018 data
-        self.assertEqual(sb14_2018.salary, 4001)
+        self.assertEqual(sb14_2017b.grade, 1)
+        self.assertEqual(sb14_2017b.grade_point, 4)
+        self.assertEqual(sb14_2017b.year.year, 2017)
+        
+    def test_salary_increment_financial_year(self):
+        """
+        Check a salary band increment for next financial year for a salary band with following years financial data available in database.
+
+        The correct behaviour is that the salary band grade and point should remain the same but the year should increase. i.e. G1.1 from 2017 should be incremented to G1.1 2018.
+        """
+        # Get initial test data from DB
+        sb11_2017 = SalaryBand.objects.filter(grade=1, grade_point=1, year__year=2017)[0]
+        sb11_2018 = sb11_2017.salary_band_next_financial_year()
+        
+        # salary grade point should increment
+        self.assertEqual(sb11_2018.grade, 1)
+        self.assertEqual(sb11_2018.grade_point, 1)
+        self.assertEqual(sb11_2018.year.year, 2018)
+        
+    def test_salary_increment_financial_year_estimated(self):
+        """
+        Check a salary band increment for next financial year for a salary band which does not have  the following years financial data available in database.
+
+        The correct behaviour is that the salary band year, grade and point should remain the same  i.e. G1.1 from 2019 should be returned as the last valid years data for this grade and point
+        """
+        # Get initial test data from DB
+        sb11_2019 = SalaryBand.objects.filter(grade=1, grade_point=1, year__year=2019)[0]
+        sb11_2019b = sb11_2019.salary_band_next_financial_year()
+        
+        # salary grade point should increment
+        self.assertEqual(sb11_2019b.grade, 1)
+        self.assertEqual(sb11_2019b.grade_point, 1)
+        self.assertEqual(sb11_2019b.year.year, 2019)
 
     def test_get_last_grade_change(self):
         """
@@ -202,49 +233,60 @@ class SalaryCalculationTests(TestCase):
         Where financial year data is not provided the salary band will be estimated given the current data.
         """
         # Get initial test data from DB
-        sgc = SalaryGradeChange.objects.filter(rse=self.rse)[0]  # first grade change is for 2017 on salary band 1.1 with salary of 1000
+        # first grade change is for 2017 on salary band 1.1 with salary of 1000
+        sgc = SalaryGradeChange.objects.filter(rse=self.rse)[0]  
         
         # Check initial salary for grade point 1.1
-        self.assertEqual(sgc.salary_band.salary, 1000)
+        # If this is wrong then data in test db is not as expected and all other tests will fail
+        self.assertEqual(sgc.salary_band.grade, 1)
+        self.assertEqual(sgc.salary_band.grade_point, 1)
+        self.assertEqual(sgc.salary_band.year.year, 2017)
+        
+        # TODO: Test for date before salary grade change 
         
         # Check salary for rse in same year and same financial year
+        # Should return same salary band G1.1 2017 (no change)
         sb = sgc.salary_band_at_future_date(date(2017, 12, 12))
-        self.assertEqual(sb.salary, 1000)
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 1)
+        self.assertEqual(sb.year.year, 2017)
         
-        # Check salary for rse in next year but same financial year
+        # Check salary for rse in next calendar year but same financial year
+        # Should increment the grade point using 2017 financial year data. I.e. G1.2 2017
         sb = sgc.salary_band_at_future_date(date(2018, 6, 1))
-        self.assertEqual(sb.salary, 1000)
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 2)
+        self.assertEqual(sb.year.year, 2017)
+        
+        # Check salary for rse at last date in current financial year
+        # Should increment grade point not the financial year. I.e. G1.2 2017
+        sb = sgc.salary_band_at_future_date(date(2018, 7, 31))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 2)
+        self.assertEqual(sb.year.year, 2017)
         
         # Check salary for rse at first date in next financial year
-        # (should be normal increment using 2018 data)
+        # Should increment grade point and the financial year. I.e. G1.2 2018
         sb = sgc.salary_band_at_future_date(date(2018, 8, 1))
-        self.assertEqual(sb.salary, 2001)
-        
-        # Check salary for rse at date in next financial year
-        # (should be normal increment using 2018 data)
-        sb = sgc.salary_band_at_future_date(date(2018, 12, 12))
-        self.assertEqual(sb.salary, 2001)
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 2)
+        self.assertEqual(sb.year.year, 2018)
         
         # Check salary for rse at a date two years in future
-        # (should be retrieved from salary band change to g1.5)
+        # Should increment both grade point and financial year by two. I.e. G1.3 2019
         sb = sgc.salary_band_at_future_date(date(2019, 10, 10))
-        self.assertEqual(sb.salary, 5002)
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 3)
+        self.assertEqual(sb.year.year, 2019)
         
-        # Check salary for rse at a date many years in future
-        # (should be retrieved from salary band change to g1.5)
+        # Check salary for rse at a date many years in future (where data will be estimated)
+        # Should be retrieved from final (2019) years financial data at last increment salary band. I.e. G1.5 2019
         # which does not increment
         sb = sgc.salary_band_at_future_date(date(2050, 10, 10))
-        self.assertEqual(sb.salary, 5002)
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 4)
+        self.assertEqual(sb.year.year, 2019)
 
-    def test_query_salary_band(self):
-        # should error as no salary band data changes exist before 1st August 2017
-        # self.assertEqual(self.rse.futureSalaryBand(date(2017, 1, 1)).salary, 1000)
-        # should return a salary band of g1.1 2017
-        self.assertEqual(self.rse.futureSalaryBand(date(2017, 12, 12)).salary, 1000)
-        # Should return a salary band of g1.1 2017
-        self.assertEqual(self.rse.futureSalaryBand(date(2018, 1, 1)).salary, 1000)
-        # Should return a salary band of g1.2 2018
-        self.assertEqual(self.rse.futureSalaryBand(date(2018, 9, 1)).salary, 2001)
     """
     def test_allocation_costs(self):
         # test cost of 50% allocation for full 2017 year (expects 1000*0.5)

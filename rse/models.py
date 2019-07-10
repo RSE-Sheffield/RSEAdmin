@@ -39,31 +39,47 @@ class SalaryBand(models.Model):
     def salary_band_after_increment(self):
         """
         Provides the next salary band object after a single increment. 
-        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used. Grades which increments will use the next available grade point. 
-        Grades which do not increment (exceptional range) will use the same grade point if no next year data is available.
+        Grades which increments will use the next available grade point.  Grades which do not increment (exceptional range) will return the same salary band.
         """
         
-        # Handle increment
+        # check first to see if salary band can increment
+        if self.increments:
+            # Find next salary band with incremented year
+            g = self.grade
+            gp = self.grade_point + 1
+            y = self.year.year
+            sb = SalaryBand.objects.filter(grade=g, grade_point=gp, year__year=y)  # order by year?
+            
+            # Result of database query should be unique if next years data is available
+            if sb:  
+                return sb[0]
+            raise ObjectDoesNotExist('Incomplete salary data in database. Could not find a valid increment for current salary band.')
+            
+        # salary band does not increment so return self
+        else:
+            return self
+        
+
+    def salary_band_next_financial_year(self):
+        """
+        Provides the salary and for the next financial year
+        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used. 
+        Grade point should not change as this represents just the salary change in August which is the inflation adjustment.
+        """
+        # Query database to find a salary band for next years financial data
         g = self.grade
         gp = self.grade_point
-        if self.increments:
-            gp += 1
-        # Find next
         y = self.year.year + 1
-        sbs = SalaryBand.objects.filter(grade=g, grade_point=gp, year__year=y)  # order by year?
-        if sbs:  # should be unique if next years data is available
+        sbs = SalaryBand.objects.filter(grade=g, grade_point=gp, year__year=y)
+        
+        # Should be unique if next years data is available
+        if sbs:  
             return sbs[0]
-        else:  # There is no more salary band data (probably not released yet). Estimated salary band off current years data.
-            # TODO: Warning that data is estimated?
-            # if no increment then just return the same salary band
-            if not self.increments:
-                return self
-            # If there is an increment then get next salary band from current year
-            sbs = SalaryBand.objects.filter(grade=g, grade_point=gp, year=self.year)
-            if sbs:  # should be unique
-                return sbs[0]
-            else:
-                raise ObjectDoesNotExist('Incomplete salary data in database. Could not find a valid increment for current salary band.')
+        # There is no more salary band data (probably not released yet)
+        else:  
+            # Return current salary band
+            return self
+
 
     @staticmethod
     def spans_financial_year(start: date, end: date) -> bool:
@@ -71,6 +87,10 @@ class SalaryBand(models.Model):
         Static method to determine if a date range spans a financial year. 
         Important for considering inflation adjustments.
         """
+        # Catch error
+        if start > end:
+            raise ValueError('Start date after end date')
+        
         # Next financial year end from start date
         if start.month >= 8:
             n_fy_end = date(start.year + 1, 7, 31)
@@ -78,6 +98,29 @@ class SalaryBand(models.Model):
             n_fy_end = date(start.year, 7, 31)
 
         return end > n_fy_end
+        
+    @staticmethod
+    def spans_calendar_year(start: date, end: date) -> bool:
+        """
+        Static method to determine if a date range spans a calendar year. 
+        Important for considering grade point increments.
+        """
+        # Catch error
+        if start > end:
+            raise ValueError('Start date after end date')
+            
+        return end.year > start.year
+        
+    @staticmethod
+    def spans_salary_change(start: date, end: date) -> bool:
+        """
+        Static method to determine if a date range spans either a calendar or financial year. 
+        """
+        # Catch error
+        if start > end:
+            raise ValueError('Start date after end date')
+            
+        return SalaryBand.spans_calendar_year(start, end) or SalaryBand.spans_financial_year(start, end)
 
     def start_date(self) -> date:
         """Get start date of the financial year."""
@@ -149,6 +192,8 @@ class RSE(models.Model):
         """
         Calculates the staff cost of an RSE given a start and end date with percentage FTE.
         Cost is calculated by breaking a date range down into financial years ensuring increments and annual salary inflation is adjusted for.
+        
+        TODO: This is broken does not account for grade point changes
         """
     
         # Add one to end as end day is inclusive of cost calculation (e.g. start date from 9:00 end date until 5pm)
@@ -186,33 +231,40 @@ class SalaryGradeChange(models.Model):
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
 
     # Gets the incremented salary given some point in the future
-    def salary_band_at_future_date(self, date):
+    def salary_band_at_future_date(self, future_date):
         """
         Returns a salary band a some date in the future.
         The SalaryGradeChange represents a starting point for the calculation of future grade points and as such can be used to apply increments
-        BUG #25 Does not account for annual increments
         """
         # Check for obvious stupid
-        if date < self.salary_band.start_date():
+        if future_date < self.salary_band.start_date():
             raise ValueError('Future salary can not be calculated from dates in the past')
-
-        # Easy case if date is in the same financial year
-        if not SalaryBand.spans_financial_year(self.salary_band.start_date(), date):
-            return self.salary_band
-
+            
         # Check if there is a salary grade change at a later date but before specified date
-        sgc = self.rse.lastSalaryGradeChange(date)
+        sgc = self.rse.lastSalaryGradeChange(future_date)
         if not sgc.id == self.id:
             # there is a more recent salary grade change so use it
-            return sgc.salary_band_at_future_date(date)
+            return sgc.salary_band_at_future_date(future_date)
 
-        # Loop financial years to increment salary where appropriate
-        sb = self.salary_band
-        increments = floor((date - sb.start_date()).days / 365.0)
-        for _ in range(increments):
-            sb = sb.salary_band_after_increment()
 
-        return sb
+        # Get the salary band and start date of the salary grade change
+        # Note salary band data may be estimated in future years so the date of increment must be tracked
+        next_increment = sgc.salary_band.start_date() # start of financial year
+        next_sb = sgc.salary_band
+        
+        # If the salary can change between the date range then advance increment or year
+        while ( SalaryBand.spans_salary_change(next_increment, future_date)):
+            # BUG: Order is important here
+            if SalaryBand.spans_financial_year(next_increment, future_date):
+                next_increment = date(next_increment.year, 8, 1)
+                next_sb = next_sb.salary_band_next_financial_year()
+                
+            elif SalaryBand.spans_calendar_year(next_increment, future_date):
+                next_increment = date(next_increment.year + 1, 1, 1)
+                next_sb = next_sb.salary_band_after_increment()
+        
+        return next_sb
+       
 
     def __str__(self) -> str:
         return (f"{self.rse.user.first_name} {self.rse.user.last_name}: Grade "
