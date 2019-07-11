@@ -15,96 +15,125 @@ from rse.models import (
         User,
         )
 
+###########################################
+# Helper functions for creating test data #
+###########################################
+
+def setup_user_and_rse_data(testcase: TestCase):
+    """
+    Function to create data a user and RSE saved in database and in dict of TestCase
+    """
+    
+    # create a single rse with grade change in 2017 and 2019
+    # save rse and user in class dict
+    testcase.user = User.objects.create_user(username='testuser', password='12345')
+    testcase.rse = RSE(user=testcase.user)
+    testcase.rse.employed_from = date(2017, 1, 1)
+    testcase.rse.employed_until = date(2025, 1, 1)
+    testcase.rse.save()
+
+
+def setup_salary_and_banding_data(testcase: TestCase):
+    """
+    Function to create data in test database for salary and banding
+    """
+    # Create some financial years
+    y2017 = FinancialYear(year=2017, inflation=0)
+    y2017.save()
+    y2018 = FinancialYear(year=2018, inflation=0)
+    y2018.save()
+    y2019 = FinancialYear(year=2019, inflation=0)
+    y2019.save()
+
+    # Create an incremental range for 2017 year
+    sb11_2017 = SalaryBand(grade=1, grade_point=1, salary=(1000), year=y2017, increments=True)
+    sb11_2017.save()
+    sb12_2017 = SalaryBand(grade=1, grade_point=2, salary=(2000), year=y2017, increments=True)
+    sb12_2017.save()
+    sb13_2017 = SalaryBand(grade=1, grade_point=3, salary=(3000), year=y2017, increments=True)
+    sb13_2017.save()
+    # Create non incremental range
+    sb14_2017 = SalaryBand(grade=1, grade_point=4, salary=(4000), year=y2017, increments=False)
+    sb14_2017.save()
+    sb15_2017 = SalaryBand(grade=1, grade_point=5, salary=(5000), year=y2017, increments=False)
+    sb15_2017.save()
+
+    # Create an incremental range for 2018 year
+    sb11_2018 = SalaryBand(grade=1, grade_point=1, salary=(1001), year=y2018, increments=True)
+    sb11_2018.save()
+    sb12_2018 = SalaryBand(grade=1, grade_point=2, salary=(2001), year=y2018, increments=True)
+    sb12_2018.save()
+    sb13_2018 = SalaryBand(grade=1, grade_point=3, salary=(3001), year=y2018, increments=True)
+    sb13_2018.save()
+    # Create non incremental range
+    sb14_2018 = SalaryBand(grade=1, grade_point=4, salary=(4001), year=y2018, increments=False)
+    sb14_2018.save()
+    sb15_2018 = SalaryBand(grade=1, grade_point=5, salary=(5001), year=y2018, increments=False)
+    sb15_2018.save()
+
+    # Create an incremental range for 2019 year
+    sb11_2019 = SalaryBand(grade=1, grade_point=1, salary=(1002), year=y2019, increments=True)
+    sb11_2019.save()
+    sb12_2019 = SalaryBand(grade=1, grade_point=2, salary=(2002), year=y2019, increments=True)
+    sb12_2019.save()
+    sb13_2019 = SalaryBand(grade=1, grade_point=3, salary=(3002), year=y2019, increments=True)
+    sb13_2019.save()
+    # Create non incremental range
+    sb14_2019 = SalaryBand(grade=1, grade_point=4, salary=(4002), year=y2019, increments=False)
+    sb14_2019.save()
+    sb15_2019 = SalaryBand(grade=1, grade_point=5, salary=(5002), year=y2019, increments=False)
+    sb15_2019.save()
+
+    # Create salary grade changes (requires that an RSE has been created in database)
+    sgc1 = SalaryGradeChange(rse=testcase.rse, salary_band=sb11_2017)
+    sgc1.save()
+    sgc2 = SalaryGradeChange(rse=testcase.rse, salary_band=sb13_2018)
+    sgc2.save()
+    
+
+def setup_project_and_allocation_data(testcase: TestCase):
+    """
+    Create a client, projects and allocation in test database
+    """
+    # create some test projects
+    c = Client(name="test_client")
+    c.save()
+    """
+    p = Project(creator=self.user,
+                created=datetime.now(),
+                proj_costing_id="12345",
+                name="test_project",
+                description="none",
+                client=c,
+                start=date(2010, 1, 1),
+                end=date(2050, 1, 1),
+                percentage=50,
+                status='F')
+    p.save()
+    a = RSEAllocation(rse=self.rse, project=p, percentage=50,
+                      start=date(2017, 8, 1),
+                      end=date(2018, 7, 31))
+    a.save()
+    a2 = RSEAllocation(rse=self.rse, project=p, percentage=50,
+                       start=date(2017, 8, 1),
+                       end=date(2019, 7, 31))
+    a2.save()
+    """
+
+
+##############
+# Test Cases #
+##############
 
 class SalaryCalculationTests(TestCase):
 
     def setUp(self):
         """
-        Create test database
+        Create test database using just salary and banding data
         """
-        # Create some financial years
-        y2017 = FinancialYear(year=2017, inflation=0)
-        y2017.save()
-        y2018 = FinancialYear(year=2018, inflation=0)
-        y2018.save()
-        y2019 = FinancialYear(year=2019, inflation=0)
-        y2019.save()
+        setup_user_and_rse_data(self)
+        setup_salary_and_banding_data(self)
 
-        # Create an incremental range for 2017 year
-        sb11_2017 = SalaryBand(grade=1, grade_point=1, salary=(1000), year=y2017, increments=True)
-        sb11_2017.save()
-        sb12_2017 = SalaryBand(grade=1, grade_point=2, salary=(2000), year=y2017, increments=True)
-        sb12_2017.save()
-        sb13_2017 = SalaryBand(grade=1, grade_point=3, salary=(3000), year=y2017, increments=True)
-        sb13_2017.save()
-        # Create non incremental range
-        sb14_2017 = SalaryBand(grade=1, grade_point=4, salary=(4000), year=y2017, increments=False)
-        sb14_2017.save()
-        sb15_2017 = SalaryBand(grade=1, grade_point=5, salary=(5000), year=y2017, increments=False)
-        sb15_2017.save()
-
-        # Create an incremental range for 2018 year
-        sb11_2018 = SalaryBand(grade=1, grade_point=1, salary=(1001), year=y2018, increments=True)
-        sb11_2018.save()
-        sb12_2018 = SalaryBand(grade=1, grade_point=2, salary=(2001), year=y2018, increments=True)
-        sb12_2018.save()
-        sb13_2018 = SalaryBand(grade=1, grade_point=3, salary=(3001), year=y2018, increments=True)
-        sb13_2018.save()
-        # Create non incremental range
-        sb14_2018 = SalaryBand(grade=1, grade_point=4, salary=(4001), year=y2018, increments=False)
-        sb14_2018.save()
-        sb15_2018 = SalaryBand(grade=1, grade_point=5, salary=(5001), year=y2018, increments=False)
-        sb15_2018.save()
-
-        # Create an incremental range for 2019 year
-        sb11_2019 = SalaryBand(grade=1, grade_point=1, salary=(1002), year=y2019, increments=True)
-        sb11_2019.save()
-        sb12_2019 = SalaryBand(grade=1, grade_point=2, salary=(2002), year=y2019, increments=True)
-        sb12_2019.save()
-        sb13_2019 = SalaryBand(grade=1, grade_point=3, salary=(3002), year=y2019, increments=True)
-        sb13_2019.save()
-        # Create non incremental range
-        sb14_2019 = SalaryBand(grade=1, grade_point=4, salary=(4002), year=y2019, increments=False)
-        sb14_2019.save()
-        sb15_2019 = SalaryBand(grade=1, grade_point=5, salary=(5002), year=y2019, increments=False)
-        sb15_2019.save()
-
-        # create a single rse with grade change in 2017 and 2019
-        # save rse and user in class dict
-        self.user = User.objects.create_user(username='testuser', password='12345')
-        self.rse = RSE(user=self.user)
-        self.rse.employed_from = date(2017, 1, 1)
-        self.rse.employed_until = date(2025, 1, 1)
-        self.rse.save()
-        sgc1 = SalaryGradeChange(rse=self.rse, salary_band=sb11_2017)
-        sgc1.save()
-        sgc2 = SalaryGradeChange(rse=self.rse, salary_band=sb13_2018)
-        sgc2.save()
-
-        # create some test projects
-        c = Client(name="test_client")
-        c.save()
-        """
-        p = Project(creator=self.user,
-                    created=datetime.now(),
-                    proj_costing_id="12345",
-                    name="test_project",
-                    description="none",
-                    client=c,
-                    start=date(2010, 1, 1),
-                    end=date(2050, 1, 1),
-                    percentage=50,
-                    status='F')
-        p.save()
-        a = RSEAllocation(rse=self.rse, project=p, percentage=50,
-                          start=date(2017, 8, 1),
-                          end=date(2018, 7, 31))
-        a.save()
-        a2 = RSEAllocation(rse=self.rse, project=p, percentage=50,
-                           start=date(2017, 8, 1),
-                           end=date(2019, 7, 31))
-        a2.save()
-        """
 
     def test_salary_finacial_year_span(self):
         """
@@ -244,9 +273,7 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sgc.salary_band.grade, 1)
         self.assertEqual(sgc.salary_band.grade_point, 1)
         self.assertEqual(sgc.salary_band.year.year, 2017)
-        
-        # TODO: Test for date before salary grade change 
-        
+               
         # Check salary for rse in same year and same financial year
         # Should return same salary band G1.1 2017 (no change)
         sb = sgc.salary_band_at_future_date(date(2017, 12, 12))
@@ -290,6 +317,13 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.grade_point, 4)
         self.assertEqual(sb.year.year, 2019)
 
+class ProjectAllocationTests(TestCase):
+
+    def setUp(self):
+        setup_user_and_rse_data(self)
+        setup_salary_and_banding_data(self)
+        setup_project_and_allocattion_data(self)
+        
     """
     def test_allocation_costs(self):
         # test cost of 50% allocation for full 2017 year (expects 1000*0.5)
