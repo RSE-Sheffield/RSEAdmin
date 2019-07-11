@@ -233,7 +233,7 @@ class SalaryGradeChange(models.Model):
     # Gets the incremented salary given some point in the future
     def salary_band_at_future_date(self, future_date):
         """
-        Returns a salary band a some date in the future.
+        Returns a salary band at some date in the future.
         The SalaryGradeChange represents a starting point for the calculation of future grade points and as such can be used to apply increments
         """
         # Check for obvious stupid
@@ -254,12 +254,13 @@ class SalaryGradeChange(models.Model):
         
         # If the salary can change between the date range then advance increment or year
         while ( SalaryBand.spans_salary_change(next_increment, future_date)):
-            # BUG: Order is important here
-            if SalaryBand.spans_financial_year(next_increment, future_date):
+            # If date is before financial year then date range spans financial year
+            if next_increment.month < 8 :
                 next_increment = date(next_increment.year, 8, 1)
                 next_sb = next_sb.salary_band_next_financial_year()
                 
-            elif SalaryBand.spans_calendar_year(next_increment, future_date):
+            # Doesn't span financial year so must span calendar year
+            else:
                 next_increment = date(next_increment.year + 1, 1, 1)
                 next_sb = next_sb.salary_band_after_increment()
         
