@@ -383,6 +383,10 @@ class SalaryCalculationTests(TestCase):
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365
         self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1)), 84.93, places=2)
         
+        # Test cost of 2017 1.1 for period without any increments at 50% FTE
+        # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365 *0.5
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1), percentage=50.0), 42.47, places=2)
+        
         # Test cost of 2017 1.1 for period with grade point increment
         # Expected behaviour is value of salary for year duration with increment in January 
         # I.e. 1000 (2017 G1.1) * 153/365 (days in 2017 FY)
