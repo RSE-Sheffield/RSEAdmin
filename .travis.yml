@@ -1,4 +1,7 @@
 language: python
+
+# required for python 3.7 support
+dist: xenial
 python:
   - "3.7"
 
