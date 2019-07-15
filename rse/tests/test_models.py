@@ -1,19 +1,10 @@
 from datetime import date, datetime
+from django.utils import timezone
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils.timezone import make_aware
 
-from rse.models import (
-        Client,
-        FinancialYear,
-        Project,
-        RSE,
-        RSEAllocation,
-        SalaryBand,
-        SalaryGradeChange,
-        User,
-        )
+from rse.models import *
 
 ###########################################
 # Helper functions for creating test data #
@@ -98,27 +89,63 @@ def setup_project_and_allocation_data(testcase: TestCase):
     # create some test projects
     c = Client(name="test_client")
     c.save()
-    """
-    p = Project(creator=self.user,
-                created=datetime.now(),
-                proj_costing_id="12345",
-                name="test_project",
-                description="none",
-                client=c,
-                start=date(2010, 1, 1),
-                end=date(2050, 1, 1),
-                percentage=50,
-                status='F')
+    
+    # Create an allocated project
+    p = AllocatedProject(
+        percentage=50,
+        overheads='U',
+        # base class values
+        creator=testcase.user,
+        created=timezone.now(),
+        proj_costing_id="12345",
+        name="test_project_1",
+        description="none",
+        client=c,
+        start=date(2017, 1, 1),
+        end=date(2020, 1, 1),
+        status='F')
     p.save()
-    a = RSEAllocation(rse=self.rse, project=p, percentage=50,
-                      start=date(2017, 8, 1),
-                      end=date(2018, 7, 31))
+    
+    # Create an allocated project
+    p2 = ServiceProject(
+        days=30,
+        rate=275,
+        # base class values
+        creator=testcase.user,
+        created=timezone.now(),
+        proj_costing_id="12345",
+        name="test_project_1",
+        description="none",
+        client=c,
+        start=date(2010, 1, 1),
+        end=date(2050, 1, 1),
+        status='F')
+    p2.save()
+    
+    # Create an allocation for the AllocatedProject (spanning full 2017 financial year)
+    a = RSEAllocation(rse=testcase.rse, 
+        project=p,
+        percentage=50,
+        start=date(2017, 8, 1),
+        end=date(2018, 7, 31))
     a.save()
-    a2 = RSEAllocation(rse=self.rse, project=p, percentage=50,
-                       start=date(2017, 8, 1),
-                       end=date(2019, 7, 31))
+    
+    # Create an allocation for the AllocatedProject (spanning full 2017 and 2018 financial year)
+    a2 = RSEAllocation(rse=testcase.rse, 
+        project=p, 
+        percentage=50,
+        start=date(2017, 8, 1),
+        end=date(2019, 7, 31))
     a2.save()
-    """
+    
+    # Create an allocation for the ServiceProject at 50% FTE for one month (August 2017)
+    a3 = RSEAllocation(rse=testcase.rse, 
+        project=p2, 
+        percentage=50,
+        start=date(2017, 8, 1),
+        end=date(2017, 9, 1))
+    a3.save()
+    
 
 
 ##############
@@ -322,8 +349,38 @@ class ProjectAllocationTests(TestCase):
     def setUp(self):
         setup_user_and_rse_data(self)
         setup_salary_and_banding_data(self)
-        setup_project_and_allocattion_data(self)
+        setup_project_and_allocation_data(self)
         
+        
+    def test_polymorphism(self):
+        """
+        Tests for MTI polymorphism
+        """
+        # Get an allocated project and test that the polymorphic plugin returns the correct type
+        # Should return correctly typed concrete implementations of abstract Project type
+        p = Project.objects.all()[0]
+        self.assertEqual(isinstance(p, AllocatedProject), True)
+        
+        # Get an service project and test that the polymorphic plugin returns the correct type
+        # Should return correctly typed concrete implementations of abstract Project type
+        p = Project.objects.all()[1]
+        self.assertEqual(isinstance(p, ServiceProject), True)
+    
+    def test_project_duration(self):
+        """
+        Tests polymorphic function duration which differs depeingin on project type
+        """
+        
+        # Get an allocated project and test that duration function returns the correct number of days
+        # Should return the project duration in days (i.e. 3 years)
+        p = Project.objects.all()[0]
+        self.assertEqual(p.duration(), 365*3)
+        
+        # Get a service project and test that duration function returns the service adjusted for TRAC
+        # Should return the project duration in days (30 days plus 19 days adjustment for TRAC)
+        p = Project.objects.all()[1]
+        self.assertEqual(p.duration(), 49)
+    
     """
     def test_allocation_costs(self):
         # test cost of 50% allocation for full 2017 year (expects 1000*0.5)

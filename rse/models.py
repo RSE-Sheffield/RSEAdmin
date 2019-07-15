@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from polymorphic.models import PolymorphicModel
 
 class FinancialYear(models.Model):
     """
@@ -273,10 +274,11 @@ class SalaryGradeChange(models.Model):
                 f"({self.salary_band.year})")
 
 
-class Project(models.Model):
+class Project(PolymorphicModel):
     """
     Project represents a project undertaken by RSE team.
-    Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). Lack of using abstract type is due to limitations on inheritance with Django table mapping (See:https://docs.djangoproject.com/en/2.2/topics/db/models/#abstract-base-classes).
+    Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheretance much cleaner.
+    See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created = models.DateTimeField()
@@ -298,23 +300,14 @@ class Project(models.Model):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
     def duration(self) -> Optional[int]:
-        """
-        Works like a virtual function in returning the duration based off the concrete type of project which was used to create the project (see: https://stackoverflow.com/questions/9771180/model-inheritance-how-can-i-use-overridden-methods)
-        """
-        if hasattr(self, 'AllocatedProject'):
-            return self.AllocatedProject.duration()
-        if hasattr(self, 'ServiceProject'):
-            return self.ServiceProject.duration()
+        """ Implemented by concrete classes """        
+        pass
             
             
     def value(self) -> Optional[int]:
-        """
-        Works like a virtual function in returning the value based off the concrete type of project which was used to create the project (see: https://stackoverflow.com/questions/9771180/model-inheritance-how-can-i-use-overridden-methods)
-        """
-        if hasattr(self, 'AllocatedProject'):
-            return self.AllocatedProject.value()
-        if hasattr(self, 'ServiceProject'):
-            return self.ServiceProject.value()
+        """ Implemented by concrete classes """        
+        pass
+            
         
     def __str__(self):
         return self.name
@@ -366,7 +359,7 @@ class ServiceProject(Project):
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are 220 TRAC working days) to a FTE duration
         """
-        return floor(days * (360.0/ 220.0))
+        return floor(self.days * (360.0/ 220.0))
         
     def value(self) -> float:
         """
