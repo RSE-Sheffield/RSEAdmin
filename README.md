@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/RSE-Sheffield/RSEAdmin.svg?branch=master)](https://travis-ci.org/RSE-Sheffield/RSEAdmin)
+
 # RSE Administration Tool
 
 This is a (work in progress) tool for tracking grant applications, RSE commitment and reporting on group overheads and costings.
