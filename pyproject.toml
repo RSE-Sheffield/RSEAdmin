@@ -10,6 +10,7 @@ python = ">=3.6"
 Django = "~1.11.3"
 django-adminlte2 = "~0.4.1"
 pytest = "^4.5"
+django-polymorphic = "~2.1"
 
 [tool.poetry.dev-dependencies]
 
