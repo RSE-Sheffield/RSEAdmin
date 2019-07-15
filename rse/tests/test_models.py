@@ -455,10 +455,10 @@ class ProjectAllocationTests(TestCase):
         #      5000 (2017 G1.5) * 212/365(days in 2017 FY NO January increment) +
         #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
         p = Project.objects.all()[0]
-        self.assertAlmostEqual(p.value(), 3548.16)
+        self.assertAlmostEqual(p.value(), 3548.15, places=2)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
-        self.assertAlmostEqual(p.value(), 8250.00)
+        self.assertAlmostEqual(p.value(), 8250.00, places=2)
    
