@@ -13,6 +13,8 @@ pytest = "^4.5"
 django-polymorphic = "~2.1"
 
 [tool.poetry.dev-dependencies]
+pytest-cov = "^2.7"
+codecov = "^2.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
