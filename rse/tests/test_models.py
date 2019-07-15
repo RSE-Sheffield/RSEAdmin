@@ -48,6 +48,8 @@ def setup_salary_and_banding_data(testcase: TestCase):
     sb14_2017.save()
     sb15_2017 = SalaryBand(grade=1, grade_point=5, salary=(5000), year=y2017, increments=False)
     sb15_2017.save()
+    # Save sb15_2017 to testcase for use later in project creation
+    testcase.sb15_2017 = sb15_2017
 
     # Create an incremental range for 2018 year
     sb11_2018 = SalaryBand(grade=1, grade_point=1, salary=(1001), year=y2018, increments=True)
@@ -89,11 +91,12 @@ def setup_project_and_allocation_data(testcase: TestCase):
     # create some test projects
     c = Client(name="test_client")
     c.save()
-    
+        
     # Create an allocated project
     p = AllocatedProject(
         percentage=50,
         overheads='U',
+        salary_band=testcase.sb15_2017
         # base class values
         creator=testcase.user,
         created=timezone.now(),
@@ -343,6 +346,13 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.grade, 1)
         self.assertEqual(sb.grade_point, 4)
         self.assertEqual(sb.year.year, 2019)
+        
+    def test_staff_costs(Self):
+        """
+        Test the true cost of staff accounting for grade changes and inflation
+        """
+        
+        # TODO:
 
 class ProjectAllocationTests(TestCase):
     """
@@ -391,12 +401,20 @@ class ProjectAllocationTests(TestCase):
         """
         
         # Get an allocated project and test that the value is determined from G7.9 data
+        # Should return a value based of the financial year data for a G7.9
+        p = Project.objects.all()[1]
+        self.assertEqual(p.value(), 8250)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
         self.assertEqual(p.value(), 8250)
    
+    
+    # TODO: Test an allocation can not be made outside of project dates (custom validator?)
+    
+    # TODO: Test the cost of an allocation
+    # allocation duration may be same as project but staff costs may be reduced
     
     """
     def test_allocation_costs(self):

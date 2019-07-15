@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
+
 class FinancialYear(models.Model):
     """
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
@@ -330,6 +331,7 @@ class AllocatedProject(Project):
         ('E', 'EU'),
     )
     overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
 
     def duration(self) -> int:
         """
@@ -345,6 +347,7 @@ class AllocatedProject(Project):
         """
         Value is determined by project duration based off standard RSE costing of G7.9
         """
+        
         return 0
     
 class ServiceProject(Project):
