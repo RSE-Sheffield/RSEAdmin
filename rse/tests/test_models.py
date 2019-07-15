@@ -96,7 +96,7 @@ def setup_project_and_allocation_data(testcase: TestCase):
     p = AllocatedProject(
         percentage=50,
         overheads='U',
-        salary_band=testcase.sb15_2017
+        salary_band=testcase.sb15_2017,
         # base class values
         creator=testcase.user,
         created=timezone.now(),
@@ -170,32 +170,32 @@ class SalaryCalculationTests(TestCase):
         Simple tests to check the to see if dates span the financial year.
         """
         # Obvious true
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2018, 1, 1)), True)
+        self.assertTrue(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2018, 1, 1)))
         
         # True by a long way
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2020, 8, 1)), True)
+        self.assertTrue(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2020, 8, 1)))
         
         # One day before true
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2017, 7, 31)), False)
+        self.assertFalse(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2017, 7, 31)))
         
         # True spans financial year by only one day
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 7, 31), date(2017, 8, 1)), True)
+        self.assertTrue(SalaryBand.spans_financial_year(date(2017, 7, 31), date(2017, 8, 1)))
         
         # True one day into financial year
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2017, 8, 1)), True)
+        self.assertTrue(SalaryBand.spans_financial_year(date(2017, 1, 1), date(2017, 8, 1)))
         
         # False it is the same day
-        self.assertEqual(SalaryBand.spans_financial_year(date(2017, 8, 1), date(2017, 8, 1)), False)
+        self.assertFalse(SalaryBand.spans_financial_year(date(2017, 8, 1), date(2017, 8, 1)))
 
     def test_salary_academic_year_span(self):
         """
         Simple tests to check the to see if dates span the calendar year.
         """
         # Obvious true
-        self.assertEqual(SalaryBand.spans_calendar_year(date(2017, 1, 1), date(2018, 1, 1)), True)
+        self.assertTrue(SalaryBand.spans_calendar_year(date(2017, 1, 1), date(2018, 1, 1)))
         
         # False (spans only financial year)
-        self.assertEqual(SalaryBand.spans_calendar_year(date(2017, 1, 1), date(2017, 8, 1)), False)
+        self.assertFalse(SalaryBand.spans_calendar_year(date(2017, 1, 1), date(2017, 8, 1)))
 
 
     def test_salary_increment(self):
@@ -346,13 +346,54 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.grade, 1)
         self.assertEqual(sb.grade_point, 4)
         self.assertEqual(sb.year.year, 2019)
+    
+    def test_date_in_financial_year(self):
+        """
+        Tests to see if a date is in the finical year represented by this salary band
+        """
         
-    def test_staff_costs(Self):
+        # Get first (2017) financial year
+        fy = FinancialYear.objects.all()[0]
+        
+        # Test date at start of financial year (1st August 2017)
+        self.assertTrue(fy.date_in_financial_year(date(2017, 8, 1)))
+        
+        # Test date at end of financial year (31st July 2018)
+        self.assertTrue(fy.date_in_financial_year(date(2018, 7, 31)))
+        
+        # Test date before start of financial year (31st July 2017)
+        self.assertFalse(fy.date_in_financial_year(date(2017, 7, 31)))
+        
+        # Test after end of financial year (1st August 2018)
+        self.assertFalse(fy.date_in_financial_year(date(2018, 8, 1)))
+        
+    
+    def test_staff_costs(self):
         """
         Test the true cost of staff accounting for grade changes and inflation
         """
         
-        # TODO:
+        # Get initial test data from DB
+        # first grade change is for 2017 on salary band 1.1 with salary of 1000
+        sgc = SalaryGradeChange.objects.filter(rse=self.rse)[0]
+        sb = sgc.salary_band
+        sby = sb.year
+        
+        # Test cost of 2017 1.1 for period without any increments
+        # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1)), 84.93, places=2)
+        
+        # Test cost of 2017 1.1 for period with grade point increment
+        # Expected behaviour is value of salary for year duration with increment in January 
+        # I.e. 1000 (2017 G1.1) * 153/365 (days in 2017 FY)
+        #      2000 (2017 G1.2) * 212/365(days in 2017 FY after January increment)
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2018, 8, 1)), 1580.82, places=2)
+        
+        # Test cost of 2017 1.1 for period with financial year adjustment
+        # Expected behaviour is value of salary for 2017 G7.1 July and 2018 G7.1 August 2018
+        # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
+        #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
+        self.assertAlmostEqual(sb.staff_cost(date(2018, 7, 1), date(2018, 9, 1)), 169.95, places=2)
 
 class ProjectAllocationTests(TestCase):
     """
@@ -373,12 +414,12 @@ class ProjectAllocationTests(TestCase):
         # Get an allocated project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[0]
-        self.assertEqual(isinstance(p, AllocatedProject), True)
+        self.assertIsInstance(p, AllocatedProject)
         
         # Get an service project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[1]
-        self.assertEqual(isinstance(p, ServiceProject), True)
+        self.assertIsInstance(p, ServiceProject)
     
     def test_project_duration(self):
         """
