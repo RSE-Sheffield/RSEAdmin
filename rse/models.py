@@ -288,8 +288,8 @@ class Project(PolymorphicModel):
     description = models.TextField(blank=True)
     client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
 
-    start = models.DateField(blank=True, null=True)
-    end = models.DateField(blank=True, null=True)
+    start = models.DateField()
+    end = models.DateField()
     
     STATUS_CHOICES = (
         ('P', 'Preparation'),
@@ -365,7 +365,7 @@ class ServiceProject(Project):
         """
         Value is determined by service days multiplied by rate
         """
-        return days*rate
+        return self.days*self.rate
 
 class RSEAllocation(models.Model):
     """

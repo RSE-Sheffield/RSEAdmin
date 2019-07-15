@@ -345,7 +345,10 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.year.year, 2019)
 
 class ProjectAllocationTests(TestCase):
-
+    """
+    Test case for testing projects and allocations
+    """
+    
     def setUp(self):
         setup_user_and_rse_data(self)
         setup_salary_and_banding_data(self)
@@ -356,6 +359,7 @@ class ProjectAllocationTests(TestCase):
         """
         Tests for MTI polymorphism
         """
+        
         # Get an allocated project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[0]
@@ -368,7 +372,7 @@ class ProjectAllocationTests(TestCase):
     
     def test_project_duration(self):
         """
-        Tests polymorphic function duration which differs depeingin on project type
+        Tests polymorphic function duration which differs depending on project type
         """
         
         # Get an allocated project and test that duration function returns the correct number of days
@@ -380,6 +384,19 @@ class ProjectAllocationTests(TestCase):
         # Should return the project duration in days (30 days plus 19 days adjustment for TRAC)
         p = Project.objects.all()[1]
         self.assertEqual(p.duration(), 49)
+        
+    def test_project_value(self):
+        """
+        Tests polymorphic function value which differs depending on project type
+        """
+        
+        # Get an allocated project and test that the value is determined from G7.9 data
+        
+        # Get a service project and test the value is calculated from the day rate
+        # Should return a value of 30 days x £275
+        p = Project.objects.all()[1]
+        self.assertEqual(p.value(), 8250)
+   
     
     """
     def test_allocation_costs(self):
