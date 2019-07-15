@@ -150,11 +150,11 @@ class SalaryBand(models.Model):
         """
         return (days / 365.0) * float(salary) * (float(percentage) / 100.0)
         
-    def staff_cost(self, start: date, end: date) -> float :
+    def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> float :
         """
         Gets the staff cost for this salary band by considering any future increments
         Start must be a date in the current financial year in which this salary band represents
-        End can be any date after start and may require increments
+        End (up to not including )can be any date after start and may require increments
         
         Function operates in same way as salary_band_at_future_date
         """
@@ -197,7 +197,7 @@ class SalaryBand(models.Model):
         # Final salary cost for period not spanning a salary change
         cost += SalaryBand.salaryCost((end - next_increment).days, next_sb.salary)
         
-        return cost
+        return cost*percentage/100.0
 
 
 class Client(models.Model):
@@ -376,10 +376,10 @@ class AllocatedProject(Project):
     # TODO
     def value(self) -> float:
         """
-        Value is determined by project duration based off standard RSE costing of G7.9
+        Value is determined by project duration and salary cost of salary band used for costing
         """
         
-        return 0
+        return salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
     
 class ServiceProject(Project):
     """
