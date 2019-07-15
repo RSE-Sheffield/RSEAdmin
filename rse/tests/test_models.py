@@ -104,8 +104,8 @@ def setup_project_and_allocation_data(testcase: TestCase):
         name="test_project_1",
         description="none",
         client=c,
-        start=date(2017, 1, 1),
-        end=date(2020, 1, 1),
+        start=date(2017, 8, 1),
+        end=date(2019, 1, 1),
         status='F')
     p.save()
     
@@ -120,8 +120,8 @@ def setup_project_and_allocation_data(testcase: TestCase):
         name="test_project_1",
         description="none",
         client=c,
-        start=date(2010, 1, 1),
-        end=date(2050, 1, 1),
+        start=date(2017, 8, 1),
+        end=date(2019, 1, 1),
         status='F')
     p2.save()
     
@@ -133,12 +133,12 @@ def setup_project_and_allocation_data(testcase: TestCase):
         end=date(2018, 7, 31))
     a.save()
     
-    # Create an allocation for the AllocatedProject (spanning full 2017 and 2018 financial year)
+    # Create an allocation for the AllocatedProject (spanning full 2017 financial year) at 50% FTE
     a2 = RSEAllocation(rse=testcase.rse, 
         project=p, 
         percentage=50,
         start=date(2017, 8, 1),
-        end=date(2019, 7, 31))
+        end=date(2018, 9, 1))
     a2.save()
     
     # Create an allocation for the ServiceProject at 50% FTE for one month (August 2017)
@@ -431,9 +431,12 @@ class ProjectAllocationTests(TestCase):
         """
         
         # Get an allocated project and test that duration function returns the correct number of days
-        # Should return the project duration in days (i.e. 3 years)
+        # Should return the project duration in days. I.e. 518 days
+        #   153 days in 2017 FY
+        #   212 days in 2017 FY (after grade point increment in Jan)
+        #   153 day in 2018 FY (in new FY after August)
         p = Project.objects.all()[0]
-        self.assertEqual(p.duration(), 365*3)
+        self.assertEqual(p.duration(), 518)
         
         # Get a service project and test that duration function returns the service adjusted for TRAC
         # Should return the project duration in days (30 days plus 19 days adjustment for TRAC)
@@ -445,71 +448,17 @@ class ProjectAllocationTests(TestCase):
         Tests polymorphic function value which differs depending on project type
         """
         
-        # Get an allocated project and test that the value is determined from G7.9 data
-        # Should return a value based of the financial year data for a G7.9
-        p = Project.objects.all()[1]
-        self.assertEqual(p.value(), 8250)
+        # Get an allocated project and test that the value is determined from project salary band used for staff costing
+        # Should return a value based of the following calculation
+        # 50% of 
+        #      5000 (2017 G1.5) * 153/365 (days in 2017 FY) +
+        #      5000 (2017 G1.5) * 212/365(days in 2017 FY NO January increment) +
+        #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
+        p = Project.objects.all()[0]
+        self.assertAlmostEqual(p.value(), 3548.16)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
-        self.assertEqual(p.value(), 8250)
+        self.assertAlmostEqual(p.value(), 8250.00)
    
-    
-    # TODO: Test an allocation can not be made outside of project dates (custom validator?)
-    
-    # TODO: Test the cost of an allocation
-    # allocation duration may be same as project but staff costs may be reduced
-    
-    """
-    def test_allocation_costs(self):
-        # test cost of 50% allocation for full 2017 year (expects 1000*0.5)
-        a = RSEAllocation.objects.all()[0]
-        self.assertEqual(a.staff_cost(), 500)
-        # Test cost of 50% allocation for full 2017 and 2018 year
-        # (expects 1000*.5 + 2001*0.5)
-        a = RSEAllocation.objects.all()[1]
-        self.assertEqual(a.staff_cost(), 1500.5)
-
-    def test_project_costing_id_validation(self):
-        \"""Assert a Project's proj_costing_id can be null unless in preparation.\"""
-        try:
-            p_good = Project(creator=self.user,
-                             created=datetime.now(),
-                             proj_costing_id=None,
-                             name="test_project",
-                             description="none",
-                             client=Client.objects.all()[0],
-                             start=date(2010, 1, 1),
-                             end=date(2050, 1, 1),
-                             percentage=50,
-                             status='P')
-            p_good.clean()
-        except ValidationError:
-            self.fail("p_good.clean() raised a ValidationError unexpectedly")
-        p_bad = Project(creator=self.user,
-                        created=datetime.now(),
-                        proj_costing_id=None,
-                        name="test_project",
-                        description="none",
-                        client=Client.objects.all()[0],
-                        start=date(2010, 1, 1),
-                        end=date(2050, 1, 1),
-                        percentage=50,
-                        status='F')
-        self.assertRaises(ValidationError, p_bad.clean)
-
-    def test_project_date_validation(self):
-        \"""Assert a Project's end date cannot be earlier than the start date.\"""
-        p_bad = Project(creator=self.user,
-                        created=datetime.now(),
-                        proj_costing_id="funder1",
-                        name="test_project",
-                        description="none",
-                        client=Client.objects.all()[0],
-                        start=date(2050, 1, 1),
-                        end=date(2010, 1, 1),
-                        percentage=50,
-                        status='F')
-        self.assertRaises(ValidationError, p_bad.clean)
-    """
