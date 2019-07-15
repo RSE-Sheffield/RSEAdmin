@@ -18,8 +18,25 @@ class FinancialYear(models.Model):
     year = models.IntegerField(primary_key=True, default=2018)  # Must relate to a financial year
     inflation = models.FloatField()
 
+    def start_date(self) -> date:
+        """Get start date of the financial year."""
+        return date(self.year, 8, 1)
+
+    def end_date(self) -> date:
+        """Get end date of the financial year."""
+        return self.start_date() + timedelta(days=364)
+
+    def date_in_financial_year(self, date: date) -> bool:
+        """
+        Functions checks is a date is in the finical year represented
+        """
+        return date >= self.start_date() and date <= self.end_date()
+    
+
     def __str__(self) -> str:
         return str(self.year)
+        
+    
 
 
 class SalaryBand(models.Model):
@@ -81,6 +98,8 @@ class SalaryBand(models.Model):
         else:  
             # Return current salary band
             return self
+            
+
 
 
     @staticmethod
@@ -124,13 +143,61 @@ class SalaryBand(models.Model):
             
         return SalaryBand.spans_calendar_year(start, end) or SalaryBand.spans_financial_year(start, end)
 
-    def start_date(self) -> date:
-        """Get start date of the financial year."""
-        return date(self.year.year, 8, 1)
+    @staticmethod
+    def salaryCost(days, salary, percentage: float = 100.0) -> float:
+        """
+        Returns the salary cost for a number of days given a salary and FTE percentage
+        """
+        return (days / 365.0) * float(salary) * (float(percentage) / 100.0)
+        
+    def staff_cost(self, start: date, end: date) -> float :
+        """
+        Gets the staff cost for this salary band by considering any future increments
+        Start must be a date in the current financial year in which this salary band represents
+        End can be any date after start and may require increments
+        
+        Function operates in same way as salary_band_at_future_date
+        """
+        
+        # Check for obvious stupid
+        if end < start:
+            raise ValueError('End date is before start date')
+            
+        # Check that the start date is in the financial year of this salary band
+        if not self.year.date_in_financial_year(start):
+            raise ValueError('SalaryBand staff costs can only be calculated for dates starting in the specified financial year')
+        
+        
+        # Now calculate the staff costs through iteration of chargeable periods (applying any increments)
+        # Note salary band data may be estimated in future years so the date of increment must be tracked rather than just the salary band
+        next_increment = start
+        next_sb = self
+        cost = 0
+        
+        # If the salary can change between the date range then advance increment or year
+        while ( SalaryBand.spans_salary_change(next_increment, end)):
+            # If date is before financial year then date range spans financial year
+            if next_increment.month < 8 :
+                # calculate next increment date and salary band
+                temp_next_increment = date(next_increment.year, 8, 1)
+                temp_next_sb = next_sb.salary_band_next_financial_year()
 
-    def end_date(self) -> date:
-        """Get end date of the financial year."""
-        return self.start_date() + timedelta(days=364)
+            # Doesn't span financial year so must span calendar year
+            else:
+                # increment cost between period
+                temp_next_increment = date(next_increment.year + 1, 1, 1)
+                temp_next_sb = next_sb.salary_band_after_increment()
+                
+            # update salary cost
+            cost += SalaryBand.salaryCost((temp_next_increment - next_increment).days, next_sb.salary)
+            # update chargeable period date and band
+            next_increment = temp_next_increment
+            next_sb = temp_next_sb
+        
+        # Final salary cost for period not spanning a salary change
+        cost += SalaryBand.salaryCost((end - next_increment).days, next_sb.salary)
+        
+        return cost
 
 
 class Client(models.Model):
@@ -170,7 +237,7 @@ class RSE(models.Model):
         """
         sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
         for sgc in sgcs:
-            if sgc.salary_band.start_date() <= date:
+            if sgc.salary_band.year.start_date() <= date:
                 return sgc
         # Unable to find any data
         raise ValueError('No Salary Data exists before specified date period for this RSE')
@@ -183,42 +250,6 @@ class RSE(models.Model):
         """
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
 
-    @staticmethod
-    def salaryCost(days, salary, percentage: float = 100.0) -> float:
-        """
-        Returns the salary cost for a number of days given a salary and FTE percentage
-        """
-        return (days / 365.0) * float(salary) * (float(percentage) / 100.0)
-
-    def staff_cost(self, start, end, percentage: float = 100.0):
-        """
-        Calculates the staff cost of an RSE given a start and end date with percentage FTE.
-        Cost is calculated by breaking a date range down into financial years ensuring increments and annual salary inflation is adjusted for.
-        
-        TODO: This is broken does not account for grade point changes
-        """
-    
-        # Add one to end as end day is inclusive of cost calculation (e.g. start date from 9:00 end date until 5pm)
-        end = end + timedelta(days=1)
-
-        # Calculate cost per year by splitting into financial year periods to obtain correct salary info
-        cost = 0.0
-        s = start
-        # BUG #24: Needs to also be broken down into real years for increments
-        while SalaryBand.spans_financial_year(s, end):
-            sb = self.futureSalaryBand(s)  # salary band at date s
-            ye = sb.end_date() + timedelta(days=1)  # financial year end for date s (for cost calculations this needs to include this day)
-            d = ye - s  # duration in days
-            cost += self.salaryCost(d.days, sb.salary, percentage)  # increment by salary cost for this period (for allocation percentage)
-            # increment to next financial year
-            s = ye
-
-        # final (partial) year calculation
-        d = end - s                    # duration in days
-        sb = self.futureSalaryBand(s)  # get latest salary for this period
-        cost += self.salaryCost(d.days, sb.salary, percentage)  # increment by salary cost for this period
-
-        return cost
 
 
 class SalaryGradeChange(models.Model):
@@ -239,7 +270,7 @@ class SalaryGradeChange(models.Model):
         The SalaryGradeChange represents a starting point for the calculation of future grade points and as such can be used to apply increments
         """
         # Check for obvious stupid
-        if future_date < self.salary_band.start_date():
+        if future_date < self.salary_band.year.start_date():
             raise ValueError('Future salary can not be calculated from dates in the past')
             
         # Check if there is a salary grade change at a later date but before specified date
@@ -251,7 +282,7 @@ class SalaryGradeChange(models.Model):
 
         # Get the salary band and start date of the salary grade change
         # Note salary band data may be estimated in future years so the date of increment must be tracked
-        next_increment = sgc.salary_band.start_date() # start of financial year
+        next_increment = sgc.salary_band.year.start_date() # start of financial year
         next_sb = sgc.salary_band
         
         # If the salary can change between the date range then advance increment or year
