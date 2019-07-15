@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.7"
+
+# command to install dependencies
+install:
+  - pip install poetry
+  - poetry install
+  
+# command to run tests
+script:
+  - poetry run python manage.py test
