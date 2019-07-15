@@ -354,6 +354,7 @@ class Project(PolymorphicModel):
 class AllocatedProject(Project):
     """
     AllocatedProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
+    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
     OVERHEAD_CHOICES = (
@@ -379,7 +380,7 @@ class AllocatedProject(Project):
         Value is determined by project duration and salary cost of salary band used for costing
         """
         
-        return salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+        return self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
     
 class ServiceProject(Project):
     """
