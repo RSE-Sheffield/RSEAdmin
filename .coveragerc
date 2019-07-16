@@ -1,0 +1,8 @@
+[coverage:run]
+source = .
+omit = 
+    manage.py
+
+[coverage:report]
+show_missing = True
+skip_covered = True
