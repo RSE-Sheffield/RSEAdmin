@@ -1,14 +1,58 @@
 {% extends 'adminlte/lib/_main_sidebar.html' %}
 
 {% block nav_links %}
+
+	<li class="treeview"">
+		<a href="#">
+			<i class="fa fa-dashboard"></i> <span>Reporting</span>
+			<span class="pull-right-container">
+				<i class="fa fa-angle-left pull-right"></i>
+			</span>
+		</a>
+		<ul class="treeview-menu" style="">
+			<li><a href="#"><i class="fa fa-circle-o"></i>Projects</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>RSEs</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Team</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Clients</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Year End Financials</a></li>
+		</ul>
+	</li>
+	
+	<li class="header">Administration</li>	
+
+    <li class="treeview"">
+		<a href="#">
+			<i class="fa fa-dashboard"></i> <span>Staffing</span>
+			<span class="pull-right-container">
+				<i class="fa fa-angle-left pull-right"></i>
+			</span>
+		</a>
+		<ul class="treeview-menu" style="">
+			<li><a href="#"><i class="fa fa-circle-o"></i>Add Year</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Grade Points</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Grade Point Adjustment</a></li>
+		</ul>
+	</li>
+	
+	<li class="treeview"">
+		<a href="#">
+			<i class="fa fa-dashboard"></i> <span>Projects</span>
+			<span class="pull-right-container">
+				<i class="fa fa-angle-left pull-right"></i>
+			</span>
+		</a>
+		<ul class="treeview-menu" style="">
+			<li><a href="#"><i class="fa fa-circle-o"></i>Add Project</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>Add Client</a></li>
+			<li><a href="#"><i class="fa fa-circle-o"></i>View Team</a></li>
+		</ul>
+	</li>
+	
+	<li class="header">Client Views</li>
+	
     <li>
         <a href="/some/url">
-            <i class="fa fa-dashboard"></i> <span>Home</span>
-        </a>
-    </li>
-    <li>
-        <a href="/some/url">
-            <i class="fa fa-user"></i> <span>Users</span>
+            <i class="fa fa-user"></i> <span>Timesheets?</span>
         </a>
     </li>
 {% endblock nav_links %}

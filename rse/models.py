@@ -319,6 +319,8 @@ class Project(PolymorphicModel):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
+    internal = models.BooleanField(default=True)                    # Internal or in kind projects
+
 
     start = models.DateField()
     end = models.DateField()

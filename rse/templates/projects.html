@@ -1,0 +1,118 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block page_name %}View RSE Projects{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			
+			<div class="box-body table-responsive padding">
+				<table id="projects" class="table table-hover">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Type</th>
+							<th>Internal</th>
+							<th>Title</th>
+							<th>Status</th>
+							<th>Days/Duration</th>
+							<th>FTE</th>
+							<th>Department</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>ID</td>
+							<td>Allocated/Service</td>
+							<td><input type="checkbox" disabled></input></td>
+							<td>Title</td>
+							<td><span class="label label-success">Status</span></td>
+							<td>200 days</td>
+							<td>100%</td>
+							<td>COM</td>
+						</tr>
+					</tbody></table>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="box-body">
+				
+				
+				<div class="form-group">
+					<label>Project Type</label>
+					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
+					<select class="form-control">
+						<option>All</option>
+						<option>Allocated Only</option>
+						<option>Service Only</option>
+					</select>
+					
+					</br>
+					
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					<select class="form-control">
+						<option>All</option>
+						<option>Preparation</option>
+						<option>Review</option>
+						<option>Funded</option>
+						<option>Rejected</option>
+					</select>
+					
+					</br>
+					
+					<label>RSE Allocations</label>
+					<p><i>Filter projects based the level of RSE effort allocated</i></p>
+					<select class="form-control">
+						<option>All</option>
+						<option>Part Allocated</option>
+						<option>Fully Allocated</option>
+						<option>Unallocated</option>
+					</select>
+				</div>
+				
+				
+
+
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+	<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#projects').DataTable();
+		} );
+	</script>
+{% endblock %}
+

@@ -19,6 +19,13 @@ def index(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+def projects(request: HttpRequest) -> HttpResponse:
+    
+    return render(request, 'projects.html')
+
+
+
+@login_required
 def project_view(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)

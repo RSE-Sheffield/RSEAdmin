@@ -9,8 +9,8 @@ urlpatterns = [
     # ex: /training
     url(r'^$', views.index, name='index'),
 
-    # Project allocation view
-    # url(r'^project/all', views.project_view, name='project_viewall'),
+    # Reporting: View All Projects (list view)
+    url(r'^projects', views.projects, name='projects'),
 
     # Project allocation view
     url(r'^project/(?P<project_id>[0-9]+)$', views.project_view, name='project_view'),
