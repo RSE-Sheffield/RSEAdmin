@@ -1,33 +1,43 @@
 from datetime import date, datetime
 from django.utils import timezone
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.test import TestCase
 
 from rse.models import *
+import random
 
 ###########################################
 # Helper functions for creating test data #
 ###########################################
 
-def setup_user_and_rse_data(testcase: TestCase):
+def setup_user_and_rse_data():
     """
     Function to create data a user and RSE saved in database and in dict of TestCase
     """
     
     # create a single rse with grade change in 2017 and 2019
     # save rse and user in class dict
-    testcase.user = User.objects.create_user(username='testuser', password='12345')
-    testcase.rse = RSE(user=testcase.user)
-    testcase.rse.employed_from = date(2017, 1, 1)
-    testcase.rse.employed_until = date(2025, 1, 1)
-    testcase.rse.save()
+    user = User.objects.create_user(username='testuser', password='12345')
+    rse = RSE(user=user)
+    rse.employed_from = date(2017, 1, 1)
+    rse.employed_until = date(2025, 1, 1)
+    rse.save()
 
 
-def setup_salary_and_banding_data(testcase: TestCase):
+def setup_salary_and_banding_data():
     """
     Function to create data in test database for salary and banding
     """
+    
+    # create test user and rse
+    setup_user_and_rse_data()
+    
+    # get user from database
+    user = User.objects.get(username='testuser')
+    # get rse from database
+    rse = RSE.objects.get(user=user)
+    
     # Create some financial years
     y2017 = FinancialYear(year=2017, inflation=0)
     y2017.save()
@@ -48,8 +58,6 @@ def setup_salary_and_banding_data(testcase: TestCase):
     sb14_2017.save()
     sb15_2017 = SalaryBand(grade=1, grade_point=5, salary=(5000), year=y2017, increments=False)
     sb15_2017.save()
-    # Save sb15_2017 to testcase for use later in project creation
-    testcase.sb15_2017 = sb15_2017
 
     # Create an incremental range for 2018 year
     sb11_2018 = SalaryBand(grade=1, grade_point=1, salary=(1001), year=y2018, increments=True)
@@ -78,27 +86,38 @@ def setup_salary_and_banding_data(testcase: TestCase):
     sb15_2019.save()
 
     # Create salary grade changes (requires that an RSE has been created in database)
-    sgc1 = SalaryGradeChange(rse=testcase.rse, salary_band=sb11_2017)
+    sgc1 = SalaryGradeChange(rse=rse, salary_band=sb11_2017)
     sgc1.save()
-    sgc2 = SalaryGradeChange(rse=testcase.rse, salary_band=sb13_2018)
+    sgc2 = SalaryGradeChange(rse=rse, salary_band=sb13_2018)
     sgc2.save()
     
 
-def setup_project_and_allocation_data(testcase: TestCase):
+def setup_project_and_allocation_data():
     """
     Create a client, projects and allocation in test database
     """
+    
+    # create test salary bands
+    setup_salary_and_banding_data()
+    
+    # get expected salary band from database
+    sb15_2017 = SalaryBand.objects.get(grade=1, grade_point=5, year=2017)
+    # get user from database
+    user = User.objects.get(username='testuser')
+    # get rse from database
+    rse = RSE.objects.get(user=user)
+
     # create some test projects
     c = Client(name="test_client")
-    c.save()
+    c.save()        
         
     # Create an allocated project
     p = AllocatedProject(
         percentage=50,
         overheads='U',
-        salary_band=testcase.sb15_2017,
+        salary_band=sb15_2017,
         # base class values
-        creator=testcase.user,
+        creator=user,
         created=timezone.now(),
         proj_costing_id="12345",
         name="test_project_1",
@@ -109,12 +128,13 @@ def setup_project_and_allocation_data(testcase: TestCase):
         status='F')
     p.save()
     
+    
     # Create an allocated project
     p2 = ServiceProject(
         days=30,
         rate=275,
         # base class values
-        creator=testcase.user,
+        creator=user,
         created=timezone.now(),
         proj_costing_id="12345",
         name="test_project_1",
@@ -125,8 +145,65 @@ def setup_project_and_allocation_data(testcase: TestCase):
         status='F')
     p2.save()
     
+    # Create some random projects for test database
+    for x in range(20):
+        
+        
+        proj_costing_id = random.randint(1,99999)
+        start=date(random.randint(2017, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
+        # if start month is dec then end year cant start in same year
+        if start.month == 12:
+            end_year=random.randint(start.year+1, 2022)
+        else:
+            end_year=random.randint(start.year, 2022)
+        # if end year is the same as start year then end month must be greater than start month
+        if end_year == start.year:
+            end_month = random.randint(start.month+1, 12)
+        else:
+            end_month = random.randint(1, 12)
+        end=date(end_year, end_month, 1)
+        status = random.choice(Project.STATUS_CHOICES)
+        
+        #random choice between allocated or service project
+        if random.random()>0.5:
+            # allocated
+            percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
+            p_temp = AllocatedProject(
+                percentage=percentage,
+                overheads='U',
+                salary_band=sb15_2017,
+                # base class values
+                creator=user,
+                created=timezone.now(),
+                proj_costing_id=proj_costing_id,
+                name=f"test_project_{x}",
+                description="none",
+                client=c,
+                start=start,
+                end=end,
+                status=status)
+        else:
+            # service
+            days = random.randint(1,220) #between 1 day and 220 TRAC days
+            p_temp = ServiceProject(
+                    days=days,
+                    rate=275,
+                    # base class values
+                    creator=user,
+                    created=timezone.now(),
+                    proj_costing_id=proj_costing_id,
+                    name=f"test_project_{x}",
+                    description="none",
+                    client=c,
+                    start=start,
+                    end=end,
+                    status=status)
+         
+        
+        p_temp.save()
+    
     # Create an allocation for the AllocatedProject (spanning full 2017 financial year)
-    a = RSEAllocation(rse=testcase.rse, 
+    a = RSEAllocation(rse=rse, 
         project=p,
         percentage=50,
         start=date(2017, 8, 1),
@@ -134,7 +211,7 @@ def setup_project_and_allocation_data(testcase: TestCase):
     a.save()
     
     # Create an allocation for the AllocatedProject (spanning full 2017 financial year) at 50% FTE
-    a2 = RSEAllocation(rse=testcase.rse, 
+    a2 = RSEAllocation(rse=rse, 
         project=p, 
         percentage=50,
         start=date(2017, 8, 1),
@@ -142,7 +219,7 @@ def setup_project_and_allocation_data(testcase: TestCase):
     a2.save()
     
     # Create an allocation for the ServiceProject at 50% FTE for one month (August 2017)
-    a3 = RSEAllocation(rse=testcase.rse, 
+    a3 = RSEAllocation(rse=rse, 
         project=p2, 
         percentage=50,
         start=date(2017, 8, 1),
@@ -161,8 +238,12 @@ class SalaryCalculationTests(TestCase):
         """
         Create test database using just salary and banding data
         """
-        setup_user_and_rse_data(self)
-        setup_salary_and_banding_data(self)
+        setup_salary_and_banding_data()
+        
+        # get test user and rse from database
+        self.user = User.objects.get(username='testuser')
+        # get rse from database
+        self.rse = RSE.objects.get(user=self.user)
 
 
     def test_salary_finacial_year_span(self):
@@ -405,9 +486,7 @@ class ProjectAllocationTests(TestCase):
     """
     
     def setUp(self):
-        setup_user_and_rse_data(self)
-        setup_salary_and_banding_data(self)
-        setup_project_and_allocation_data(self)
+        setup_project_and_allocation_data()
         
         
     def test_polymorphism(self):
@@ -461,4 +540,27 @@ class ProjectAllocationTests(TestCase):
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
         self.assertAlmostEqual(p.value(), 8250.00, places=2)
+        
+        
+    def test_random_projects(self):
+        """
+        Tests the randomly generated projects to ensure that they are valid projects
+        """
+        
+        # Test allocated projects (randomly generated fields)
+        for p in Project.objects.all():
+            if isinstance(p, AllocatedProject):
+                # percentage should be between 5% and 50%
+                self.assertLessEqual(p.percentage, 50) 
+                self.assertGreaterEqual(p.percentage, 5)
+                
+                # start must be before end
+                self.assertLess(p.start, p.end)
+            elif isinstance(p, ServiceProject):
+                # service days should be greater than 1 and less than 220
+                self.assertGreaterEqual(p.days, 1)
+                self.assertLessEqual(p.days, 220)
+
+            
+        
    
