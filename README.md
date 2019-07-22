@@ -49,6 +49,18 @@ Run all tests for all Django Apps associated with this Django Project:
 poetry run python manage.py test
 ```
 
+## Populating your development database with test data
+
+The test data can be used to generate data for experimenting with the system during development.
+
+```sh
+poetry run python manage.py shell
+from rse.tests.test_models import *
+setup_project_and_allocation_data()
+```
+
+This will populate your development/production database with test data. To reset the database delete the db.sqlite3 file and remove any files from `rse/migrations` (except `__init__.py`).
+
 [adminlte2]: https://django-adminlte2.readthedocs.io/en/latest/ 
 [conda]: https://docs.conda.io/en/latest/
 [django]: https://www.djangoproject.com/
