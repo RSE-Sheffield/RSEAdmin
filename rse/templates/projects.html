@@ -21,26 +21,28 @@
 					<thead>
 						<tr>
 							<th>ID</th>
-							<th>Type</th>
-							<th>Internal</th>
-							<th>Title</th>
-							<th>Status</th>
-							<th>Days/Duration</th>
-							<th>FTE</th>
-							<th>Department</th>
+							<th id="type">Type</th>
+							<th id="internal">Internal</th>
+							<th id="title">Title</th>
+							<th id="status">Status</th>
+							<th id="duration">Duration (days)</th>
+							<th id="fte">FTE</th>
+							<th id="department">Department</th>
 						</tr>
 					</thead>
 					<tbody>
+						{% for p in projects %}
 						<tr>
-							<td>ID</td>
-							<td>Allocated/Service</td>
-							<td><input type="checkbox" disabled></input></td>
-							<td>Title</td>
-							<td><span class="label label-success">Status</span></td>
-							<td>200 days</td>
-							<td>100%</td>
-							<td>COM</td>
+							<td>{{ p.id }}</td>
+							<td>{{ p.type_str }}</td>
+							<td><input type="checkbox" disabled {% if p.internal %}checked{% endif %}></input></td>
+							<td>{{ p.name }}</td>
+							<td><span class="label label-success"> {{ p.get_status_display }} </span></td>
+							<td>{{ p.duration }}</td>
+							<td>{{ p.fte }}</td>
+							<td>{{ p.client.department }}</td>
 						</tr>
+						{% endfor %}
 					</tbody></table>
 			</div>
 		</div>
@@ -61,26 +63,27 @@
 				<div class="form-group">
 					<label>Project Type</label>
 					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
-					<select class="form-control">
-						<option>All</option>
-						<option>Allocated Only</option>
-						<option>Service Only</option>
+					<select class="form-control" id="type_filter">
+						<option value="">All</option>
+						<option value="Allocated">Allocated Only</option>
+						<option value="Service">Service Only</option>
 					</select>
 					
 					</br>
 					
 					<label>Funding Status</label>
 					<p><i>Filter projects based current funding status</i></p>
-					<select class="form-control">
-						<option>All</option>
-						<option>Preparation</option>
-						<option>Review</option>
-						<option>Funded</option>
-						<option>Rejected</option>
+					<select class="form-control" id="status_filter">
+						<option value="">All</option>
+						<option value="Preparation">Preparation</option>
+						<option value="Review">Review</option>
+						<option value="Funded">Funded</option>
+						<option value="Rejected">Rejected</option>
 					</select>
 					
 					</br>
 					
+					<!--
 					<label>RSE Allocations</label>
 					<p><i>Filter projects based the level of RSE effort allocated</i></p>
 					<select class="form-control">
@@ -89,6 +92,7 @@
 						<option>Fully Allocated</option>
 						<option>Unallocated</option>
 					</select>
+					-->
 				</div>
 				
 				
@@ -111,8 +115,49 @@
 	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
 	<script type="text/javascript">
 		$(document).ready(function() {
-			$('#projects').DataTable();
+			$('#projects').DataTable({
+				pageLength: 25,
+				initComplete: function () {
+					// Type filter
+					this.api().column("#type").every( function () {
+						var column = this;
+						var select = $('#type_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+		 
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+		 
+						
+					} );
+					// status filter
+					this.api().column("#status").every( function () {
+						var column = this;
+
+						var select = $('#status_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								
+		 
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+						column.data().unique().sort().each( function ( d, j ) {
+							console.log( d )
+						} );
+						
+					} );
+				}
+			} );
 		} );
+		
 	</script>
 {% endblock %}
 

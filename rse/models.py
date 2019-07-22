@@ -319,20 +319,30 @@ class Project(PolymorphicModel):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
-    internal = models.BooleanField(default=True)                    # Internal or in kind projects
+    internal = models.BooleanField(default=False)                    # Internal or in kind projects
 
 
     start = models.DateField()
     end = models.DateField()
     
+    PREPARATION = 'P'
+    REVIEW = 'R'
+    FUNDED = 'F'
+    REJECTED = 'X'
     STATUS_CHOICES = (
-        ('P', 'Preparation'),
-        ('R', 'Review'),
-        ('F', 'Funded'),
-        ('X', 'Rejected'),
+        (PREPARATION, 'Preparation'),
+        (REVIEW, 'Review'),
+        (FUNDED, 'Funded'),
+        (REJECTED, 'Rejected'),
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
+    @staticmethod
+    def status_choice_keys():
+        """ Returns the available choices for status field """
+        return [Project.PREPARATION, Project.REVIEW, Project.FUNDED, Project.REJECTED]
+
+    @property
     def duration(self) -> Optional[int]:
         """ Implemented by concrete classes """        
         pass
@@ -341,6 +351,17 @@ class Project(PolymorphicModel):
     def value(self) -> Optional[int]:
         """ Implemented by concrete classes """        
         pass
+        
+    @property
+    def type_str(self) -> str:
+        """ Implemented by concrete classes """        
+        pass
+    
+    @property    
+    def fte(self) -> int:
+        """ Implemented by concrete classes """        
+        pass
+        
             
         
     def __str__(self):
@@ -367,6 +388,7 @@ class AllocatedProject(Project):
     overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
 
+    @property
     def duration(self) -> int:
         """
         Duration is determined by start and end dates
@@ -376,13 +398,24 @@ class AllocatedProject(Project):
             dur = (self.end - self.start).days
         return dur
     
-    # TODO
     def value(self) -> float:
         """
         Value is determined by project duration and salary cost of salary band used for costing
         """
         
         return self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+    
+    @property    
+    def type_str(self) -> str:
+        """
+        Returns a plain string representation of the project type
+        """
+        return "Allocated"
+        
+    @property    
+    def fte(self) -> int:
+        """ Returns the FTE equivalent for this project """        
+        return self.percentage
     
 class ServiceProject(Project):
     """
@@ -391,6 +424,7 @@ class ServiceProject(Project):
     days = models.IntegerField(default=1)                           # duration in days
     rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate 
     
+    @property
     def duration(self) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
@@ -403,6 +437,18 @@ class ServiceProject(Project):
         Value is determined by service days multiplied by rate
         """
         return self.days*self.rate
+      
+    @property
+    def type_str(self) -> str:
+        """
+        Returns a plain string representation of the project type
+        """
+        return "Service"
+        
+    @property    
+    def fte(self) -> int:
+        """ Returns the FTE equivalent (always 100% days) """        
+        return 100
 
 class RSEAllocation(models.Model):
     """

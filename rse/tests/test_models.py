@@ -109,6 +109,7 @@ def setup_project_and_allocation_data():
 
     # create some test projects
     c = Client(name="test_client")
+    c.department = "COM"
     c.save()        
         
     # Create an allocated project
@@ -162,7 +163,7 @@ def setup_project_and_allocation_data():
         else:
             end_month = random.randint(1, 12)
         end=date(end_year, end_month, 1)
-        status = random.choice(Project.STATUS_CHOICES)
+        status = random.choice(Project.status_choice_keys())
         
         #random choice between allocated or service project
         if random.random()>0.5:
@@ -515,12 +516,12 @@ class ProjectAllocationTests(TestCase):
         #   212 days in 2017 FY (after grade point increment in Jan)
         #   153 day in 2018 FY (in new FY after August)
         p = Project.objects.all()[0]
-        self.assertEqual(p.duration(), 518)
+        self.assertEqual(p.duration, 518)
         
         # Get a service project and test that duration function returns the service adjusted for TRAC
         # Should return the project duration in days (30 days plus 19 days adjustment for TRAC)
         p = Project.objects.all()[1]
-        self.assertEqual(p.duration(), 49)
+        self.assertEqual(p.duration, 49)
         
     def test_project_value(self):
         """
@@ -549,6 +550,10 @@ class ProjectAllocationTests(TestCase):
         
         # Test allocated projects (randomly generated fields)
         for p in Project.objects.all():
+        
+            # test choices
+            self.assertIn(p.status, Project.status_choice_keys())
+        
             if isinstance(p, AllocatedProject):
                 # percentage should be between 5% and 50%
                 self.assertLessEqual(p.percentage, 50) 

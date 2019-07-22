@@ -20,8 +20,13 @@ def index(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def projects(request: HttpRequest) -> HttpResponse:
+    """
+    Filters to be handled client side with DataTables
+    """
     
-    return render(request, 'projects.html')
+    projects = Project.objects.all()
+    
+    return render(request, 'projects.html', { "projects": projects })
 
 
 
