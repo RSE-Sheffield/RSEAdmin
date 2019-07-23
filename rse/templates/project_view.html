@@ -8,13 +8,58 @@
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - Project View {% endblock %}
+{% block page_name %}View Project{% endblock %}
 {% block content %}
+
+	<div class ="row">
+        <div class="col-md-9">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {{project.name}} ({{project.type_str}} Project)</h3>
+            </div>
+            <div class="box-body">
+              <p><strong>Project Title:</strong> {{project.name}} </p>
+			  <p><strong>Description:</strong> {{project.description}} </p>
+			  <p><strong>Costing ID:</strong> {{project.proj_costing_id}} </p>
+			  <p><strong>Client Name:</strong> {{project.client.name}} ({{project.client.department}})</p>
+			  <p><strong>Internal:</strong> {{project.internal}} </p>
+			  <p><strong>Start:</strong> {{project.start}} </p>
+			  <p><strong>End:</strong> {{project.end}} </p>
+			  <p><strong>FTE:</strong> {{project.fte}} </p>
+			  <p><strong>Status:</strong> {{project.get_status_display}} </p>
+			  <hr>
+			  {% if service %}
+			  <p><strong>Service Days:</strong> {{project.days}} </p>
+			  <p><strong>Service Rate:</strong> {{project.rate}} </p>
+			  <p><strong>FTE Duration:</strong> {{project.duration}} </p>
+			  {% else %}
+			  <p><strong>Allocated Percentage:</strong> {{project.percentage}}%</p>
+			  <p><strong>Overheads:</strong> {{project.get_overheads_display}} </p>
+			  <p><strong>Initial Salary Band:</strong> G{{project.salary_band.grade}}.{{project.salary_band.grade_point}} ({{project.salary_band.year.year}}) </p>
+			  {% endif %}
+            </div>
+          </div>
+        </div>
+		
+		<div class="col-md-3">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> Effort Reporting </h3>
+            </div>
+            <div class="box-body">
+              <p><strong>Total Project Days: </strong>{{ project_days }} days</p>
+              <p><strong>Total Allocated Days: </strong>{{ committed_days }} days</p>
+            </div>
+          </div>
+        </div>
+    </div>
+
 
     <div class ="row">
         <div class="col-md-12">
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title"> {{proj.name}}: RSE allocation</h3>
+              <h3 class="box-title">RSE Allocations</h3>
             </div>
             <div class="box-body">
               <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
@@ -23,19 +68,6 @@
         </div>
     </div>
     
-    <div class ="row">
-        <div class="col-md-12">
-          <div class="box box-solid">
-            <div class="box-header with-border">
-              <h3 class="box-title"> {{proj.name}}: Reporting </h3>
-            </div>
-            <div class="box-body">
-              <p><strong>Duration: </strong>{{ proj_days }} days</p>
-              <p><strong>Committed: </strong>{{ committed_days }} days</p>
-            </div>
-          </div>
-        </div>
-    </div>
 
    
     
@@ -47,12 +79,12 @@
 {{ block.super}}
 <script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
 <script type="text/javascript">
-    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'day');
+    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
     if( g.getDivId() != null ) {
-        g.AddTaskItem(new JSGantt.TaskItem({{proj.id}}, '{{proj.name}}', '{{ proj.start | date:'Y-m-d'}}', '{{ proj.end | date:'Y-m-d' }}', 'ggroupblack', '', 0, '', {{ proj.percentage }}, 1, 0,  1, '', '', '', g));
+        g.AddTaskItem(new JSGantt.TaskItem({{project.id}}, '{{project.name}}', '{{ project.start | date:'Y-m-d'}}', '{{ project.end | date:'Y-m-d' }}', 'ggroupblack', '', 0, '', {{ project.fte }}, 1, 0,  1, '', '', '', g));
         
         {% for a in allocations %}
-            g.AddTaskItem(new JSGantt.TaskItem({{proj.id}}{{a.id}}, '{{a.rse}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, {{ proj.id }},  1, '', '', '', g));
+            g.AddTaskItem(new JSGantt.TaskItem({{project.id}}{{a.id}}, '{{a.rse}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, {{ project.id }},  1, '', '', '', g));
         {% endfor %}
         
         g.Draw();

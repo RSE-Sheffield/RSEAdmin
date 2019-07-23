@@ -368,12 +368,9 @@ class Project(PolymorphicModel):
     
     def committed_days(self) -> float:
         """ Returns the committed effort in days from any allocation on this project """
-        # Sum effort in commitments
-        effort = 0.0
-        for a in RSEAllocation.objects.filter(project=self):
-            effort += a.effort()
+        return sum(a.effort() for a in RSEAllocation.objects.filter(project=self))
         
-        return effort
+        sum(a.duration for a in allocations)
               
     def percent_allocated(self) -> float:
         """ Gets all allocations for this project and sums FTE*days to calculate committed effort """

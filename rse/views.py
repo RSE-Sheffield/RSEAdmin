@@ -6,12 +6,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
-from .models import (
-    Project,
-    RSE,
-    RSEAllocation,
-    User,
-    )
+from .models import *
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -44,11 +39,16 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['allocations'] = allocations
 
     # Calculate commitments
-    view_dict['proj_days'] = proj.duration
-    view_dict['committed_days'] = sum(a.duration for a in allocations)
+    view_dict['project_days'] = proj.project_days()
+    view_dict['committed_days'] = proj.committed_days()
 
     # Add proj to dict
-    view_dict['proj'] = proj
+    view_dict['project'] = proj
+    
+    # Project type
+    view_dict['service'] = False
+    if isinstance(proj, ServiceProject):
+        view_dict['service'] = True
 
     return render(request, 'project_view.html', view_dict)
 
@@ -135,5 +135,8 @@ def team_view(request: HttpRequest) -> HttpResponse:
     for rse in RSE.objects.all():
         rses[rse] = RSEAllocation.objects.filter(rse=rse)
     view_dict['rses'] = rses
+    
+    # Get available financial years
+    view_dict['years'] = FinancialYear.objects.all()
 
     return render(request, 'team_view.html', view_dict)

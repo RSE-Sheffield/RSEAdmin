@@ -31,6 +31,7 @@
 							<th id="start">Start</th>
 							<th id="end">End</th>
 							<th id="department">Department</th>
+							<th id="more"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -46,6 +47,7 @@
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
 							<td>{{ p.client.department }}</td>
+							<td><a href="{% url 'project_view' p.id %}" class="btn btn-block btn-info btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}
 					</tbody></table>

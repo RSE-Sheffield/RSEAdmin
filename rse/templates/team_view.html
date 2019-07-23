@@ -5,12 +5,40 @@
 {% block stylesheets %}
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
 {% block content %}
 
     <div class ="row">
+        		
+		<div class="col-md-6">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Filter</h3>
+            </div>
+            <div class="box-body">
+              <div class="form-group">
+                <label>Date range:</label>
+
+                <div class="input-group">
+                  <div class="input-group-addon">
+                    <i class="fa fa-calendar"></i>
+                  </div>
+				  <form method='GET' id="filter_form">
+                  <input type="text" name="filter_year" class="form-control pull-right" id="filter_year">
+				  </form>
+                </div>
+              </div>
+			</div>
+          </div>
+        </div>
+    </div>
+   
+	
+	
+	<div class ="row">
         <div class="col-md-12">
           <div class="box box-solid">
             <div class="box-header with-border">
@@ -18,9 +46,9 @@
             </div>
             <div class="box-body">
               <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-          </div>
-        </div>
-      </div>
+			</div>
+		  </div>
+		</div>
     </div>
  
 {% endblock %}
@@ -28,9 +56,12 @@
 {% block javascript %}
 {{ block.super}}
 <script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+
 <script type="text/javascript">
-    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'day');
-    
+	// Gantt
+    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
     if( g.getDivId() != null ) {
         {% for rse, allocation in rses.items %}
             g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}, '{{rse}}', '', '', 'ggroupblack', '', 0, '', 0, 1, 0,  1, '', '', '', g));
@@ -42,5 +73,28 @@
 
         g.Draw();
     }
+	
+	//Date Range Picker
+	var this_fy_start = moment().startOf('year').add(7, 'months');
+	var this_fy_end = moment().startOf('year').add(7, 'months').add(1, 'year').subtract(1, 'days');
+	$('#filter_year').daterangepicker({
+		ranges: {
+			{% for y in years %}
+				'{{y.year}} Year': [moment("{{y.year}}0801", "YYYYMMDD"), moment("{{y.year}}0801", "YYYYMMDD").add(1, 'year').subtract(1, 'days')],
+			{% endfor%}
+		},
+		"startDate": this_fy_start.format("DD/MM/YYYY"),
+		"endDate": this_fy_end.format("DD/MM/YYYY"),
+		"locale": {
+			"format": "DD/MM/YYYY"
+		}
+	});
+	// submit form on change
+	$('#filter_year').on('apply.daterangepicker', function(ev, picker) {
+		 $('#filter_form').submit();
+	});
+
+	
+	
 </script>
 {% endblock %}
