@@ -362,6 +362,22 @@ class Project(PolymorphicModel):
         """ Implemented by concrete classes """        
         pass
         
+    def project_days(self) -> float:
+        """ Duration times by fte """
+        return self.duration * self.fte / 100.0
+    
+    def committed_days(self) -> float:
+        """ Returns the committed effort in days from any allocation on this project """
+        # Sum effort in commitments
+        effort = 0.0
+        for a in RSEAllocation.objects.filter(project=self):
+            effort += a.effort()
+        
+        return effort
+              
+    def percent_allocated(self) -> float:
+        """ Gets all allocations for this project and sums FTE*days to calculate committed effort """
+        return self.committed_days() / self.project_days() * 100
             
         
     def __str__(self):
@@ -404,6 +420,7 @@ class AllocatedProject(Project):
         """
         
         return self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+
     
     @property    
     def type_str(self) -> str:
@@ -467,6 +484,12 @@ class RSEAllocation(models.Model):
     @property
     def duration(self):
         return (self.end - self.start).days
+        
+    def effort(self) -> float:
+        """
+        Returns the number of days allocated on project (multiplied by fte)
+        """
+        return self.duration* self.percentage / 100.0
 
     def staff_cost(self, start=None, end=None):
         """

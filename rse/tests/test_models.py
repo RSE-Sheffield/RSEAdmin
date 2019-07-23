@@ -146,63 +146,6 @@ def setup_project_and_allocation_data():
         status='F')
     p2.save()
     
-    # Create some random projects for test database
-    for x in range(20):
-        
-        
-        proj_costing_id = random.randint(1,99999)
-        start=date(random.randint(2017, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
-        # if start month is dec then end year cant start in same year
-        if start.month == 12:
-            end_year=random.randint(start.year+1, 2022)
-        else:
-            end_year=random.randint(start.year, 2022)
-        # if end year is the same as start year then end month must be greater than start month
-        if end_year == start.year:
-            end_month = random.randint(start.month+1, 12)
-        else:
-            end_month = random.randint(1, 12)
-        end=date(end_year, end_month, 1)
-        status = random.choice(Project.status_choice_keys())
-        
-        #random choice between allocated or service project
-        if random.random()>0.5:
-            # allocated
-            percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
-            p_temp = AllocatedProject(
-                percentage=percentage,
-                overheads='U',
-                salary_band=sb15_2017,
-                # base class values
-                creator=user,
-                created=timezone.now(),
-                proj_costing_id=proj_costing_id,
-                name=f"test_project_{x}",
-                description="none",
-                client=c,
-                start=start,
-                end=end,
-                status=status)
-        else:
-            # service
-            days = random.randint(1,220) #between 1 day and 220 TRAC days
-            p_temp = ServiceProject(
-                    days=days,
-                    rate=275,
-                    # base class values
-                    creator=user,
-                    created=timezone.now(),
-                    proj_costing_id=proj_costing_id,
-                    name=f"test_project_{x}",
-                    description="none",
-                    client=c,
-                    start=start,
-                    end=end,
-                    status=status)
-         
-        
-        p_temp.save()
-    
     # Create an allocation for the AllocatedProject (spanning full 2017 financial year)
     a = RSEAllocation(rse=rse, 
         project=p,
@@ -227,7 +170,7 @@ def setup_project_and_allocation_data():
         end=date(2017, 9, 1))
     a3.save()
     
-
+    
 
 ##############
 # Test Cases #
@@ -541,31 +484,5 @@ class ProjectAllocationTests(TestCase):
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
         self.assertAlmostEqual(p.value(), 8250.00, places=2)
-        
-        
-    def test_random_projects(self):
-        """
-        Tests the randomly generated projects to ensure that they are valid projects
-        """
-        
-        # Test allocated projects (randomly generated fields)
-        for p in Project.objects.all():
-        
-            # test choices
-            self.assertIn(p.status, Project.status_choice_keys())
-        
-            if isinstance(p, AllocatedProject):
-                # percentage should be between 5% and 50%
-                self.assertLessEqual(p.percentage, 50) 
-                self.assertGreaterEqual(p.percentage, 5)
-                
-                # start must be before end
-                self.assertLess(p.start, p.end)
-            elif isinstance(p, ServiceProject):
-                # service days should be greater than 1 and less than 220
-                self.assertGreaterEqual(p.days, 1)
-                self.assertLessEqual(p.days, 220)
-
-            
         
    
