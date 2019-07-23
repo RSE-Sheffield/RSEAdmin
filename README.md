@@ -55,8 +55,8 @@ The test data can be used to generate data for experimenting with the system dur
 
 ```sh
 poetry run python manage.py shell
-from rse.tests.test_models import *
-setup_project_and_allocation_data()
+from rse.tests.test_random_data import *
+random_project_and_allocation_data()
 ```
 
 This will populate your development/production database with test data. To reset the database delete the db.sqlite3 file and remove any files from `rse/migrations` (except `__init__.py`).
