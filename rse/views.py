@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.db.models import Max, Min
 
 from .models import *
 
@@ -130,10 +131,34 @@ def team_view(request: HttpRequest) -> HttpResponse:
     # Dict for view
     view_dict = {}
 
-    # Get RSE if exists
+    # Get min and max dates of allocations
+    max_date = RSEAllocation.objects.aggregate(Max('end'))['end__max']
+    min_date = RSEAllocation.objects.aggregate(Min('start'))['start__min']
+    view_dict['max_date'] = max_date
+    view_dict['min_date'] = min_date
+
+    # Construct q query with date range of one exists
+    q = Q()
+    from_date = min_date
+    until_date = max_date
+    if request.method == 'GET' and 'filter_year' in request.GET:
+        try:
+            from_date = datetime.strptime(request.GET['filter_year'].split(' - ')[0], '%d/%m/%Y').date()
+            q &= Q(end__gte=from_date)
+            until_date = datetime.strptime(request.GET['filter_year'].split(' - ')[1], '%d/%m/%Y').date()
+            q &= Q(start__lte=until_date)
+        except ValueError:
+            pass
+            
+    # Set the filter date range
+    view_dict['filter_from'] = from_date
+    view_dict['filter_until'] = until_date
+
+    # Get RSE allocations grouped by RSE
     rses = {}
     for rse in RSE.objects.all():
-        rses[rse] = RSEAllocation.objects.filter(rse=rse)
+        #q &= Q(rse=rse)
+        rses[rse] = RSEAllocation.objects.filter(q, rse=rse)
     view_dict['rses'] = rses
     
     # Get available financial years
