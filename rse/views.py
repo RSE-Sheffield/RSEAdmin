@@ -35,7 +35,7 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
 
-
+    #TODO
     # Dict for view
     view_dict = {}
 
