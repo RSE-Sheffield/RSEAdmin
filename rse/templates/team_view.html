@@ -59,8 +59,7 @@
 {% block javascript %}
 {{ block.super}}
 <script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
-<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
-<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+
 
 <script type="text/javascript">
 	// Gantt
@@ -76,29 +75,9 @@
 
         g.Draw();
     }
-	
-	//Date Range Picker
-	var this_fy_start = moment().startOf('year').add(7, 'months');
-	var this_fy_end = moment().startOf('year').add(7, 'months').add(1, 'year').subtract(1, 'days');
-	$('#filter_year').daterangepicker({
-		ranges: {
-			'All': [moment("{{min_date|date:"Ymd"}}", "YYYYMMDD"), moment("{{max_date|date:"Ymd"}}", "YYYYMMDD")],
-			{% for y in years %}
-				'{{y.year}} Year': [moment("{{y.year}}0801", "YYYYMMDD"), moment("{{y.year}}0801", "YYYYMMDD").add(1, 'year').subtract(1, 'days')],
-			{% endfor%}
-		},
-		"startDate": "{{filter_from|date:"d/m/Y"}}",
-		"endDate": "{{filter_until|date:"d/m/Y"}}",
-		"locale": {
-			"format": "DD/MM/YYYY"
-		}
-	});
-	//Submit form on change
-	$('#filter_year').on('apply.daterangepicker', function(ev, picker) {
-		 $('#filter_form').submit();
-	});
-
-	
-	
 </script>
+
+
+{% include "includes/daterangepicker.html" with form_id="filter_form" input_id="filter_year" years=years max_date=max_date min_date=min_date current_from_date=filter_from current_until_date=filter_until %}
+
 {% endblock %}
