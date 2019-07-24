@@ -55,14 +55,15 @@
         
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title"> Commitment Summary for {{ filter_date }}</h3>
+              <h3 class="box-title"> FTE Commitment Summary for {{ rse }}</h3>
             </div>
             <div class="box-body">
               <table class="table table-striped">
                 <tr>
                   <td><strong>Report Duration (days)</strong></td><td style="text-align: right;">{{ report_duration }} </td>
                 </tr>
-                <tr>
+                <!--
+				<tr>
                   <td><strong>Total Staff Cost</strong></td><td style="text-align: right;">£ {{ staff_cost | floatformat:2 | intcomma}} </td>
                 </tr>
                 <tr>
@@ -74,6 +75,7 @@
                 <tr>
                   <td><strong>Total Shortfall (Liability)</strong></td><td style="text-align: right;">£ {{ staff_shortfall | floatformat:2 | intcomma}} </td>
                 </tr>
+				-->
               </table>
             </div>
           </div>
@@ -83,7 +85,12 @@
         <div class="col-md-8">
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title"> Commitment Overview in date range: {{ filter_date }}</h3>
+              <h3 class="box-title"> FTE Commitment Overview for {{rse}}</h3>
+			  <div style="float: right">
+				
+					<button id="committment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="committment_graph_scale_icon"></i></button>
+				
+			  </div>
             </div>
             <div class="box-body">
               <canvas id="commitmentChart" width="100%"></canvas>
@@ -127,7 +134,8 @@
 <script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
 <script language="javascript" src="{% static 'chartjs/chart.js' %}"></script>
 <script type="text/javascript">
-    var ctx = document.getElementById("commitmentChart").getContext('2d');
+	
+    var ctx = $('#commitmentChart')[0].getContext('2d');
     var myChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -142,19 +150,22 @@
                             },
                         {% endfor %}
                     ],
+					backgroundColor: 'rgba(0,255,255,0.1)',
+					borderColor: '#3c8dbc',
+					fill: true,
                 },
                 ]
             },
             options: {
                 scales: {
                     yAxes: [{
-                        stacked: true,
+                        //stacked: true,
                         ticks: {
                             beginAtZero:true,
                             max: 100,
                             min: 0,
                             callback: function(label, index, labels) {
-                                return label+'%';
+                                return label+'% FTE';
                             },
                         }
                     }],
@@ -175,17 +186,25 @@
                     callbacks: {
                         label: function(tooltipItem, data) {
                             var label = data.datasets[tooltipItem.datasetIndex].label || '';
-
-                            if (label) {
-                                label += ': ';
-                            }
-                            label += Math.round(tooltipItem.yLabel * 100) / 100;
+							label += ': {{ rse }} ' + tooltipItem.yLabel + '% FTE Commitment';
                             return label;
                         }
                     }
                 }
             }
-        });
+    });
+	
+	// javascript graph scaling
+	var scale_button = $('#committment_graph_scale').on( 'click', function () {
+		if (myChart.options.scales.yAxes[0].ticks.max){
+			delete myChart.options.scales.yAxes[0].ticks.max;
+			$("#committment_graph_scale_icon")[0].className = "fa fa-compress";
+		}else{
+			myChart.options.scales.yAxes[0].ticks.max = 100;
+			$("#committment_graph_scale_icon")[0].className = "fa fa-expand";
+		}
+		myChart.update();
+	});
 
 </script>
 

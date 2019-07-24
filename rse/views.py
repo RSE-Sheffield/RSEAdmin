@@ -109,16 +109,16 @@ def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
 
     # Calculate commitment summary
     # TODO: August inflation
-    staff_cost = rse.staff_cost(from_date, until_date)
-    staff_recovered = sum([a.staff_cost(from_date, until_date)
-                           for a in allocations])
+    #staff_cost = rse.staff_cost(from_date, until_date)
+    #staff_recovered = sum([a.staff_cost(from_date, until_date)
+    #                       for a in allocations])
 
     # Overview data
     view_dict['report_duration'] = (pdates[-1] - pdates[0]).days
-    view_dict['staff_cost'] = staff_cost
-    view_dict['staff_recovered'] = staff_recovered
-    view_dict['staff_recovered_percent'] = (staff_recovered / staff_cost) * 100
-    view_dict['staff_shortfall'] = staff_cost - staff_recovered
+    #view_dict['staff_cost'] = staff_cost
+    #view_dict['staff_recovered'] = staff_recovered
+    #view_dict['staff_recovered_percent'] = (staff_recovered / staff_cost) * 100
+    #view_dict['staff_shortfall'] = staff_cost - staff_recovered
 
     # Date range (may be from first and last project or request GET data)
     view_dict['filter_date'] = f"{from_date:%d/%m/%Y} - {until_date:%d/%m/%Y}"
