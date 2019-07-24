@@ -33,11 +33,6 @@
 				</br>
 				<p><i>Will show any projects which have any time within the selected date range</i><p>
 				
-				<p>MIN:	{{ min_date|date:"d/m/Y"}} </p>
-				<p>MAX: {{ max_date|date:"d/m/Y"}} </p>
-				<p>FROM: {{ filter_from|date:"d/m/Y"}} </p>
-				<p>UNTIL: {{ filter_until|date:"d/m/Y"}} </p>
-
               </div>
 			</div>
           </div>
@@ -87,18 +82,18 @@
 	var this_fy_end = moment().startOf('year').add(7, 'months').add(1, 'year').subtract(1, 'days');
 	$('#filter_year').daterangepicker({
 		ranges: {
-			'All': [{{min_date|date:"Ymd"}}, {{max_date|date:"Ymd"}}],
+			'All': [moment("{{min_date|date:"Ymd"}}", "YYYYMMDD"), moment("{{max_date|date:"Ymd"}}", "YYYYMMDD")],
 			{% for y in years %}
 				'{{y.year}} Year': [moment("{{y.year}}0801", "YYYYMMDD"), moment("{{y.year}}0801", "YYYYMMDD").add(1, 'year').subtract(1, 'days')],
 			{% endfor%}
 		},
-		"startDate": {{filter_from|date:"d/m/Y"}},
-		"endDate": {{filter_until|date:"d/m/Y"}},
+		"startDate": "{{filter_from|date:"d/m/Y"}}",
+		"endDate": "{{filter_until|date:"d/m/Y"}}",
 		"locale": {
 			"format": "DD/MM/YYYY"
 		}
 	});
-	// submit form on change
+	//Submit form on change
 	$('#filter_year').on('apply.daterangepicker', function(ev, picker) {
 		 $('#filter_form').submit();
 	});
