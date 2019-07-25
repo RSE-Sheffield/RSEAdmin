@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
+{% block page_name %}RSE Team Allocation Summary {% endblock %}
 {% block content %}
 
     <div class ="row">
@@ -26,13 +27,17 @@
                   <div class="input-group-addon">
                     <i class="fa fa-calendar"></i>
                   </div>
-				  <form method='GET' id="filter_form">
-                  <input type="text" name="filter_year" class="form-control pull-right" id="filter_year">
+				  
+                  
+                  <form method='GET' id="filter_form">
+                  {{ form.filter_range }}
 				  </form>
+                  
                 </div>
+
 				</br>
 				<p><i>Will show any projects which have any time within the selected date range</i><p>
-				
+				MIN:{{ form.filter_range.get_min }}
               </div>
 			</div>
           </div>
@@ -77,7 +82,7 @@
     }
 </script>
 
+{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
 
-{% include "includes/daterangepicker.html" with form_id="filter_form" input_id="filter_year" years=years max_date=max_date min_date=min_date current_from_date=filter_from current_until_date=filter_until %}
 
 {% endblock %}

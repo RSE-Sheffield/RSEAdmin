@@ -9,6 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from polymorphic.models import PolymorphicModel
+from django.db.models import Max, Min
 
 
 class FinancialYear(models.Model):
@@ -500,3 +501,12 @@ class RSEAllocation(models.Model):
             end = self.end
 
         return self.rse.staff_cost(start, end, self.percentage)
+        
+    @staticmethod
+    def min_allocation_start() -> date:
+        return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+    
+    @staticmethod
+    def max_allocation_end() -> date:
+        return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+
