@@ -87,23 +87,10 @@ def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
     view_dict['allocations'] = allocations
     view_dict['form'] = form
 
-    # Clip allocations by filter date
-    f_bnone = lambda f, a, b: a if b is None else f(a, b)  # lambda function returns a if b is None or f(a,b) if b is not none
-    starts = [[f_bnone(max, item.start, from_date), item.percentage, item] for item in allocations]
-    ends = [[f_bnone(min, item.end, until_date), -item.percentage, item] for item in allocations]
-
-    # Create list of start and end dates and sort
-    events = sorted(starts + ends, key=lambda x: x[0])
-    # accumulate effort
-    pdates, deltas, allocs = zip(*events)
-    effort = list(it.accumulate(deltas))
-
-
-    # add plot events for changes in FTE
-    plot_events = list(zip(pdates, effort, allocs))
+    # Get the commitment summary (date, effort, RSEAllocation)
+    plot_events = RSEAllocation.commitment_summary(allocations, from_date, until_date)
     view_dict['plot_events'] = plot_events
 	
-
     return render(request, 'rse_view.html', view_dict)
 
 

@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min
+import itertools as it
 
 
 class FinancialYear(models.Model):
@@ -465,6 +466,7 @@ class ServiceProject(Project):
         """ Returns the FTE equivalent (always 100% days) """        
         return 100
 
+
 class RSEAllocation(models.Model):
     """
     Defines an allocation of an RSE to project with a given percentage of time.
@@ -504,9 +506,49 @@ class RSEAllocation(models.Model):
         
     @staticmethod
     def min_allocation_start() -> date:
+        """ Returns the first start date for all allocations (i.e. the first allocation in the database) """
         return RSEAllocation.objects.aggregate(Min('start'))['start__min']
     
     @staticmethod
     def max_allocation_end() -> date:
+        """ Returns the last end date for all allocations (i.e. the last allocation end in the database) """
         return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+    
+    @staticmethod    
+    def commitment_summary(allocations : 'RSEAllocation', from_date: date = None, until_date : date = None):
+        
+        # TODO: Return exclusive date in which RSE effort changes with list of allocations maintained
+        # I.e. (date, FTE, (allocations))
+        
+        
+        # Helpful lambda function for max where a value may be None
+        # lambda function returns a if b is None or f(a,b) if b is not none
+        f_bnone = lambda f, a, b: a if b is None else f(a, b)  
+        
+        # Generate a list of start and end dates and store the percentage FTE effort (negative for end dates)
+        starts = [[f_bnone(max, item.start, from_date), item.percentage, item] for item in allocations]
+        ends = [[f_bnone(min, item.end, until_date), -item.percentage, item] for item in allocations]
+
+        # Combine start and end dates and sort
+        events = sorted(starts + ends, key=lambda x: x[0])
+        
+        # iterate dates (d), percentages (p) and allocations (a) and accumulate allocations
+        cumulative_allocations = []
+        active_allocations = []
+        for d, p, a in events:
+            # add or remove allocation depending on percentage
+            if p > 0 :
+                active_allocations.append(a)
+            if p < 0 :
+                active_allocations.remove(a)
+            # add list of allocations to to cumulative allocations
+            cumulative_allocations.append(list(active_allocations))
+            
+        # Accumulate effort by unpacking events and then apply prefix sum to deltas (FTE accumulations)
+        dates, deltas, allocs = zip(*events)
+        effort = list(it.accumulate(deltas))
+        
+        # return list of (date, effort, [RSEAllocation])
+        return list(zip(dates, effort, cumulative_allocations))
+    
 

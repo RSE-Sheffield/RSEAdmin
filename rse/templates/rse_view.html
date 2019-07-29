@@ -135,10 +135,11 @@
                 {
                     steppedLine: 'before',
                     data: [
-                        {% for date, value, alloc in plot_events %}
+                        {% for date, value, allocs in plot_events %}
                             {
                                 "x": moment("{{date | date:'Y-m-d'}}"), 
-                                "y": {{value}}
+                                "y": {{value}},
+								tooltip: "{% for a in allocs %} {{a}},  {% endfor %}"
                             },
                         {% endfor %}
                     ],
@@ -177,11 +178,10 @@
                 tooltips: {
                     callbacks: {
                         label: function(tooltipItem, data) {
-                            var label = data.datasets[tooltipItem.datasetIndex].label || '';
-							label += ': {{ rse }} ' + tooltipItem.yLabel + '% FTE Commitment';
+                            var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].tooltip
                             return label;
                         }
-                    }
+					}	
                 }
             }
     });
