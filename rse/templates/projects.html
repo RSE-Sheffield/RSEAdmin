@@ -31,6 +31,8 @@
 							<th id="start">Start</th>
 							<th id="end">End</th>
 							<th id="department">Department</th>
+							<th id="progress">Commitment</th>
+							<th id="progress_label"></th>
 							<th id="more"></th>
 						</tr>
 					</thead>
@@ -47,6 +49,14 @@
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
 							<td>{{ p.client.department }}</td>
+							<td>
+								<div class="progress progress-xs progress-striped active">
+									<div class="progress-bar progress-bar-primary" style="width: {{p.percent_allocated}}%"></div>
+								</div>
+							</td>
+							<td>
+								<span class="badge bg-light-blue">{{p.percent_allocated}}%</span>
+							</td>
 							<td><a href="{% url 'project_view' p.id %}" class="btn btn-block btn-info btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}

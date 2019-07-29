@@ -38,9 +38,6 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
 
-    # Calculate commitments
-    view_dict['project_days'] = proj.project_days()
-    view_dict['committed_days'] = proj.committed_days()
 
     # Add proj to dict
     view_dict['project'] = proj
