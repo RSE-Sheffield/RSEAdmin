@@ -12,7 +12,7 @@
 {% block content %}
 
 	<div class ="row">
-        <div class="col-md-9">
+        <div class="col-md-3">
           <div class="box box-solid">
             <div class="box-header with-border">
               <h3 class="box-title"> {{project.name}} ({{project.type_str}} Project)</h3>
@@ -52,6 +52,23 @@
             </div>
           </div>
         </div>
+		
+		<div class="col-md-6">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> FTE Commitment Overview for {{project.name}}</h3>
+			  <div style="float: right">
+				
+					<button id="committment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="committment_graph_scale_icon"></i></button>
+				
+			  </div>
+            </div>
+            <div class="box-body">
+              <canvas id="commitmentChart" width="100%"></canvas>
+            </div>
+          </div>
+        </div>
+		
     </div>
 
 
@@ -90,4 +107,7 @@
         g.Draw();
     }
 </script>
+
+{% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" %}
+
 {% endblock %}

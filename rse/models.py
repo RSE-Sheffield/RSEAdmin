@@ -251,6 +251,13 @@ class RSE(models.Model):
         This may be based on real grade changes in the future or estimated from current financial year increments (see `salary_band_after_increment` notes in `SalaryBand`)
         """
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
+        
+    @property
+    def colour_rbg(self) -> str:
+        r = hash(self.user.first_name) % 255
+        g = hash(self.user.last_name) % 255
+        b = hash(self.user.first_name + self.user.last_name) %255
+        return {"r": r, "g": g, "b": b}
 
 
 

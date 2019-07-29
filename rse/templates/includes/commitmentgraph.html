@@ -1,0 +1,81 @@
+{% load static %}
+<!-- Commitment graph -->
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/chart.js' %}"></script>
+<script type="text/javascript">
+	
+    var ctx = $('#{{canvas_id}}')[0].getContext('2d');
+    var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+				
+                datasets: [
+				{% for plot_rse, commitments in commitment_data %}
+                {
+                    steppedLine: 'before',
+                    data: [
+                        {% for date, value, allocs in commitments %}
+                            {
+                                "x": moment("{{date | date:'Y-m-d'}}"), 
+                                "y": {{value}},
+								tooltip: "{% for a in allocs %} {{a}},  {% endfor %}"
+                            },
+                        {% endfor %}
+                    ],
+					backgroundColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 0.1)',
+					borderColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+					fill: true,
+                },
+				{% endfor %}
+                ]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        //stacked: true,
+                        ticks: {
+                            beginAtZero:true,
+                            max: 100,
+                            min: 0,
+                            callback: function(label, index, labels) {
+                                return label+'% FTE';
+                            },
+                        }
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                            displayFormats: {
+                                quarter: 'D MMM YYYY'
+                            }
+                        }
+                    }]                    
+                },
+                legend:{
+                    display:false,
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].tooltip
+                            return label;
+                        }
+					}	
+                }
+            }
+    });
+	
+	// javascript graph scaling
+	var scale_button = $('#commitment_graph_scale').on( 'click', function () {
+		if (myChart.options.scales.yAxes[0].ticks.max){
+			delete myChart.options.scales.yAxes[0].ticks.max;
+			$("#commitment_graph_scale_icon")[0].className = "fa fa-compress";
+		}else{
+			myChart.options.scales.yAxes[0].ticks.max = 100;
+			$("#commitment_graph_scale_icon")[0].className = "fa fa-expand";
+		}
+		myChart.update();
+	});
+
+</script>
