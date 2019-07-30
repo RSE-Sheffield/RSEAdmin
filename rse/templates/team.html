@@ -14,32 +14,37 @@
 
     <div class ="row">
         		
-		<div class="col-md-6">
+		<div class="col-md-4">
           <div class="box box-solid">
             <div class="box-header with-border">
               <h3 class="box-title">Filter</h3>
             </div>
-            <div class="box-body">
-              <div class="form-group">
-                <label>Date range:</label>
-
-                <div class="input-group">
-                  <div class="input-group-addon">
-                    <i class="fa fa-calendar"></i>
-                  </div>
-				  
-                  
-                  <form method='GET' id="filter_form">
-                  {{ form.filter_range }}
-				  </form>
-                  
-                </div>
-
-				</br>
-				<p><i>Will show any projects which have any time within the selected date range</i><p>
-				MIN:{{ form.filter_range.get_min }}
-              </div>
-			</div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+				  <div class="form-group">
+					
+					<label>Date range:</label>
+					<p><i>Will show any projects which have any time within the selected date range</i><p>
+					<div class="input-group">
+					  <div class="input-group-addon">
+						<i class="fa fa-calendar"></i>
+					  </div>
+					  {{ form.filter_range }}
+					</div>
+					</br>
+					
+						
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{ form.status }}
+					</br>
+					
+				  </div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div> {{temp}}
+			</form>
           </div>
         </div>
     </div>
@@ -82,7 +87,7 @@
     }
 </script>
 
-{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
+{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" auto_submit=False%}
 
 
 {% endblock %}

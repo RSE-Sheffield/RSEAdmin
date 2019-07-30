@@ -12,7 +12,8 @@
                 datasets: [
 				{% for plot_rse, commitments in commitment_data %}
                 {
-                    steppedLine: 'before',
+                    label: "{{plot_rse.user.first_name}} {{plot_rse.user.last_name}}",
+					steppedLine: 'before',
                     data: [
                         {% for date, value, allocs in commitments %}
                             {
@@ -30,7 +31,11 @@
                 ]
             },
             options: {
-                scales: {
+				responsive: true,
+				legend: {
+						display: true,
+					},
+				scales: {
                     yAxes: [{
                         //stacked: true,
                         ticks: {
@@ -51,9 +56,6 @@
                             }
                         }
                     }]                    
-                },
-                legend:{
-                    display:false,
                 },
                 tooltips: {
                     callbacks: {

@@ -17,6 +17,9 @@ urlpatterns = [
 
     # RSE team view all
     url(r'^team', views.team_view, name='team_view'),
+    
+    # RSE team commitment view all
+    url(r'^commitment', views.commitment_view, name='commitment_view'),
 
     # RSE allocation view
     url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),

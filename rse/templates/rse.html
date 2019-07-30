@@ -16,63 +16,6 @@
 
    
     <div class ="row">
-        <div class="col-md-4">
-        
-          <div class="box box-solid">
-            <div class="box-header with-border">
-                <h3 class="box-title"> Filter</h3>
-            </div>
-            <div class="box-body">
-                  <div class="form-group">
-                    <label>Date range:</label>
-                    <div class="input-group">
-                      <div class="input-group-addon">
-                        <i class="fa fa-clock-o"></i>
-                      </div>
-                      <form method='GET' id="filter_form">
-                      {{ form.filter_range }}
-                      </form>
-                    </div>
-                  </div>
-                  
-                  
-                  <!--
-                  <button type="submit" class="btn btn-success">Funded Only</button>
-                  <button type="submit" class="btn btn-default">Funded and Under Review</button>
-                  <button type="submit" class="btn btn-default">All Projects</button>  
-                  -->                  
-            </div>
-          </div>
-        
-          <div class="box box-solid">
-            <div class="box-header with-border">
-              <h3 class="box-title"> FTE Commitment Summary for {{ rse }}</h3>
-            </div>
-            <div class="box-body">
-              <table class="table table-striped">
-                <!--
-                <tr>
-                  <td><strong>Report Duration (days)</strong></td><td style="text-align: right;">{{ report_duration }} </td>
-                </tr>
-                
-				<tr>
-                  <td><strong>Total Staff Cost</strong></td><td style="text-align: right;">£ {{ staff_cost | floatformat:2 | intcomma}} </td>
-                </tr>
-                <tr>
-                  <td><strong>Total Staff Salary Recovered</strong></td><td style="text-align: right;">£ {{ staff_recovered | floatformat:2 | intcomma }} </td>
-                </tr>
-                <tr>
-                  <td><strong>Total Staff Salary Recovered (%)</strong></td><td style="text-align: right;">{{ staff_recovered_percent | floatformat:2 }}%</td>
-                </tr>
-                <tr>
-                  <td><strong>Total Shortfall (Liability)</strong></td><td style="text-align: right;">£ {{ staff_shortfall | floatformat:2 | intcomma}} </td>
-                </tr>
-				-->
-              </table>
-            </div>
-          </div>
-          
-        </div>
         
         <div class="col-md-8">
           <div class="box box-solid">
@@ -89,6 +32,41 @@
             </div>
           </div>
         </div>
+		
+		<div class="col-md-4">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Filter</h3>
+            </div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+				  <div class="form-group">
+					
+					<label>Date range:</label>
+					<p><i>Will show any projects which have any time within the selected date range</i><p>
+					<div class="input-group">
+					  <div class="input-group-addon">
+						<i class="fa fa-calendar"></i>
+					  </div>
+					  {{ form.filter_range }}
+					</div>
+					</br>
+					
+						
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{ form.status }}
+					</br>
+					
+				  </div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div> {{temp}}
+			</form>
+          </div>
+        </div>
+		
     </div>
     
      <div class ="row">
@@ -129,5 +107,5 @@
 
     
     
-</script>
+
 {% endblock %}

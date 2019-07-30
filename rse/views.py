@@ -30,7 +30,6 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
 
-    #TODO
     # Dict for view
     view_dict = {}
 
@@ -57,7 +56,50 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['commitment_data'] = commitment_data
 	
 
-    return render(request, 'project_view.html', view_dict)
+    return render(request, 'project.html', view_dict)
+    
+    
+@login_required
+def commitment_view(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = None
+    until_date = None
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
+    else:
+        form = FilterProjectForm()
+        
+    # Get RSE allocations grouped by RSE based off Q filter and save the form
+    allocations = RSEAllocation.objects.filter(q)
+    view_dict['form'] = form
+        
+    # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
+    allocation_unique_rses = allocations.values('rse').distinct()
+    commitment_data = []
+    for a in allocation_unique_rses:
+        rse_allocations = allocations.filter(rse__id=a['rse'])
+        rse = RSE.objects.get(id=a['rse'])
+        commitment_data.append((rse, RSEAllocation.commitment_summary(rse_allocations, from_date, until_date)))
+    view_dict['commitment_data'] = commitment_data
+	
+
+    return render(request, 'commitments.html', view_dict)
 
 
 @login_required
@@ -72,18 +114,25 @@ def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
     rse = get_object_or_404(RSE, user=user)
     view_dict['rse'] = rse
 	
-    # Construct q query and check the filter range form
+    # Construct q query and check the project filter form
     q = Q()
+    from_date = None
+    until_date = None
     if request.method == 'GET':
-        form = FilterDateRangeForm(request.GET)
+        form = FilterProjectForm(request.GET)
         if form.is_valid():
             filter_range = form.cleaned_data["filter_range"]
             from_date = filter_range[0]
             q &= Q(end__gte=from_date)
             until_date = filter_range[1]
             q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
     else:
-        form = FilterDateRangeForm()
+        form = FilterProjectForm()
     
 
     # Get RSE allocations grouped by RSE based off Q filter and save the form
@@ -93,9 +142,10 @@ def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
     view_dict['form'] = form
 
     # Get the commitment summary (date, effort, RSEAllocation)
-    view_dict['commitment_data'] = [(rse, RSEAllocation.commitment_summary(allocations, from_date, until_date))]
+    if allocations:
+        view_dict['commitment_data'] = [(rse, RSEAllocation.commitment_summary(allocations, from_date, until_date))]
 	
-    return render(request, 'rse_view.html', view_dict)
+    return render(request, 'rse.html', view_dict)
 
 
 @login_required
@@ -103,18 +153,23 @@ def team_view(request: HttpRequest) -> HttpResponse:
     # Dict for view
     view_dict = {}
 
-    # Construct q query and check the filter range form
+    # Construct q query and check the project filter form
     q = Q()
     if request.method == 'GET':
-        form = FilterDateRangeForm(request.GET)
+        form = FilterProjectForm(request.GET)
         if form.is_valid():
             filter_range = form.cleaned_data["filter_range"]
             from_date = filter_range[0]
             q &= Q(end__gte=from_date)
             until_date = filter_range[1]
             q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
     else:
-        form = FilterDateRangeForm()
+        form = FilterProjectForm()
     
 
     # Get RSE allocations grouped by RSE based off Q filter and save the form
@@ -125,4 +180,4 @@ def team_view(request: HttpRequest) -> HttpResponse:
     view_dict['form'] = form
 
 
-    return render(request, 'team_view.html', view_dict)
+    return render(request, 'team.html', view_dict)

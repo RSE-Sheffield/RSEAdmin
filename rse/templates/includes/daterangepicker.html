@@ -18,9 +18,12 @@
 			"format": "DD/MM/YYYY"
 		}
 	});
+	
+	{% if auto_submit %}
 	//Submit form on change
 	$('#{{filter_form.filter_range.id_for_label}}').on('apply.daterangepicker', function(ev, picker) {
 		 $('#{{html_form}}').submit();
 	});
+	{% endif %}
 
 </script>

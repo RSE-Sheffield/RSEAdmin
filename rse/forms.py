@@ -68,3 +68,20 @@ class FilterDateRangeForm(forms.Form):
     @property 
     def years(self):
         return FinancialYear.objects.all()
+        
+        
+        
+        
+class FilterProjectForm(FilterDateRangeForm):
+    """
+    Class represents a filter form for filtering by date range and service type used by many views which display multiple project views.
+    Extends the filter range form by adding type and status fields
+    """
+
+    status = forms.ChoiceField(choices = (('A', 'All'),) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    # Type cant be filtered at database level as it is a property
+    #type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    
+    
+    
+    
