@@ -50,12 +50,12 @@
 							<td>{{ p.end|date:'Y-m-d' }}</td>
 							<td>{{ p.client.department }}</td>
 							<td>
-								<div class="progress progress-xs progress-striped active">
-									<div class="progress-bar progress-bar-primary" style="width: {{p.percent_allocated}}%"></div>
+								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 100%} progress-striped active {% endif %}">
+									<div class="progress-bar {% if p.percent_allocated < 50 %}progress-bar-danger{% elif p.percent_allocated == 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated}}%"></div>
 								</div>
 							</td>
 							<td>
-								<span class="badge bg-light-blue">{{p.percent_allocated}}%</span>
+								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated == 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated}}%</span>
 							</td>
 							<td><a href="{% url 'project_view' p.id %}" class="btn btn-block btn-info btn-xs">Info</a></td>
 						</tr>
