@@ -365,6 +365,12 @@ class Project(PolymorphicModel):
     def type_str(self) -> str:
         """ Implemented by concrete classes """        
         pass
+        
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        pass
+        
     
     @property    
     def fte(self) -> int:
@@ -381,10 +387,22 @@ class Project(PolymorphicModel):
         """ Returns the committed effort in days from any allocation on this project """
         return sum(a.effort for a in RSEAllocation.objects.filter(project=self))
         
+    @property
+    def remaining_days(self) -> int:
+        """ Return the number of unallocated (i.e. remaining) days for project """
+        return self.project_days - self.committed_days
+        
+    @property
+    def remaining_days_at_fte(self) -> int:
+        """ Return the number of unallocated (i.e. remaining) days for project at the projects standard fte percentage"""
+        return self.remaining_days / self.fte * 100
+        
     @property            
     def percent_allocated(self) -> float:
         """ Gets all allocations for this project and sums FTE*days to calculate committed effort """
         return round(self.committed_days / self.project_days * 100, 2)
+        
+        
             
         
     def __str__(self):
@@ -436,6 +454,11 @@ class AllocatedProject(Project):
         """
         return "Allocated"
         
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        return False
+    
     @property    
     def fte(self) -> int:
         """ Returns the FTE equivalent for this project """        
@@ -468,7 +491,12 @@ class ServiceProject(Project):
         Returns a plain string representation of the project type
         """
         return "Service"
-        
+    
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        return True
+    
     @property    
     def fte(self) -> int:
         """ Returns the FTE equivalent (always 100% days) """        
@@ -492,13 +520,18 @@ class RSEAllocation(models.Model):
     @property
     def duration(self):
         return (self.end - self.start).days
-    
+           
     @property    
     def effort(self) -> float:
         """
         Returns the number of days allocated on project (multiplied by fte)
         """
         return self.duration* self.percentage / 100.0
+
+    @property
+    def project_allocation_percentage(self) -> float:
+        """ Returns the percentage of this allocation from project total """
+        return round(self.effort / self.project.project_days *100.0,2)
 
     def staff_cost(self, start=None, end=None):
         """

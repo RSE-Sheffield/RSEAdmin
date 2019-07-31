@@ -41,10 +41,6 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     # Add proj to dict
     view_dict['project'] = proj
     
-    # Project type
-    view_dict['service'] = False
-    if isinstance(proj, ServiceProject):
-        view_dict['service'] = True
         
     # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
     allocation_unique_rses = allocations.values('rse').distinct()
@@ -57,6 +53,40 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
 	
 
     return render(request, 'project.html', view_dict)
+
+@login_required
+def project_allocations_view(request: HttpRequest, project_id) -> HttpResponse:
+    # Get the project
+    proj = get_object_or_404(Project, pk=project_id)
+    
+    # Dict for view
+    view_dict = {}
+    view_dict['project'] = proj
+    
+    # Get allocations for project
+    allocations = RSEAllocation.objects.filter(project=proj)
+    view_dict['allocations'] = allocations
+
+    # Create new allocation form
+    if request.method == 'POST':
+        form = ProjectAllocationForm(request.POST, project=proj)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            a = form.save(commit=False)
+            a.project = proj
+            a.save()
+            pass
+    else:
+        form = ProjectAllocationForm(project=proj)
+        #set default values
+        #form.data['start'] = proj.start
+        #form.data['end'] = proj.start + timedelta(days=proj.remaining_days_at_fte)
+        #form.data['percentage'] = proj.fte
+    view_dict['form'] = form
+    
+	
+
+    return render(request, 'project_allocations.html', view_dict)
     
     
 @login_required
