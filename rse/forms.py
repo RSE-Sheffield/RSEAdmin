@@ -88,6 +88,9 @@ class ProjectAllocationForm(forms.ModelForm):
     Form for adding and editing allocations within a project. Uses model form base type.
     """
     
+    start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
     def __init__ (self, *args, **kwargs):
         """ Set the initial data """
         if not 'project' in kwargs:
@@ -105,8 +108,8 @@ class ProjectAllocationForm(forms.ModelForm):
         widgets = {
             'rse': forms.Select(attrs={'class' : 'form-control'}),
             'percentage': forms.NumberInput(attrs={'class' : 'form-control'}),
-            'start': forms.DateInput(attrs={'class' : 'form-control'}),
-            'end': forms.DateInput(attrs={'class' : 'form-control'}),
+            #'start': forms.DateInput(format = '%d/%m/%Y',  input_formats=('%d/%m/%Y',), attrs={'class' : 'form-control'}),
+            #'end': forms.DateInput(format = '%d/%m/%Y',  input_formats=('%d/%m/%Y',), attrs={'class' : 'form-control'}),
             'project': forms.HiddenInput(),
         }
         
