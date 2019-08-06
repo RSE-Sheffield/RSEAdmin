@@ -87,10 +87,11 @@ class ProjectAllocationForm(forms.ModelForm):
     """
     Form for adding and editing allocations within a project. Uses model form base type.
     Sets the start and end day of the allocation as follows
-    - Start day si start of project
+    - Start day is start of project
     - End day is start day plus remaining commitment to the project (by calculating sum of already committed hours)
     """
     
+    # Fields are created manually to set the date input format
     start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
@@ -115,8 +116,6 @@ class ProjectAllocationForm(forms.ModelForm):
         widgets = {
             'rse': forms.Select(attrs={'class' : 'form-control'}),
             'percentage': forms.NumberInput(attrs={'class' : 'form-control'}),
-            #'start': forms.DateInput(format = '%d/%m/%Y',  input_formats=('%d/%m/%Y',), attrs={'class' : 'form-control'}),
-            #'end': forms.DateInput(format = '%d/%m/%Y',  input_formats=('%d/%m/%Y',), attrs={'class' : 'form-control'}),
             'project': forms.HiddenInput(),
         }
         
@@ -134,7 +133,41 @@ class ProjectAllocationForm(forms.ModelForm):
         if errors:
             raise ValidationError(errors)
     
+
+class ProjectForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a project
+    """
     
+    # Fields are created manually to set the date input format
+    start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
+    class Meta:
+        model = AllocatedProject
+        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band']
+        widgets = {
+            'proj_costing_id': forms.TextInput(attrs={'class' : 'form-control'}),
+            'name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'description': forms.Textarea(attrs={'class' : 'form-control'}),
+            'client': forms.Select(attrs={'class' : 'form-control'}),
+            'internal': forms.CheckboxInput(),
+            'status': forms.Select(choices = Project.STATUS_CHOICES, attrs={'class' : 'form-control pull-right'}),
+            'percentage': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'overheads': forms.Select(choices = AllocatedProject.OVERHEAD_CHOICES, attrs={'class' : 'form-control pull-right'}),
+            'salary_band': forms.Select(attrs={'class' : 'form-control'}),
+        }
+        
+    def clean(self):
+        cleaned_data=super(ProjectForm, self).clean()
+        errors = {}
+        
+        # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
+        if cleaned_data['start'] and cleaned_data['end']:
+            if cleaned_data['start'] > cleaned_data['end'] :
+                errors['end'] = ('Project end date can not be before start date')
+        
+        if errors:
+            raise ValidationError(errors)
     
     

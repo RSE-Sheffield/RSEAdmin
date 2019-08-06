@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Max, Min
 
@@ -57,7 +57,41 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     return render(request, 'project.html', view_dict)
 
 @login_required
-def project_allocations_view(request: HttpRequest, project_id) -> HttpResponse:
+def project_new(request: HttpRequest) -> HttpResponse:
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            new_proj = form.save(commit=False)
+            new_proj.creator = request.user
+            new_proj.created = datetime.now().date()
+            new_proj.save()
+            # Go to the project view
+            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': new_proj.id}))
+    else:
+        form = ProjectForm()
+
+    view_dict['form'] = form
+    
+    return render(request, 'project_new.html', view_dict)
+ 
+@login_required
+def project_edit(request: HttpRequest) -> HttpResponse:
+    # Dict for view
+    view_dict = {}
+    
+
+    
+    return render(request, 'project_new.html', view_dict)
+ 
+
+ 
+@login_required
+def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
     
@@ -77,7 +111,6 @@ def project_allocations_view(request: HttpRequest, project_id) -> HttpResponse:
             a = form.save(commit=False)
             a.project = proj
             a.save()
-            pass
     else:
         form = ProjectAllocationForm(project=proj)
 

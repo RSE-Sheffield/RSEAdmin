@@ -15,8 +15,14 @@ urlpatterns = [
     # Project view
     url(r'^project/(?P<project_id>[0-9]+)$', views.project_view, name='project_view'),
     
+    # Create Project view
+    url(r'^project/new$', views.project_new, name='project_new'),
+    
+    # Edit Project view
+    url(r'^project/(?P<project_id>[0-9]+)/edit$', views.project_edit, name='project_edit'),
+    
     # Project allocation view
-    url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations_view, name='project_allocations_view'),
+    url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations, name='project_allocations'),
     
     # Allocation delete (forwards to project allocation view)
     url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_view_delete.as_view(), name='project_allocations_view_delete'),

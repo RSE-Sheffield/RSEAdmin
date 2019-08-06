@@ -1,0 +1,149 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - New Project View {% endblock %}
+{% block page_name %}New  Project{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-8">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title"> New Project</h3>
+            </div>
+            
+			<form method="POST" action="">
+				{% csrf_token %}
+											
+				<div class="box-body no-padding">
+				
+					
+							<table id="id_project_table" class="table table-striped">
+								<tbody>
+								
+									<tr><td>
+									<strong>Project Name:</strong>
+									{{ form.name}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Project Internal ID (URMS or equivalent):</strong>
+									{{ form.proj_costing_id}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Description / Notes:</strong>
+									{{ form.description}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Start Date:</strong>
+									{{ form.start}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>End Date:</strong>
+									{{ form.end}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Client:</strong>
+									{{ form.client}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Internal:</strong>
+									{{ form.internal}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Status:</strong>
+									{{ form.status}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Percentage FTE:</strong>
+									{{ form.percentage}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Overheads Type:</strong>
+									{{ form.overheads}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Salary Band Used for Costing:</strong>
+									{{ form.salary_band}}
+									</td></tr>
+									
+								</tbody>
+							</table>
+				</div>
+				
+				<div class="box-footer">
+					{% if form.errors %}
+						{% for field in form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+				</div>
+			
+			</form>
+          </div>
+        </div>
+			
+		
+    </div>
+
+
+    
+
+   
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+<script type="text/javascript">	
+	//Start Date Picker
+	$('#{{form.start.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+	//End date picker
+	$('#{{form.end.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+
+
+
+</script>
+
+{% endblock %}
