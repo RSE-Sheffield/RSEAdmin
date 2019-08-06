@@ -86,6 +86,9 @@ class FilterProjectForm(FilterDateRangeForm):
 class ProjectAllocationForm(forms.ModelForm):
     """
     Form for adding and editing allocations within a project. Uses model form base type.
+    Sets the start and end day of the allocation as follows
+    - Start day si start of project
+    - End day is start day plus remaining commitment to the project (by calculating sum of already committed hours)
     """
     
     start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
@@ -96,10 +99,14 @@ class ProjectAllocationForm(forms.ModelForm):
         if not 'project' in kwargs:
             raise TypeError("ProjectAllocationForm missing required argument: 'project'")
         project = self.user = kwargs.pop('project', None)
+        # call super 
         super(ProjectAllocationForm, self).__init__(*args, **kwargs)
+        
+        # do stuff with project to set the initial data
         self.fields['percentage'].initial = project.fte
         self.fields['start'].initial = datetime.strftime(project.start, "%d/%m/%Y")
-        self.fields['end'].initial = datetime.strftime(project.start + timedelta(days=project.remaining_days_at_fte), "%d/%m/%Y")
+        # remaining days must be rounded to whole days
+        self.fields['end'].initial = datetime.strftime(project.start + timedelta(days=round(project.remaining_days_at_fte)), "%d/%m/%Y")
 
     
     class Meta:
@@ -118,10 +125,13 @@ class ProjectAllocationForm(forms.ModelForm):
     def clean(self):
         cleaned_data=super(ProjectAllocationForm, self).clean()
         errors = {}
-         # TODO Validation does not work
-        if cleaned_data['start'] < cleaned_data['end'] :
-            errors['end'] = ('Allocation end date can not be before start date')
-        if not errors:
+        
+        # Validation checks that the dates are correct (no need to raise errors if fiedls are empty as they are required so superclass will have done this)
+        if cleaned_data['start'] and cleaned_data['end']:
+            if cleaned_data['start'] > cleaned_data['end'] :
+                errors['end'] = ('Allocation end date can not be before start date')
+        
+        if errors:
             raise ValidationError(errors)
     
     

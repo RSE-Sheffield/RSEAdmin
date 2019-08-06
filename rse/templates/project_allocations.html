@@ -53,8 +53,13 @@
 									<td>
 										<span class="badge bg-light-blue">{{a.project_allocation_percentage}}%</span>
 									</td>
-									<td><a href="" class="btn btn-block btn-info btn-xs">Edit</a></td>
-									<td><a href="" class="btn btn-block btn-danger btn-xs">Delete</a></td>
+									<td></td>
+									<td>
+										<form method="POST" action="{% url 'project_allocations_view_delete' a.id %}">
+											{% csrf_token %}
+											<input type="submit" value="Delete" class="btn btn-block btn-danger btn-xs"></input>
+										</form>
+									</td>
 								</tr>
 									{% endfor %}
 							</tbody>
@@ -97,24 +102,39 @@
 									<br>
 
 									<label>RSE:</label>
-										{{ form.rse }}
+									<div class="input-group">
+										{{ form.rse }} 
+										<div class="input-group-addon">
+											<a href="" id="id_rse_summary" target="_blank" class="fa fa-area-chart"></a>
+										</div>
+									</div>
 									<br>
 
 									<label>FTE Percentage:</label>
 										{{ form.percentage }}
 									<br>
 
-									{{ form.errors }}
+									{% if form.errors %}
+										{% for field in form %}
+											{% for error in field.errors %}
+												<div class="alert alert-danger">
+													<strong>{{ error|escape }}</strong>
+												</div>
+											{% endfor %}
+										{% endfor %}
+										{% for error in form.non_field_errors %}
+											<div class="alert alert-danger">
+												<strong>{{ error|escape }}</strong>
+											</div>
+										{% endfor %}
+									{% endif %}
 	
 									<button type="submit" class="btn btn-primary">Add Allocation</button>
-
 								</div>
 							</form>
 						</div>
 
-						<div class="box-footer">
-
-						</div>
+						
 					</div>
 				</div>
 			</div>
@@ -207,9 +227,9 @@
 				<h3 class="box-title"> Effort Reporting </h3>
 			</div>
 			<div class="box-body">
-				<p><span class="float-left badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated == 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated}}%</span> of Project Allocated</p>
+				<p><span class="float-left badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated >= 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated}}%</span> of Project Allocated</p>
 				<div class="progress progress {% if project.percent_allocated >= 50 and project.percent_allocated < 100%} progress-striped active {% endif %}">
-					<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated == 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated}}%">
+					<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated >= 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated}}%">
 					</div>
 				</div>
 
@@ -261,24 +281,64 @@
 <script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
 <script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
 <script type="text/javascript">	
-	var end_day = moment("{{project.start|date:"d/m/Y"}}","DDMMYYYY").add({{project.remaining_days_at_fte}}, 'day');
+	// function for getting address string for commitment view
+	function commitment_view_url(rse_id){
+		var url_str;
+		
+		//get base url
+		if (rse_id)
+			url_str = window.location.protocol + "//" + document.location.host + '{% url 'rseid_view' %}' + rse_id;
+		else
+			url_str = window.location.protocol + "//" + document.location.host + '{% url 'commitment_view' %}' + rse_id;
+		var url = new URL(url_str);	
+			
+		//append filter range
+		var filter_range = new URLSearchParams();
+		date_str = $('#id_start').val() + ' - ' + $('#id_end').val()
+		filter_range.set('filter_range', date_str);
+		filter_range.set('status', 'A');
+		url.search = filter_range.toString()
+			
+		return url;
+	}
+	
+	// function for updating the url
+	function commitment_view_update_url(){
+		var rse_id = $('#id_rse').val();
+		$('#id_rse_summary').attr('href', commitment_view_url(rse_id).toString());
+		console.log("change");
+	}
+	
+
 	//Start Date Picker
 	$('#{{form.start.id_for_label}}').daterangepicker({
 		singleDatePicker: true,
-		//startDate: "{{project.start|date:"d/m/Y"}}",
 		locale: {
 			"format": "DD/MM/YYYY"
-		}
+		},
 	});
 	//End date picker
 	$('#{{form.end.id_for_label}}').daterangepicker({
 		singleDatePicker: true,
-		startDate: end_day.format("DD/MM/YYYY"),
 		locale: {
 			"format": "DD/MM/YYYY"
-		}
+		},
 	});
 	
+	// form option changes update the url
+	$('#id_rse').change(commitment_view_update_url());
+	$('#id_start').on('apply.daterangepicker', function(){
+		commitment_view_update_url();
+	});
+	$('#id_end').on('apply.daterangepicker', function(){
+		commitment_view_update_url();
+	});
+
+	
+	
+
+	
+
 
 </script>
 {% endblock %}

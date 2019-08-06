@@ -1,5 +1,7 @@
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
+from django.views.generic.edit import DeleteView
+from django.urls import reverse_lazy
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -67,7 +69,7 @@ def project_allocations_view(request: HttpRequest, project_id) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
 
-    # Create new allocation form
+    # Create new allocation form (this will fill in start date and end date automatically based of any previous commitments
     if request.method == 'POST':
         form = ProjectAllocationForm(request.POST, project=proj)
         if form.is_valid():
@@ -78,16 +80,20 @@ def project_allocations_view(request: HttpRequest, project_id) -> HttpResponse:
             pass
     else:
         form = ProjectAllocationForm(project=proj)
-        #set default values
-        #form.data['start'] = proj.start
-        #form.data['end'] = proj.start + timedelta(days=proj.remaining_days_at_fte)
-        #form.data['percentage'] = proj.fte
+
     view_dict['form'] = form
     
 	
 
     return render(request, 'project_allocations.html', view_dict)
+
+
+class project_allocations_view_delete(DeleteView):
+    """ POST only special delete view which redirects to project allocation view """
+    model = RSEAllocation
     
+    def get_success_url(self):
+        return reverse_lazy('project_allocations_view', kwargs={'project_id': self.object.project.id})
     
 @login_required
 def commitment_view(request: HttpRequest) -> HttpResponse:
@@ -131,6 +137,12 @@ def commitment_view(request: HttpRequest) -> HttpResponse:
 
     return render(request, 'commitments.html', view_dict)
 
+
+@login_required
+def rseid_view(request: HttpRequest, rse_id: int) -> HttpResponse:
+    rse = get_object_or_404(RSE, id=rse_id)
+    
+    return rse_view(request, rse.user.username)
 
 @login_required
 def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:

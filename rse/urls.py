@@ -17,6 +17,9 @@ urlpatterns = [
     
     # Project allocation view
     url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations_view, name='project_allocations_view'),
+    
+    # Allocation delete (forwards to project allocation view)
+    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_view_delete.as_view(), name='project_allocations_view_delete'),
 
     # RSE team view all
     url(r'^team$', views.team_view, name='team_view'),
@@ -24,6 +27,10 @@ urlpatterns = [
     # RSE team commitment view all
     url(r'^commitment$', views.commitment_view, name='commitment_view'),
 
-    # RSE allocation view
+    # RSE view
     url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),
+        
+    # RSE allocation view by rse id
+    url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid_view, name='rseid_view'),
+    url(r'^rse/id/$', views.rseid_view, name='rseid_view'), # without id parameter
 ]
