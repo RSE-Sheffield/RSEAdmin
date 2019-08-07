@@ -58,12 +58,13 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
 
 @login_required
 def project_new(request: HttpRequest) -> HttpResponse:
+
     # Dict for view
     view_dict = {}
     
     # process or create form
     if request.method == 'POST':
-        form = ProjectForm(request.POST)
+        form = AllocatedProjectForm(request.POST)
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save(commit=False)
@@ -73,18 +74,31 @@ def project_new(request: HttpRequest) -> HttpResponse:
             # Go to the project view
             return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': new_proj.id}))
     else:
-        form = ProjectForm()
+        form = AllocatedProjectForm()
 
     view_dict['form'] = form
     
     return render(request, 'project_new.html', view_dict)
  
 @login_required
-def project_edit(request: HttpRequest) -> HttpResponse:
+def project_edit(request: HttpRequest, project_id) -> HttpResponse:
+    
+    # Get the project (as generic project to ensure correct ID)
+    proj = get_object_or_404(Project, pk=project_id)
+    
     # Dict for view
     view_dict = {}
-    
 
+    if request.method == 'POST':
+        form = AllocatedProjectForm(request.POST, instance=proj)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            form.save()
+            # Go to the project view
+            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': project_id}))
+    else:
+        form = AllocatedProjectForm(instance=proj)
+    view_dict['form'] = form
     
     return render(request, 'project_new.html', view_dict)
  

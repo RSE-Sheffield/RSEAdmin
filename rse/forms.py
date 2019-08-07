@@ -134,7 +134,7 @@ class ProjectAllocationForm(forms.ModelForm):
             raise ValidationError(errors)
     
 
-class ProjectForm(forms.ModelForm):    
+class AllocatedProjectForm(forms.ModelForm):    
     """
     Class for creation and editing of a project
     """
@@ -145,7 +145,7 @@ class ProjectForm(forms.ModelForm):
     
     class Meta:
         model = AllocatedProject
-        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band']
+        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band', 'created', 'creator']
         widgets = {
             'proj_costing_id': forms.TextInput(attrs={'class' : 'form-control'}),
             'name': forms.TextInput(attrs={'class' : 'form-control'}),
@@ -156,10 +156,12 @@ class ProjectForm(forms.ModelForm):
             'percentage': forms.NumberInput(attrs={'class' : 'form-control'}),
             'overheads': forms.Select(choices = AllocatedProject.OVERHEAD_CHOICES, attrs={'class' : 'form-control pull-right'}),
             'salary_band': forms.Select(attrs={'class' : 'form-control'}),
+            'creator': forms.HiddenInput(),
+            'created': forms.HiddenInput(),
         }
         
     def clean(self):
-        cleaned_data=super(ProjectForm, self).clean()
+        cleaned_data=super(AllocatedProjectForm, self).clean()
         errors = {}
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
