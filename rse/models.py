@@ -388,12 +388,12 @@ class Project(PolymorphicModel):
         return sum(a.effort for a in RSEAllocation.objects.filter(project=self))
         
     @property
-    def remaining_days(self) -> int:
+    def remaining_days(self) -> float:
         """ Return the number of unallocated (i.e. remaining) days for project """
         return self.project_days - self.committed_days
         
     @property
-    def remaining_days_at_fte(self) -> int:
+    def remaining_days_at_fte(self) -> float:
         """ Return the number of unallocated (i.e. remaining) days for project at the projects standard fte percentage"""
         return self.remaining_days / self.fte * 100
         
@@ -531,7 +531,7 @@ class RSEAllocation(models.Model):
     @property
     def project_allocation_percentage(self) -> float:
         """ Returns the percentage of this allocation from project total """
-        return round(self.effort / self.project.project_days *100.0,2)
+        return self.effort / self.project.project_days *100.0
 
     def staff_cost(self, start=None, end=None):
         """

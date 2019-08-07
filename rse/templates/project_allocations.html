@@ -74,71 +74,69 @@
 					<div class="box-header with-border">
 						<h3 class="box-title"> New Allocation</h3>
 					</div>
+					<form method='POST' id="allocation_form">
+					{% csrf_token %}
 					<div class="box-body">
-
-
-							<form method='POST' id="allocation_form">
-								<div class="form-group">
-									{% csrf_token %}
-
-									<label>Start Date:</label>
-									<div class="input-group">
-										<div class="input-group-addon">
-											<i class="fa fa-calendar"></i>
-										</div>
-										{{ form.start }}
-									</div>
-									<br>
-
-									<label>End Date:</label>
-									<div class="input-group">
-										<div class="input-group-addon">
-											<i class="fa fa-calendar"></i>
-										</div>
-										{{ form.end }}
-										<div class="input-group-addon">
-											<a href="" id="id_end_autocomplete" class="fa fa-calculator"></a>
-										</div>
-									</div>
-									<br>
-
-									<label>RSE:</label>
-									<div class="input-group">
-										{{ form.rse }} 
-										<div class="input-group-addon">
-											<a href="" id="id_rse_summary" target="_blank" class="fa fa-area-chart"></a>
-										</div>
-									</div>
-									<br>
-
-									<label>FTE Percentage:</label>
-										{{ form.percentage }}
-									<br>
-
-									{% if form.errors %}
-										{% for field in form %}
-											{% for error in field.errors %}
-												<div class="alert alert-danger">
-													<strong>{{ error|escape }}</strong>
-												</div>
-											{% endfor %}
-										{% endfor %}
-										{% for error in form.non_field_errors %}
-											<div class="alert alert-danger">
-												<strong>{{ error|escape }}</strong>
-											</div>
-										{% endfor %}
-									{% endif %}
-	
-									<button type="submit" class="btn btn-primary">Add Allocation</button>
+						<div class="form-group">
+							<label>Start Date:</label>
+							<div class="input-group">
+								<div class="input-group-addon">
+									<i class="fa fa-calendar"></i>
 								</div>
-							</form>
+								{{ form.start }}
+							</div>
+							<br>
 
-						
+							<label>End Date:</label>
+							<div class="input-group">
+								<div class="input-group-addon">
+									<i class="fa fa-calendar"></i>
+								</div>
+								{{ form.end }}
+								<div class="input-group-addon">
+									<a href="" id="id_end_autocomplete" class="fa fa-calculator" data-toggle="tooltip" title="Auto complete end date based on remaining FTE days of project and proposed allocation FTE"></a>
+								</div>
+							</div>
+							<br>
+
+							<label>RSE:</label>
+							<div class="input-group">
+								{{ form.rse }} 
+								<div class="input-group-addon">
+									<a href="" id="id_rse_summary" target="_blank" class="fa fa-area-chart" data-toggle="tooltip" title="View RSE or Team commitment summary between allocation dates"></a>
+								</div>
+							</div>
+							<br>
+
+							<label>FTE Percentage:</label>
+								{{ form.percentage }}
+							<br>
+
+							<i>Proposed allocation represents <span id="id_new_percent">100.0</span>% of project total (with <span id="id_new_total_percent">100.0</span>% of total project allocated)</i>
+
+							{% if form.errors %}
+								{% for field in form %}
+									{% for error in field.errors %}
+										<div class="alert alert-danger">
+											<strong>{{ error|escape }}</strong>
+										</div>
+									{% endfor %}
+								{% endfor %}
+								{% for error in form.non_field_errors %}
+									<div class="alert alert-danger">
+										<strong>{{ error|escape }}</strong>
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							
+						</div>
+		
 					</div>
 					<div class="box-footer">
-						<i>Allocation represents X% of total with X% of total project allocated</i>
+						<button type="submit" class="btn btn-primary">Add Allocation</button>
 					</div>
+					</form>
 				</div>
 			</div>
 		</div>
@@ -209,7 +207,19 @@
 	function commitment_view_update_url(){
 		var rse_id = $('#id_rse').val();
 		$('#id_rse_summary').attr('href', commitment_view_url(rse_id).toString());
-		console.log("change");
+	}
+	
+	function allocation_info_update(){
+		var from = moment($('#id_start').val(), 'DD/MM/YYYY');
+		var until = moment($('#id_end').val(), 'DD/MM/YYYY');
+		var full_days = until.diff(from, 'days') * $('#id_percentage').val() / 100;
+		//calculate the percentage of proposed allocation
+		var percent_proj = full_days / {{project.project_days}} *100;
+		//calculate the percentage of project allocation including new allocation
+		var percent_proj_total = (full_days + {{project.committed_days}}) / {{project.project_days}} *100;
+		//set html information
+		$('#id_new_percent').text(percent_proj.toFixed(2));
+		$('#id_new_total_percent').text(percent_proj_total.toFixed(2));
 	}
 	
 
@@ -228,24 +238,41 @@
 		},
 	});
 	
-	// form option changes update the url
+	// form option changes update the url and information
 	$('#id_rse').change(function(){
 		commitment_view_update_url();
 	});
 	$('#id_start').on('apply.daterangepicker', function(){
 		commitment_view_update_url();
+		allocation_info_update();
 	});
 	$('#id_end').on('apply.daterangepicker', function(){
 		commitment_view_update_url();
+		allocation_info_update();
+	});
+	$('#id_percentage').change(function(){
+		allocation_info_update();
 	});
 	
-	//document ready set the initial url 
+	//calculate end date click
+	$('#id_end_autocomplete').click(function(e){
+		//stop postback
+		e.preventDefault();
+		//calculate new end date based off current start date
+		var fte_days = {{project.remaining_days}} / $('#id_percentage').val() * 100.0
+		var until = moment($('#id_start').val(), 'DD/MM/YYYY').add(fte_days, 'days');
+		$('#id_end').val(until.format('DD/MM/YYYY'));
+		//update information text
+		allocation_info_update();
+	});
+	
+	//document ready set the initial commitment view url and tooltips
 	$( document ).ready(function() {
 		commitment_view_update_url();
+		allocation_info_update();
+		$('#id_end_autocomplete').tooltip();
+		$('#id_rse_summary').tooltip();
 	});
-
-	
-	
 
 	
 
