@@ -45,27 +45,35 @@ urlpatterns = [
     
     # View a client (and associated projects)
     url(r'^client/(?P<client_id>[0-9]+)$', views.client, name='client'),
-
-    #################
-    ### Reporting ###
-    #################
-
-
-    # RSE team view all
-    url(r'^team$', views.team_view, name='team_view'),
     
-    # RSE team commitment view all
-    url(r'^commitment$', views.commitment_view, name='commitment_view'),
+    # Add a new client
+    url(r'^client/new$', views.client_new, name='client_new'),
+    
+    # Edit a client (and associated projects)
+    url(r'^client/(?P<client_id>[0-9]+)/edit$', views.client_edit, name='client_edit'),
+    
+    # Edit a client (and associated projects)
+    url(r'^client/(?P<pk>[0-9]+)/delete$', views.client_delete.as_view(), name='client_delete'),
 
 
     ############
     ### RSEs ###
     ############
 
-    # RSE view
-    url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),
+    # View a single RSE
+    url(r'^rse/(?P<rse_username>[\w]+)$', views.rse, name='rse'),
+    
+    # RSE view list
+    url(r'^rses$', views.rses, name='rses'),
         
     # RSE allocation view by rse id
-    url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid_view, name='rseid_view'),
-    url(r'^rse/id/$', views.rseid_view, name='rseid_view'), # without id parameter
+    url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid, name='rseid'),
+    url(r'^rse/id/$', views.rseid, name='rseid'), # without id parameter
+       
+    # RSE team view all
+    url(r'^team$', views.team, name='team'),
+    
+    # RSE team commitment view all
+    url(r'^commitment$', views.commitment, name='commitment'),
+
 ]

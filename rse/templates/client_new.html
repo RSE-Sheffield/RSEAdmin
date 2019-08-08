@@ -4,11 +4,10 @@
 
 {% block stylesheets %}
 {{ block.super}}
-<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - New Project View {% endblock %}
-{% block page_name %}New/Edit  Client{% endblock %}
+{% block page_name %}{% if edit %}Edit{% else %}New{% endif %} Client{% endblock %}
 {% block content %}
 
 	<div class ="row">
@@ -16,7 +15,7 @@
 		<div class="col-md-8">
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title"> New Project</h3>
+              <h3 class="box-title">{% if edit %}Edit{% else %}New{% endif %} Client</h3>
             </div>
             
 			<form method="POST" action="">
@@ -24,69 +23,26 @@
 											
 				<div class="box-body no-padding">
 				
-					
-							<table id="id_project_table" class="table table-striped">
-								<tbody>
-								
-									<tr><td>
-									<strong>Project Name:</strong>
-									{{ form.name}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Project Internal ID (URMS or equivalent):</strong>
-									{{ form.proj_costing_id}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Description / Notes:</strong>
-									{{ form.description}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Start Date:</strong>
-									{{ form.start}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>End Date:</strong>
-									{{ form.end}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Client:</strong>
-									{{ form.client}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Internal:</strong>
-									{{ form.internal}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Status:</strong>
-									{{ form.status}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Percentage FTE:</strong>
-									{{ form.percentage}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Overheads Type:</strong>
-									{{ form.overheads}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Salary Band Used for Costing:</strong>
-									{{ form.salary_band}}
-									</td></tr>
-									
-								</tbody>
-								{{ form.created}}
-								{{ form.creator}}
-							</table>
+					<table id="id_client_table" class="table table-striped">
+						<tbody>
+						
+							<tr><td>
+							<strong>Client Name:</strong>
+							{{ form.name}}
+							</td></tr>
+							
+							<tr><td>
+							<strong>Department</strong>
+							{{ form.department}}
+							</td></tr>
+							
+							<tr><td>
+							<strong>Description / Notes:</strong>
+							{{ form.description}}
+							</td></tr>
+							
+						</tbody>
+					</table>
 				</div>
 				
 				<div class="box-footer">
@@ -105,6 +61,9 @@
 						{% endfor %}
 					{% endif %}
 					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+					{% if edit %}
+						<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
+					{% endif %}
 				</div>
 			
 			</form>
@@ -116,7 +75,49 @@
 
 
     
+    {% if edit %}
+	
+		{% if form.instance.total_projects > 0 %}
+			<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+							<h4 class="modal-title" id="myModalLabel">Unable to delete client</h4>
+						</div>
+						<div class="modal-body">
+						<p>It is not possible to delete a client with associated projects. Manually delete the clients projects first.</p>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline" data-dismiss="modal">Ok</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		{% else %}
+			<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+							<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+						</div>
+						<div class="modal-body">
+						<p>Are you sure you wish to delete this client?</p>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+							<form method="POST" action="{% url 'client_delete' form.instance.id %}">
+								{% csrf_token %}
+								<input type="submit" value="Delete" class="btn btn-outline"></input>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>	
+		{% endif %}
 
+	{% endif %}
    
     
     
@@ -126,26 +127,5 @@
 {% block javascript %}
 {{ block.super}}
 
-<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
-<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
-<script type="text/javascript">	
-	//Start Date Picker
-	$('#{{form.start.id_for_label}}').daterangepicker({
-		singleDatePicker: true,
-		locale: {
-			"format": "DD/MM/YYYY"
-		},
-	});
-	//End date picker
-	$('#{{form.end.id_for_label}}').daterangepicker({
-		singleDatePicker: true,
-		locale: {
-			"format": "DD/MM/YYYY"
-		},
-	});
-
-
-
-</script>
 
 {% endblock %}

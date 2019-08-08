@@ -171,5 +171,20 @@ class AllocatedProjectForm(forms.ModelForm):
         
         if errors:
             raise ValidationError(errors)
-    
+            
+            
+class ClientForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a client
+    """
+    class Meta:
+        model = Client
+        fields = ['name', 'department', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'department': forms.TextInput(attrs={'class' : 'form-control'}),
+            'description': forms.Textarea(attrs={'class' : 'form-control'}),    
+        }
+        
+  
     

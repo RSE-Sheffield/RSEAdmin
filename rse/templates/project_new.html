@@ -16,7 +16,7 @@
 		<div class="col-md-8">
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title"> New Project</h3>
+              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Project</h3>
             </div>
             
 			<form method="POST" action="">
@@ -27,6 +27,16 @@
 					
 							<table id="id_project_table" class="table table-striped">
 								<tbody>
+								
+									<tr><td>
+									<strong>Client:</strong>
+										<div class="input-group">
+											{{ form.client}}
+											<div class="input-group-addon">
+												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
+											</div>
+										</div>
+									</td></tr>
 								
 									<tr><td>
 									<strong>Project Name:</strong>
@@ -44,18 +54,23 @@
 									</td></tr>
 									
 									<tr><td>
-									<strong>Start Date:</strong>
-									{{ form.start}}
+										<strong>Start Date:</strong>
+										<div class="input-group">
+											<div class="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>
+											{{ form.start}}
+										</div>
 									</td></tr>
 									
 									<tr><td>
-									<strong>End Date:</strong>
-									{{ form.end}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Client:</strong>
-									{{ form.client}}
+										<strong>End Date:</strong>
+										<div class="input-group">
+											<div class="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>
+											{{ form.end}}
+										</div>
 									</td></tr>
 									
 									<tr><td>

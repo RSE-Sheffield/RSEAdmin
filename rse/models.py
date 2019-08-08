@@ -242,14 +242,22 @@ class RSE(models.Model):
     employed_until = models.DateField()
     
     @property
-    def current_employment(_self):
+    def current_employment(self):
         """
         Is the staff member currently employed
         """
-        return self.employed_from < timezone.now() and self.employed_until > timezone.now()
+        now = timezone.now().date()
+        return self.employed_from < now and self.employed_until > now
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name}"
+    
+    @property
+    def current_capacity(self) -> float:
+        """ Returns the current capacity of an RSE as a percentage of FTE """
+        now = timezone.now().date()
+        return sum(a.percentage for a in RSEAllocation.objects.filter(rse=self, start__lte=now, end__gt=now))
+        
 
     def lastSalaryGradeChange(self, date: date = timezone.now()):
         """
@@ -345,7 +353,7 @@ class Project(PolymorphicModel):
     proj_costing_id = models.CharField(max_length=50, null=True)    # Internal URMS code
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT)
     internal = models.BooleanField(default=False)                    # Internal or in kind projects
 
 

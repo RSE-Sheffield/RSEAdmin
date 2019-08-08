@@ -18,6 +18,8 @@
           <div class="box box-solid">
             <div class="box-header with-border">
               <h3 class="box-title"> Projects Associated with {{client.name}}</h3>
+			  
+			  <a id="id_add_client" href="{% url 'project_new' %}?client={{ client.id }}&next={% url 'client' client.id %}" class="fa fa-plus pull-right" data-toggle="tooltip" title="" data-original-title="Create a new project for this client"></a>
             </div>
             <div class="box-body">
               
@@ -73,7 +75,7 @@
 			 <div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Client Details</h3>
-					<span class="pull-right"><a href="" class="text-muted"><i class="fa fa-edit"></i></a></span>
+					<span class="pull-right"><a href="{% url 'client_edit' client.id %}" class="text-muted"><i class="fa fa-edit"></i></a></span>
 				</div>
 				<div class="box-body">		
 					<table class="table table-striped">

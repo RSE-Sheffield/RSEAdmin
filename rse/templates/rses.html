@@ -1,0 +1,87 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block page_name %}View RSE Team{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			
+			<div class="box-body table-responsive padding">
+				<table id="clients" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="name">Name</th>
+							<th id="name">Username</th>
+							<th id="department">Employed From</th>
+							<th id="description">Employed Until</th>
+							<th id="description">Currently Employment</th>
+							<th id="num_active_projects">Current Capacity</th>
+							<th id="num_active_projects_label"></th>
+							<th id="more"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for rse in rses %}
+						<tr>
+							<td>{{ rse.user.first_name }} {{ rse.user.last_name }}</td>
+							<td>{{ rse.user.username }}</td>
+							<td>{{ rse.employed_from }}</td>
+							<td>{{ rse.employed_until }}</td>
+							<td>
+								{% if rse.current_employment %}
+									<span class="badge bg-green">Yes</span>
+								{% else %}
+									<span class="badge bg-red">No</span>
+								{% endif %}
+							</td>
+							<td> 
+								<div class="progress progress-xs progress-striped active">
+									<div class="progress-bar progress-bar-primary" style="width: {{rse.current_capacity}}%"></div>
+								</div>
+							</td>
+							<td>
+								<span class="badge bg-light-blue">{{rse.current_capacity|floatformat:2}}%</span>
+							 </td>
+							<td><a href="{% url 'rse' rse.user.username %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+						</tr>
+						{% endfor %}
+					</tbody></table>
+			</div>
+		</div>
+	</div>
+
+	
+
+
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+	<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#clients').DataTable({
+				pageLength: 25,
+				scrollX: false,
+			} );
+		} );
+		
+	</script>
+{% endblock %}
+
