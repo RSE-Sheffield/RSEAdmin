@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Max, Min
 
@@ -14,6 +14,10 @@ from .forms import *
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html')
 
+
+################################
+### Projects and Allocations ###
+################################
 
 @login_required
 def projects(request: HttpRequest) -> HttpResponse:
@@ -34,15 +38,11 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
 
     # Dict for view
     view_dict = {}
-
+    view_dict['project'] = proj
+        
     # Get allocations for project
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
-
-
-    # Add proj to dict
-    view_dict['project'] = proj
-    
         
     # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
     allocation_unique_rses = allocations.values('rse').distinct()
@@ -100,6 +100,9 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
         form = AllocatedProjectForm(instance=proj)
     view_dict['form'] = form
     
+    # Add edit field to indicate delete should be available
+    view_dict['edit'] = True
+    
     return render(request, 'project_new.html', view_dict)
  
 
@@ -139,8 +142,56 @@ class project_allocations_delete(DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = RSEAllocation
     
+    def get(self, request, *args, **kwargs):
+        """ disable this view when arriving by get (i.e. only allow post) """
+        raise Http404("Page does not exist")
+    
     def get_success_url(self):
-        return reverse_lazy('project_allocations_view', kwargs={'project_id': self.object.project.id})
+        return reverse_lazy('project_allocations', kwargs={'project_id': self.object.project.id})
+    
+class project_delete(DeleteView):
+    """ POST only special delete view which redirects to project allocation view """
+    model = Project
+    
+    def get(self, request, *args, **kwargs):
+        """ disable this view when arriving by get (i.e. only allow post) """
+        raise Http404("Page does not exist")
+    
+    def get_success_url(self):
+        return reverse_lazy('projects')
+    
+
+###############
+### Clients ###
+###############
+
+    
+@login_required
+def clients(request: HttpRequest) -> HttpResponse:
+    """
+    Filters to be handled client side with DataTables
+    """
+    
+    clients = Client.objects.all()
+    
+    return render(request, 'clients.html', { "clients": clients })
+
+    
+@login_required
+def client(request: HttpRequest, client_id) -> HttpResponse:
+    # Get the project
+    client = get_object_or_404(Client, pk=client_id)
+
+    # Dict for view
+    view_dict = {}
+    view_dict['client'] = client
+
+    # Get allocations for project
+    projects = Project.objects.filter(client=client)
+    view_dict['projects'] = projects
+
+    return render(request, 'client.html', view_dict)
+    
     
 @login_required
 def commitment_view(request: HttpRequest) -> HttpResponse:

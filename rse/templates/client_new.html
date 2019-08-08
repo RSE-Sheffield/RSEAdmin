@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - New Project View {% endblock %}
-{% block page_name %} {% if edit %}Edit{% else %}New{% endif %} Project{% endblock %}
+{% block page_name %}New/Edit  Client{% endblock %}
 {% block content %}
 
 	<div class ="row">
@@ -105,9 +105,6 @@
 						{% endfor %}
 					{% endif %}
 					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
-					{% if edit %}
-					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
-					{% endif %}
 				</div>
 			
 			</form>
@@ -118,28 +115,7 @@
     </div>
 
 
-    {% if edit %}
-	<div class="modal modal-danger fade" id="delete_modal" role="dialog">
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
-					<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
-				</div>
-				<div class="modal-body">
-				<p>Deleting a project will delete ALL allocations and financial records associated with this project!</p>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
-					<form method="POST" action="{% url 'project_delete' form.instance.id %}">
-						{% csrf_token %}
-						<input type="submit" value="Delete" class="btn btn-outline"></input>
-					</form>
-				</div>
-			</div>
-		</div>
-	</div>
-	{% endif %}
+    
 
    
     

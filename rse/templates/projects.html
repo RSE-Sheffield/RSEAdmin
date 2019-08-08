@@ -57,7 +57,7 @@
 							<td>
 								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated == 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated}}%</span>
 							</td>
-							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-info btn-xs">Info</a></td>
+							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}
 					</tbody></table>

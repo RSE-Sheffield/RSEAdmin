@@ -50,7 +50,7 @@ class SalaryBand(models.Model):
     grade = models.IntegerField(default=1)
     grade_point = models.IntegerField(default=1)
     salary = models.DecimalField(max_digits=8, decimal_places=2)
-    year = models.ForeignKey(FinancialYear, on_delete=models.DO_NOTHING)
+    year = models.ForeignKey(FinancialYear, on_delete=models.PROTECT)       # Don't allow a year to be removed if there are salary bands associated with it 
     increments = models.BooleanField(default=True)                          # Increments if in normal range
 
     def __str__(self) -> str:
@@ -211,6 +211,24 @@ class Client(models.Model):
     department = models.CharField(max_length=100)   # university department      
     description = models.TextField(blank=True)
 
+    @property
+    def total_projects(self) -> int:
+        """ Returns the number of projects associated with this client """
+        return Project.objects.filter(client=self).count()
+    
+    @property    
+    def funded_projects(self) -> int:
+        """ Returns the number of active projects associated with this client """
+        return Project.objects.filter(client=self, status=Project.FUNDED).count()
+    
+    @property    
+    def funded_projects_percent(self) -> float:
+        """ Returns the number percentage of active projects associated with this client """
+        if self.total_projects > 0:
+            return self.funded_projects / self.total_projects * 100.0
+        else:
+            return 0
+
     def __str__(self) -> str:
         return self.name
 
@@ -219,7 +237,7 @@ class RSE(models.Model):
     """
     RSE represents a RSE staff member within the RSE team
     """
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     employed_from = models.DateField()
     employed_until = models.DateField()
     
@@ -321,13 +339,13 @@ class Project(PolymorphicModel):
     Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheretance much cleaner.
     See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
-    creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    creator = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField()
 
     proj_costing_id = models.CharField(max_length=50, null=True)    # Internal URMS code
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
     internal = models.BooleanField(default=False)                    # Internal or in kind projects
 
 
@@ -427,7 +445,7 @@ class AllocatedProject(Project):
         ('E', 'EU'),
     )
     overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
 
     @property
     def duration(self) -> int:
