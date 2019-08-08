@@ -54,7 +54,7 @@
 									</td>
 									<td></td>
 									<td>
-										<form method="POST" action="{% url 'project_allocations_view_delete' a.id %}">
+										<form method="POST" action="{% url 'project_allocations_delete' a.id %}">
 											{% csrf_token %}
 											<input type="submit" value="Delete" class="btn btn-block btn-danger btn-xs"></input>
 										</form>

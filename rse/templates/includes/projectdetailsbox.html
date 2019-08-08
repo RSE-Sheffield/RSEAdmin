@@ -7,7 +7,7 @@
 	  <li><a href="#tab_creation" data-toggle="tab">Creation</a></li>
 	  
 	  <li class="pull-right"><a href="{% url 'project_edit' project.id %}" class="text-muted"><i class="fa fa-edit"></i></a></li>
-	  {% if summary_icon %}<li class="pull-right"><a href="{% url 'project_view' project.id %}" class="text-muted"><i class="fa fa-area-chart"></i></a></li>{% endif %}
+	  {% if summary_icon %}<li class="pull-right"><a href="{% url 'project' project.id %}" class="text-muted"><i class="fa fa-area-chart"></i></a></li>{% endif %}
 	</ul>
 	<div class="tab-content">
 	  <div class="tab-pane active" id="tab_details">

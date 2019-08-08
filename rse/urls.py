@@ -15,11 +15,11 @@ urlpatterns = [
     ### Projects and Allocations ###
     ################################
 
-    # Reporting: View All Projects (list view)
+    # View All Projects (list view)
     url(r'^projects$', views.projects, name='projects'),
 
     # Project view
-    url(r'^project/(?P<project_id>[0-9]+)$', views.project_view, name='project_view'),
+    url(r'^project/(?P<project_id>[0-9]+)$', views.project, name='project'),
     
     # Create Project view
     url(r'^project/new$', views.project_new, name='project_new'),
@@ -31,13 +31,14 @@ urlpatterns = [
     url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations, name='project_allocations'),
     
     # Allocation delete (forwards to project allocation view)
-    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_view_delete.as_view(), name='project_allocations_view_delete'),
+    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_delete.as_view(), name='project_allocations_delete'),
 
     ###############
     ### Clients ###
     ###############
 
-    # TODO
+    # View All Clients (list view)
+    #url(r'^clients$', views.clients, name='clients'),
 
     #################
     ### Reporting ###

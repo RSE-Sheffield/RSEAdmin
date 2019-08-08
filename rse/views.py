@@ -28,7 +28,7 @@ def projects(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def project_view(request: HttpRequest, project_id) -> HttpResponse:
+def project(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
 
@@ -72,7 +72,7 @@ def project_new(request: HttpRequest) -> HttpResponse:
             new_proj.created = datetime.now().date()
             new_proj.save()
             # Go to the project view
-            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': new_proj.id}))
+            return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
     else:
         form = AllocatedProjectForm()
 
@@ -95,7 +95,7 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
             # Save to DB (add project as not a displayed field)
             form.save()
             # Go to the project view
-            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': project_id}))
+            return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': project_id}))
     else:
         form = AllocatedProjectForm(instance=proj)
     view_dict['form'] = form
@@ -135,7 +135,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     return render(request, 'project_allocations.html', view_dict)
 
 
-class project_allocations_view_delete(DeleteView):
+class project_allocations_delete(DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = RSEAllocation
     
