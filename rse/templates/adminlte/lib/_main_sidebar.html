@@ -4,57 +4,47 @@
 
 	<li class="treeview"">
 		<a href="#">
-			<i class="fa fa-dashboard"></i> <span>Reporting</span>
+			<i class="fa fa-dashboard"></i> <span>Admin</span>
 			<span class="pull-right-container">
 				<i class="fa fa-angle-left pull-right"></i>
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
-			<li><a href="{"><i class="fa fa-circle-o"></i>RSEs</a></li>
-			<li><a href="{% url 'team' %}"><i class="fa fa-circle-o"></i>Team Allocations</a></li>
-			<li><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>Commitment Summary</a></li>
-			<li><a href=""><i class="fa fa-circle-o"></i>Charging</a></li>
-			<li><a href="{% url 'clients' %}"><i class="fa fa-circle-o"></i>Clients</a></li>
-			<li><a href=""><i class="fa fa-circle-o"></i>Year End Financials</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Add New RSE</a></li>
+			<li {% if request.resolver_match.url_name == "project_new"%} class="active" {% endif %} ><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
+			<li {% if request.resolver_match.url_name == "client_new"%} class="active" {% endif %} ><a href="{% url 'client_new' %}"><i class="fa fa-circle-o"></i>Add Client</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Years</a></li>
 		</ul>
 	</li>
 	
-	<li class="header">Administration</li>	
-
     <li class="treeview"">
 		<a href="#">
-			<i class="fa fa-dashboard"></i> <span>Staffing</span>
+			<i class="fa fa-dashboard"></i> <span>Team</span>
 			<span class="pull-right-container">
 				<i class="fa fa-angle-left pull-right"></i>
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li><a href="#"><i class="fa fa-circle-o"></i>Add Year</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>Grade Points</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>Grade Point Adjustment</a></li>
+			<li {% if request.resolver_match.url_name == "rse"%} class="active" {% endif %} ><a href="{% url 'rse' user.get_username%}"><i class="fa fa-circle-o"></i>My Summary</a></li>
+			<li {% if request.resolver_match.url_name == "clients"%} class="active" {% endif %} ><a href="{% url 'clients' %}"><i class="fa fa-circle-o"></i>Clients</a></li>
+			<li {% if request.resolver_match.url_name == "projects"%} class="active" {% endif %} ><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
+			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>Team Members</a></li>
+			<li {% if request.resolver_match.url_name == "team"%} class="active" {% endif %} ><a href="{% url 'team' %}"><i class="fa fa-circle-o"></i>Team Allocations</a></li>
+			<li {% if request.resolver_match.url_name == "commitment"%} class="active" {% endif %} ><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>Team Overview</a></li>
 		</ul>
 	</li>
 	
 	<li class="treeview"">
 		<a href="#">
-			<i class="fa fa-dashboard"></i> <span>Projects</span>
+			<i class="fa fa-dashboard"></i> <span>Reports</span>
 			<span class="pull-right-container">
 				<i class="fa fa-angle-left pull-right"></i>
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
-			<li><a href="{% url 'client_new' %}"><i class="fa fa-circle-o"></i>Add Client</a></li>
-			<li><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>View Team</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Project Spends</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Cost Recovery</a></li>
 		</ul>
 	</li>
 	
-	<li class="header">Client Views</li>
-	
-    <li>
-        <a href="/some/url">
-            <i class="fa fa-user"></i> <span>Timesheets?</span>
-        </a>
-    </li>
 {% endblock nav_links %}
