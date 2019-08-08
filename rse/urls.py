@@ -9,6 +9,12 @@ urlpatterns = [
     # ex: /training
     url(r'^$', views.index, name='index'),
 
+
+
+    ################################
+    ### Projects and Allocations ###
+    ################################
+
     # Reporting: View All Projects (list view)
     url(r'^projects$', views.projects, name='projects'),
 
@@ -27,11 +33,27 @@ urlpatterns = [
     # Allocation delete (forwards to project allocation view)
     url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_view_delete.as_view(), name='project_allocations_view_delete'),
 
+    ###############
+    ### Clients ###
+    ###############
+
+    # TODO
+
+    #################
+    ### Reporting ###
+    #################
+
+
     # RSE team view all
     url(r'^team$', views.team_view, name='team_view'),
     
     # RSE team commitment view all
     url(r'^commitment$', views.commitment_view, name='commitment_view'),
+
+
+    ############
+    ### RSEs ###
+    ############
 
     # RSE view
     url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),
