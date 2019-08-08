@@ -237,7 +237,7 @@ class ProjectAllocationTests(TestCase):
         
         for p in Project.objects.all():
             # Ensure projects are 100 committed
-            self.assertAlmostEqual(p.percent_allocated(), 100.0, places=2)
+            self.assertAlmostEqual(p.percent_allocated, 100.0, places=2)
             
             
    

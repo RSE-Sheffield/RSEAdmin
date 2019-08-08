@@ -1,0 +1,98 @@
+
+<div class="nav-tabs-custom">
+	<ul class="nav nav-tabs">
+	  <li class="active"><a href="#tab_details" data-toggle="tab">Project Details</a></li>
+	  <li><a href="#tab_additional" data-toggle="tab">{% if project.is_service %}Service{% else%}Allocated{% endif %} Details</a></li>
+	  <li><a href="#tab_notes" data-toggle="tab">Notes</a></li>
+	  <li><a href="#tab_creation" data-toggle="tab">Creation</a></li>
+	  
+	  <li class="pull-right"><a href="{% url 'project_edit' project.id %}" class="text-muted"><i class="fa fa-edit"></i></a></li>
+	  {% if summary_icon %}<li class="pull-right"><a href="{% url 'project_view' project.id %}" class="text-muted"><i class="fa fa-area-chart"></i></a></li>{% endif %}
+	</ul>
+	<div class="tab-content">
+	  <div class="tab-pane active" id="tab_details">
+			<table class="table table-striped">
+				<tbody>
+					<tr><td>
+							<p><strong>Project Title:</strong> {{project.name}} </p>
+						</td></tr>
+
+					<tr><td>
+							<p><strong>Costing ID:</strong> {{project.proj_costing_id}} </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>Client Name:</strong> {{project.client.name}} ({{project.client.department}})</p>
+						</td></tr>
+					<tr><td>
+							<p><strong>Internal:</strong> {{project.internal}} </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>Internal:</strong> {{project.internal}} </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>Start:</strong> {{project.start}} </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>End:</strong> {{project.end}} </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>FTE:</strong> {{project.fte}}% </p>
+						</td></tr>
+					<tr><td>
+							<p><strong>Status:</strong> {{project.get_status_display}} </p>
+						</td></tr>
+
+				</tbody>
+			</table>
+	  </div>
+	  
+	  <div class="tab-pane" id="tab_additional">
+			<table class="table table-striped">
+				<tbody>
+
+						{% if project.is_service %}
+					<tr><td>
+							<p><strong>Service Days:</strong> {{project.days}} </p>
+					</td></tr>
+					<tr><td>
+							<p><strong>Service Rate:</strong> {{project.rate}} </p>
+					</td></tr>
+					<tr><td>
+							<p><strong>FTE Duration (Days):</strong> {{project.duration}} </p>
+					</td></tr>
+						 {% else %}
+					<tr><td>
+							<p><strong>Allocated Percentage:</strong> {{project.percentage}}%</p>
+					</td></tr>
+					<tr><td>
+							<p><strong>Overheads:</strong> {{project.get_overheads_display}} </p>
+					</td></tr>
+					<tr><td>
+							<p><strong>Initial Salary Band:</strong> G{{project.salary_band.grade}}.{{project.salary_band.grade_point}} ({{project.salary_band.year.year}}) </p>
+					</td></tr>
+						 {% endif %}
+				</tbody>
+			</table>
+	  </div>
+	  
+	  <div class="tab-pane" id="tab_notes">
+			<p><strong>Description / Notes:</strong>  </p>
+			
+			<textarea class="form-control" rows="20" disabled="">{{project.description}}</textarea>
+	  </div>
+	  
+	  <div class="tab-pane" id="tab_creation">
+			<table class="table table-striped">
+				<tbody>	
+					<tr><td>
+						<p><strong>Created by:</strong> {{project.creator}}</p>
+						</td></tr>
+					<tr><td>
+						<p><strong>Created Date:</strong> {{project.created}} </p>
+					</td></tr>
+				</tbody>
+			</table>
+	  </div>
+	  
+	</div>
+</div>

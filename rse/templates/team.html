@@ -5,12 +5,53 @@
 {% block stylesheets %}
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool - {{ rse }} {% endblock %}
+{% block page_name %}RSE Team Allocation Summary {% endblock %}
 {% block content %}
 
     <div class ="row">
+        		
+		<div class="col-md-4">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Filter</h3>
+            </div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+				  <div class="form-group">
+					
+					<label>Date range:</label>
+					<p><i>Will show any projects which have any time within the selected date range</i><p>
+					<div class="input-group">
+					  <div class="input-group-addon">
+						<i class="fa fa-calendar"></i>
+					  </div>
+					  {{ form.filter_range }}
+					</div>
+					</br>
+					
+						
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{ form.status }}
+					</br>
+					
+				  </div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div> {{temp}}
+			</form>
+          </div>
+        </div>
+    </div>
+   
+	
+	
+	<div class ="row">
         <div class="col-md-12">
           <div class="box box-solid">
             <div class="box-header with-border">
@@ -18,9 +59,9 @@
             </div>
             <div class="box-body">
               <div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-          </div>
-        </div>
-      </div>
+			</div>
+		  </div>
+		</div>
     </div>
  
 {% endblock %}
@@ -28,9 +69,11 @@
 {% block javascript %}
 {{ block.super}}
 <script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
+
+
 <script type="text/javascript">
-    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'day');
-    
+	// Gantt
+    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
     if( g.getDivId() != null ) {
         {% for rse, allocation in rses.items %}
             g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}, '{{rse}}', '', '', 'ggroupblack', '', 0, '', 0, 1, 0,  1, '', '', '', g));
@@ -43,4 +86,8 @@
         g.Draw();
     }
 </script>
+
+{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" auto_submit=False%}
+
+
 {% endblock %}

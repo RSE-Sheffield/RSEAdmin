@@ -10,11 +10,13 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li><a href="#"><i class="fa fa-circle-o"></i>Projects</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>RSEs</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>Team</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>Clients</a></li>
-			<li><a href="#"><i class="fa fa-circle-o"></i>Year End Financials</a></li>
+			<li><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
+			<li><a href="{"><i class="fa fa-circle-o"></i>RSEs</a></li>
+			<li><a href="{% url 'team_view' %}"><i class="fa fa-circle-o"></i>Team</a></li>
+			<li><a href="{% url 'commitment_view' %}"><i class="fa fa-circle-o"></i>Commitment Summary</a></li>
+			<li><a href=""><i class="fa fa-circle-o"></i>Charging</a></li>
+			<li><a href=""><i class="fa fa-circle-o"></i>Clients</a></li>
+			<li><a href=""><i class="fa fa-circle-o"></i>Year End Financials</a></li>
 		</ul>
 	</li>
 	
@@ -42,7 +44,7 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li><a href="#"><i class="fa fa-circle-o"></i>Add Project</a></li>
+			<li><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
 			<li><a href="#"><i class="fa fa-circle-o"></i>Add Client</a></li>
 			<li><a href="#"><i class="fa fa-circle-o"></i>View Team</a></li>
 		</ul>

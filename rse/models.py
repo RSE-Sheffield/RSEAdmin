@@ -9,6 +9,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from polymorphic.models import PolymorphicModel
+from django.db.models import Max, Min
+import itertools as it
 
 
 class FinancialYear(models.Model):
@@ -249,6 +251,13 @@ class RSE(models.Model):
         This may be based on real grade changes in the future or estimated from current financial year increments (see `salary_band_after_increment` notes in `SalaryBand`)
         """
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
+        
+    @property
+    def colour_rbg(self) -> str:
+        r = hash(self.user.first_name) % 255
+        g = hash(self.user.last_name) % 255
+        b = hash(self.user.first_name + self.user.last_name) %255
+        return {"r": r, "g": g, "b": b}
 
 
 
@@ -356,28 +365,44 @@ class Project(PolymorphicModel):
     def type_str(self) -> str:
         """ Implemented by concrete classes """        
         pass
+        
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        pass
+        
     
     @property    
     def fte(self) -> int:
         """ Implemented by concrete classes """        
         pass
-        
+    
+    @property      
     def project_days(self) -> float:
         """ Duration times by fte """
         return self.duration * self.fte / 100.0
     
+    @property  
     def committed_days(self) -> float:
         """ Returns the committed effort in days from any allocation on this project """
-        # Sum effort in commitments
-        effort = 0.0
-        for a in RSEAllocation.objects.filter(project=self):
-            effort += a.effort()
+        return sum(a.effort for a in RSEAllocation.objects.filter(project=self))
         
-        return effort
-              
+    @property
+    def remaining_days(self) -> float:
+        """ Return the number of unallocated (i.e. remaining) days for project """
+        return self.project_days - self.committed_days
+        
+    @property
+    def remaining_days_at_fte(self) -> float:
+        """ Return the number of unallocated (i.e. remaining) days for project at the projects standard fte percentage"""
+        return self.remaining_days / self.fte * 100
+        
+    @property            
     def percent_allocated(self) -> float:
         """ Gets all allocations for this project and sums FTE*days to calculate committed effort """
-        return self.committed_days() / self.project_days() * 100
+        return round(self.committed_days / self.project_days * 100, 2)
+        
+        
             
         
     def __str__(self):
@@ -429,6 +454,11 @@ class AllocatedProject(Project):
         """
         return "Allocated"
         
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        return False
+    
     @property    
     def fte(self) -> int:
         """ Returns the FTE equivalent for this project """        
@@ -461,11 +491,17 @@ class ServiceProject(Project):
         Returns a plain string representation of the project type
         """
         return "Service"
-        
+    
+    @property
+    def is_service(self) -> bool:
+        """ Implemented by concrete classes """        
+        return True
+    
     @property    
     def fte(self) -> int:
         """ Returns the FTE equivalent (always 100% days) """        
         return 100
+
 
 class RSEAllocation(models.Model):
     """
@@ -484,12 +520,18 @@ class RSEAllocation(models.Model):
     @property
     def duration(self):
         return (self.end - self.start).days
-        
+           
+    @property    
     def effort(self) -> float:
         """
         Returns the number of days allocated on project (multiplied by fte)
         """
         return self.duration* self.percentage / 100.0
+
+    @property
+    def project_allocation_percentage(self) -> float:
+        """ Returns the percentage of this allocation from project total """
+        return self.effort / self.project.project_days *100.0
 
     def staff_cost(self, start=None, end=None):
         """
@@ -503,3 +545,52 @@ class RSEAllocation(models.Model):
             end = self.end
 
         return self.rse.staff_cost(start, end, self.percentage)
+        
+    @staticmethod
+    def min_allocation_start() -> date:
+        """ Returns the first start date for all allocations (i.e. the first allocation in the database) """
+        return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+    
+    @staticmethod
+    def max_allocation_end() -> date:
+        """ Returns the last end date for all allocations (i.e. the last allocation end in the database) """
+        return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+    
+    @staticmethod    
+    def commitment_summary(allocations : 'RSEAllocation', from_date: date = None, until_date : date = None):
+        
+        # TODO: Return exclusive date in which RSE effort changes with list of allocations maintained
+        # I.e. (date, FTE, (allocations))
+        
+        
+        # Helpful lambda function for max where a value may be None
+        # lambda function returns a if b is None or f(a,b) if b is not none
+        f_bnone = lambda f, a, b: a if b is None else f(a, b)  
+        
+        # Generate a list of start and end dates and store the percentage FTE effort (negative for end dates)
+        starts = [[f_bnone(max, item.start, from_date), item.percentage, item] for item in allocations]
+        ends = [[f_bnone(min, item.end, until_date), -item.percentage, item] for item in allocations]
+
+        # Combine start and end dates and sort
+        events = sorted(starts + ends, key=lambda x: x[0])
+        
+        # iterate dates (d), percentages (p) and allocations (a) and accumulate allocations
+        cumulative_allocations = []
+        active_allocations = []
+        for d, p, a in events:
+            # add or remove allocation depending on percentage
+            if p > 0 :
+                active_allocations.append(a)
+            if p < 0 :
+                active_allocations.remove(a)
+            # add list of allocations to to cumulative allocations
+            cumulative_allocations.append(list(active_allocations))
+            
+        # Accumulate effort by unpacking events and then apply prefix sum to deltas (FTE accumulations)
+        dates, deltas, allocs = zip(*events)
+        effort = list(it.accumulate(deltas))
+        
+        # return list of (date, effort, [RSEAllocation])
+        return list(zip(dates, effort, cumulative_allocations))
+    
+

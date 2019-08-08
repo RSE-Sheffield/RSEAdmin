@@ -1,17 +1,14 @@
 from datetime import datetime
-import itertools as it
-
 from django.contrib.auth.decorators import login_required
+from django.views.generic.edit import DeleteView
+from django.urls import reverse_lazy
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.db.models import Max, Min
 
-from .models import (
-    Project,
-    RSE,
-    RSEAllocation,
-    User,
-    )
+from .models import *
+from .forms import *
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -42,15 +39,157 @@ def project_view(request: HttpRequest, project_id) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
 
-    # Calculate commitments
-    view_dict['proj_days'] = proj.duration
-    view_dict['committed_days'] = sum(a.duration for a in allocations)
 
     # Add proj to dict
-    view_dict['proj'] = proj
+    view_dict['project'] = proj
+    
+        
+    # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
+    allocation_unique_rses = allocations.values('rse').distinct()
+    commitment_data = []
+    for a in allocation_unique_rses:
+        rse_allocations = allocations.filter(rse__id=a['rse'])
+        rse = RSE.objects.get(id=a['rse'])
+        commitment_data.append((rse, RSEAllocation.commitment_summary(rse_allocations)))
+    view_dict['commitment_data'] = commitment_data
+	
 
-    return render(request, 'project_view.html', view_dict)
+    return render(request, 'project.html', view_dict)
 
+@login_required
+def project_new(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':
+        form = AllocatedProjectForm(request.POST)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            new_proj = form.save(commit=False)
+            new_proj.creator = request.user
+            new_proj.created = datetime.now().date()
+            new_proj.save()
+            # Go to the project view
+            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': new_proj.id}))
+    else:
+        form = AllocatedProjectForm()
+
+    view_dict['form'] = form
+    
+    return render(request, 'project_new.html', view_dict)
+ 
+@login_required
+def project_edit(request: HttpRequest, project_id) -> HttpResponse:
+    
+    # Get the project (as generic project to ensure correct ID)
+    proj = get_object_or_404(Project, pk=project_id)
+    
+    # Dict for view
+    view_dict = {}
+
+    if request.method == 'POST':
+        form = AllocatedProjectForm(request.POST, instance=proj)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            form.save()
+            # Go to the project view
+            return HttpResponseRedirect(reverse_lazy('project_view', kwargs={'project_id': project_id}))
+    else:
+        form = AllocatedProjectForm(instance=proj)
+    view_dict['form'] = form
+    
+    return render(request, 'project_new.html', view_dict)
+ 
+
+ 
+@login_required
+def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
+    # Get the project
+    proj = get_object_or_404(Project, pk=project_id)
+    
+    # Dict for view
+    view_dict = {}
+    view_dict['project'] = proj
+    
+    # Get allocations for project
+    allocations = RSEAllocation.objects.filter(project=proj)
+    view_dict['allocations'] = allocations
+
+    # Create new allocation form (this will fill in start date and end date automatically based of any previous commitments
+    if request.method == 'POST':
+        form = ProjectAllocationForm(request.POST, project=proj)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            a = form.save(commit=False)
+            a.project = proj
+            a.save()
+    else:
+        form = ProjectAllocationForm(project=proj)
+
+    view_dict['form'] = form
+    
+	
+
+    return render(request, 'project_allocations.html', view_dict)
+
+
+class project_allocations_view_delete(DeleteView):
+    """ POST only special delete view which redirects to project allocation view """
+    model = RSEAllocation
+    
+    def get_success_url(self):
+        return reverse_lazy('project_allocations_view', kwargs={'project_id': self.object.project.id})
+    
+@login_required
+def commitment_view(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = None
+    until_date = None
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
+    else:
+        form = FilterProjectForm()
+        
+    # Get RSE allocations grouped by RSE based off Q filter and save the form
+    allocations = RSEAllocation.objects.filter(q)
+    view_dict['form'] = form
+        
+    # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
+    allocation_unique_rses = allocations.values('rse').distinct()
+    commitment_data = []
+    for a in allocation_unique_rses:
+        rse_allocations = allocations.filter(rse__id=a['rse'])
+        rse = RSE.objects.get(id=a['rse'])
+        commitment_data.append((rse, RSEAllocation.commitment_summary(rse_allocations, from_date, until_date)))
+    view_dict['commitment_data'] = commitment_data
+	
+
+    return render(request, 'commitments.html', view_dict)
+
+
+@login_required
+def rseid_view(request: HttpRequest, rse_id: int) -> HttpResponse:
+    rse = get_object_or_404(RSE, id=rse_id)
+    
+    return rse_view(request, rse.user.username)
 
 @login_required
 def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
@@ -63,65 +202,39 @@ def rse_view(request: HttpRequest, rse_username: str) -> HttpResponse:
     # Get RSE if exists
     rse = get_object_or_404(RSE, user=user)
     view_dict['rse'] = rse
-
-    # Query parameters for allocation query (has optional range query)
+	
+    # Construct q query and check the project filter form
     q = Q()
-
-    # Date range from GET
     from_date = None
     until_date = None
-    if request.method == 'GET' and 'dateRange' in request.GET:
-        try:
-            from_date = datetime.strptime(request.GET['dateRange'].split(' - ')[0], '%d/%m/%Y').date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
             q &= Q(end__gte=from_date)
-            until_date = datetime.strptime(request.GET['dateRange'].split(' - ')[1], '%d/%m/%Y').date()
+            until_date = filter_range[1]
             q &= Q(start__lte=until_date)
-        except ValueError:
-            pass
 
-    # Get allocations for RSE
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
+    else:
+        form = FilterProjectForm()
+    
+
+    # Get RSE allocations grouped by RSE based off Q filter and save the form
     q &= Q(rse=rse)
     allocations = RSEAllocation.objects.filter(q)
     view_dict['allocations'] = allocations
+    view_dict['form'] = form
 
-    # Clip allocations by filter date
-    f_bnone = lambda f, a, b: a if b is None else f(a, b)  # lambda function returns a if b is None or f(a,b) if b is not none
-    starts = [[f_bnone(max, item.start, from_date), item.percentage, item] for item in allocations]
-    ends = [[f_bnone(min, item.end, until_date), -item.percentage, item] for item in allocations]
-
-    # Create list of start and end dates and sort
-    events = sorted(starts + ends, key=lambda x: x[0])
-    # accumulate effort
-    pdates, deltas, allocs = zip(*events)
-    effort = list(it.accumulate(deltas))
-
-    # Set date range to min and max from allocations if none was specified
-    if from_date is None:
-        from_date = pdates[0]
-    if until_date is None:
-        until_date = pdates[-1]
-
-    # add plot events for changes in FTE
-    plot_events = list(zip(pdates, effort, allocs))
-    view_dict['plot_events'] = plot_events
-
-    # Calculate commitment summary
-    # TODO: August inflation
-    staff_cost = rse.staff_cost(from_date, until_date)
-    staff_recovered = sum([a.staff_cost(from_date, until_date)
-                           for a in allocations])
-
-    # Overview data
-    view_dict['report_duration'] = (pdates[-1] - pdates[0]).days
-    view_dict['staff_cost'] = staff_cost
-    view_dict['staff_recovered'] = staff_recovered
-    view_dict['staff_recovered_percent'] = (staff_recovered / staff_cost) * 100
-    view_dict['staff_shortfall'] = staff_cost - staff_recovered
-
-    # Date range (may be from first and last project or request GET data)
-    view_dict['filter_date'] = f"{from_date:%d/%m/%Y} - {until_date:%d/%m/%Y}"
-
-    return render(request, 'rse_view.html', view_dict)
+    # Get the commitment summary (date, effort, RSEAllocation)
+    if allocations:
+        view_dict['commitment_data'] = [(rse, RSEAllocation.commitment_summary(allocations, from_date, until_date))]
+	
+    return render(request, 'rse.html', view_dict)
 
 
 @login_required
@@ -129,10 +242,31 @@ def team_view(request: HttpRequest) -> HttpResponse:
     # Dict for view
     view_dict = {}
 
-    # Get RSE if exists
+    # Construct q query and check the project filter form
+    q = Q()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status != 'A':
+                q &= Q(project__status=status)
+    else:
+        form = FilterProjectForm()
+    
+
+    # Get RSE allocations grouped by RSE based off Q filter and save the form
     rses = {}
     for rse in RSE.objects.all():
-        rses[rse] = RSEAllocation.objects.filter(rse=rse)
+        rses[rse] = RSEAllocation.objects.filter(q, rse=rse)
     view_dict['rses'] = rses
+    view_dict['form'] = form
 
-    return render(request, 'team_view.html', view_dict)
+
+    return render(request, 'team.html', view_dict)
