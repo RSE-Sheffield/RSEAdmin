@@ -5,6 +5,7 @@ from typing import Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.utils import OperationalError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -574,13 +575,25 @@ class RSEAllocation(models.Model):
         
     @staticmethod
     def min_allocation_start() -> date:
-        """ Returns the first start date for all allocations (i.e. the first allocation in the database) """
-        return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+        """ 
+        Returns the first start date for all allocations (i.e. the first allocation in the database) 
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+        except OperationalError:
+            return timezone.now().date()
     
     @staticmethod
     def max_allocation_end() -> date:
-        """ Returns the last end date for all allocations (i.e. the last allocation end in the database) """
-        return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+        """ 
+        Returns the last end date for all allocations (i.e. the last allocation end in the database)
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+        except OperationalError:
+            return timezone.now().date()
     
     @staticmethod    
     def commitment_summary(allocations : 'RSEAllocation', from_date: date = None, until_date : date = None):

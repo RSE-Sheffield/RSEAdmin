@@ -323,9 +323,9 @@ def rse(request: HttpRequest, rse_username: str) -> HttpResponse:
 
 @login_required
 def rseid(request: HttpRequest, rse_id: int) -> HttpResponse:
-    rse = get_object_or_404(RSE, id=rse_id)
+    r = get_object_or_404(RSE, id=rse_id)
     
-    return rse_view(request, rse.user.username)
+    return rse(request, r.user.username)
 
 @login_required
 def rses(request: HttpRequest) -> HttpResponse:
