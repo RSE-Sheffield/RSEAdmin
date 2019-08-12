@@ -18,8 +18,14 @@ urlpatterns = [
     # View All Projects (list view)
     url(r'^projects$', views.projects, name='projects'),
 
-    # Create Project view
+    # Create Allocated Project view
     url(r'^project/new$', views.project_new, name='project_new'),
+
+    # Create Allocated Project view
+    url(r'^project/allocated/new$', views.project_new_allocated, name='project_new_allocated'),
+    
+    # Create Service Project view
+    url(r'^project/service/new$', views.project_new_service, name='project_new_service'),
 
     # Project view
     url(r'^project/(?P<project_id>[0-9]+)$', views.project, name='project'),

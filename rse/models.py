@@ -497,6 +497,7 @@ class ServiceProject(Project):
     """
     days = models.IntegerField(default=1)                           # duration in days
     rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate 
+    charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
     
     @property
     def duration(self) -> int:

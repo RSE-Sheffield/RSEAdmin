@@ -57,8 +57,102 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
 
     return render(request, 'project.html', view_dict)
 
+
 @login_required
 def project_new(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':
+        form = ProjectTypeForm(request.POST)
+        if form.is_valid():
+            type = form.cleaned_data['type']
+            if type == 'A':
+                return project_new_allocated(request)
+            else:
+                return project_new_service(request)
+    else:
+        form = ProjectTypeForm()
+
+    view_dict['form'] = form
+    
+    return render(request, 'project_new.html', view_dict)
+
+
+@login_required
+def project_new_allocated(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST' and 'project_submit' in request.POST:
+        form = AllocatedProjectForm(request.POST)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            new_proj = form.save()
+            # If there is a url to go to next then go there otherwise go to project view
+            next = request.GET.get('next', None)
+            if next:
+                return HttpResponseRedirect(next)
+            else:
+                return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
+    else:
+        form = AllocatedProjectForm()
+        # If request has a client id then automatically set this in the initial form data
+        client_id = request.GET.get('client', None)
+        if client_id:
+            try:
+                client = Client.objects.get(id=client_id)
+                form.initial['client'] = client
+            except:
+                pass
+        form.initial['creator'] = request.user
+        form.initial['created'] = timezone.now().date()
+
+    view_dict['form'] = form
+    
+    return render(request, 'project_allocated_new.html', view_dict)
+
+@login_required
+def project_new_service(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST' and 'project_submit' in request.POST:
+        form = ServiceProjectForm(request.POST)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            new_proj = form.save()
+            # If there is a url to go to next then go there otherwise go to project view
+            next = request.GET.get('next', None)
+            if next:
+                return HttpResponseRedirect(next)
+            else:
+                return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
+    else:
+        form = ServiceProjectForm()
+        # If request has a client id then automatically set this in the initial form data
+        client_id = request.GET.get('client', None)
+        if client_id:
+            try:
+                client = Client.objects.get(id=client_id)
+                form.initial['client'] = client
+            except:
+                pass
+        form.initial['creator'] = request.user
+        form.initial['created'] = timezone.now().date()
+
+    view_dict['form'] = form
+    
+    return render(request, 'project_service_new.html', view_dict)
+
+@login_required
+def project_allocated_new(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
     view_dict = {}
