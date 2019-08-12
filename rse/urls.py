@@ -81,5 +81,8 @@ urlpatterns = [
     
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
+    
+    # Add RSE View
+    
 
 ]
