@@ -70,24 +70,9 @@
 
 {% block javascript %}
 {{ block.super}}
-<script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
 
+{% include "includes/rsesgantt.html" with rses=rses %}
 
-<script type="text/javascript">
-	// Gantt
-    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
-    if( g.getDivId() != null ) {
-        {% for rse, allocation in rses.items %}
-            g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}, '{{rse}}', '', '', 'ggroupblack', '', 0, '', 0, 1, 0,  1, '', '', '', g));
-            
-            {% for a in allocation %}
-                g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}{{a.id}}, '{{a.project}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, {{ rse.id }},  1, '', '', '', g));
-            {% endfor %}
-        {% endfor %}
-
-        g.Draw();
-    }
-</script>
 
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" auto_submit=False%}
 

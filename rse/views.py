@@ -416,6 +416,11 @@ def rse(request: HttpRequest, rse_username: str) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(q)
     view_dict['allocations'] = allocations
     view_dict['form'] = form
+    
+    # RSE in dictinary with allocations
+    rses = {}
+    rses[rse] = allocations
+    view_dict['rses'] = rses
 
     # Get the commitment summary (date, effort, RSEAllocation)
     if allocations:

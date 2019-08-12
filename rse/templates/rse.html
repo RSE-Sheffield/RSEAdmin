@@ -87,18 +87,7 @@
 {% block javascript %}
 {{ block.super}}
 
-<!-- Gantt chart  -->
-<script language="javascript" src="{% static 'jsGanttImproved/jsgantt.js' %}"></script>
-<script type="text/javascript">
-    var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
-    if( g.getDivId() != null ) {
-        {% for a in allocations %}
-            g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}{{a.id}}, '{{a.project}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, '',  1, '', '', '', g));
-        {% endfor %}
-        
-        g.Draw();
-    }
-</script>
+{% include "includes/rsesgantt.html" with rses=rses %}
 
 {% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
 
