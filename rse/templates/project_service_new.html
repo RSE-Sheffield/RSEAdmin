@@ -1,0 +1,189 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - New Project View {% endblock %}
+{% block page_name %} {% if edit %}Edit{% else %}New{% endif %} Service Project{% endblock %}
+{% block content %}
+
+	<div class ="row">
+             
+        <div class="col-md-8">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Service Project</h3>
+            </div>
+            
+			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_service' %}{% endif %}">
+				{% csrf_token %} 
+											
+				<div class="box-body no-padding">
+			
+							<table id="id_project_table" class="table table-striped">
+								<tbody>
+								
+									<tr><td>
+									<strong>Client:</strong>
+										<div class="input-group">
+											{{ form.client}}
+											<div class="input-group-addon">
+												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_service' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
+											</div>
+										</div>
+									</td></tr>
+								
+									<tr><td>
+									<strong>Project Name:</strong>
+									{{ form.name}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Project Internal ID (URMS or equivalent):</strong>
+									{{ form.proj_costing_id}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Description / Notes:</strong>
+									{{ form.description}}
+									</td></tr>
+									
+									<tr><td>
+										<strong>Start Date:</strong>
+										<div class="input-group">
+											<div class="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>
+											{{ form.start}}
+										</div>
+									</td></tr>
+									
+									<tr><td>
+										<strong>End Date:</strong>
+										<div class="input-group">
+											<div class="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>
+											{{ form.end}}
+										</div>
+									</td></tr>
+									
+									<tr><td>
+									<strong>Internal:</strong>
+									{{ form.internal}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Status:</strong>
+									{{ form.status}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Number of Service Days:</strong>
+									{{ form.days}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Service Rate:</strong>
+									{{ form.rate}}
+									</td></tr>
+									
+									<tr><td>
+									<strong>Charged to RSE account:</strong>
+									{{ form.charged}}
+									</td></tr>
+									
+								</tbody>
+								{{ form.created}}
+								{{ form.creator}}
+							</table>
+				</div>
+				
+				<div class="box-footer">
+					{% if form.errors %}
+						{% for field in form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+					<input type="submit" name="project_submit" value="Save" class="btn btn-primary btn-xm"></input>
+					{% if edit %}
+					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
+					{% endif %}
+				</div>
+			
+			</form>
+          </div>
+        </div>
+			
+		
+    </div>
+
+
+    {% if edit %}
+	<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+				</div>
+				<div class="modal-body">
+				<p>Deleting a project will delete ALL allocations and financial records associated with this project!</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+					<form method="POST" action="{% url 'project_delete' form.instance.id %}">
+						{% csrf_token %}
+						<input type="submit" value="Delete" class="btn btn-outline"></input>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+
+   
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+<script type="text/javascript">	
+	//Start Date Picker
+	$('#{{form.start.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+	//End date picker
+	$('#{{form.end.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+
+
+
+</script>
+
+{% endblock %}

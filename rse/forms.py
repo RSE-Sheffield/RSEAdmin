@@ -72,6 +72,16 @@ class FilterDateRangeForm(forms.Form):
         
         
         
+class ProjectTypeForm(forms.Form):
+    """
+    Class represents a filter form for filtering by date range and service type used by many views which display multiple project views.
+    Extends the filter range form by adding type and status fields
+    """
+
+    type = forms.ChoiceField(choices = (('S', 'Service'),('A', 'Allocated')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    
+
+        
 class FilterProjectForm(FilterDateRangeForm):
     """
     Class represents a filter form for filtering by date range and service type used by many views which display multiple project views.
@@ -81,7 +91,7 @@ class FilterProjectForm(FilterDateRangeForm):
     status = forms.ChoiceField(choices = (('A', 'All'),) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     # Type cant be filtered at database level as it is a property
     #type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
-    
+      
     
 class ProjectAllocationForm(forms.ModelForm):
     """
@@ -171,5 +181,58 @@ class AllocatedProjectForm(forms.ModelForm):
         
         if errors:
             raise ValidationError(errors)
+
+class ServiceProjectForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a project
+    """
     
+    # Fields are created manually to set the date input format
+    start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+    class Meta:
+        model = ServiceProject
+        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'days', 'rate', 'charged', 'created', 'creator']
+        widgets = {
+            'proj_costing_id': forms.TextInput(attrs={'class' : 'form-control'}),
+            'name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'description': forms.Textarea(attrs={'class' : 'form-control'}),
+            'client': forms.Select(attrs={'class' : 'form-control'}),
+            'internal': forms.CheckboxInput(),
+            'status': forms.Select(choices = Project.STATUS_CHOICES, attrs={'class' : 'form-control pull-right'}),
+            'days': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'rate': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'charged': forms.CheckboxInput(),
+            'creator': forms.HiddenInput(),
+            'created': forms.HiddenInput(),
+        }
+        
+    def clean(self):
+        cleaned_data=super(ServiceProjectForm, self).clean()
+        errors = {}
+        
+        # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
+        if cleaned_data['start'] and cleaned_data['end']:
+            if cleaned_data['start'] > cleaned_data['end'] :
+                errors['end'] = ('Project end date can not be before start date')
+        
+        if errors:
+            raise ValidationError(errors)
+                
+            
+class ClientForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a client
+    """
+    class Meta:
+        model = Client
+        fields = ['name', 'department', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'department': forms.TextInput(attrs={'class' : 'form-control'}),
+            'description': forms.Textarea(attrs={'class' : 'form-control'}),    
+        }
+        
+  
     

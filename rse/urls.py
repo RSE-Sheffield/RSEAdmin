@@ -9,15 +9,27 @@ urlpatterns = [
     # ex: /training
     url(r'^$', views.index, name='index'),
 
-    # Reporting: View All Projects (list view)
+
+
+    ################################
+    ### Projects and Allocations ###
+    ################################
+
+    # View All Projects (list view)
     url(r'^projects$', views.projects, name='projects'),
 
-    # Project view
-    url(r'^project/(?P<project_id>[0-9]+)$', views.project_view, name='project_view'),
-    
-    # Create Project view
+    # Create Allocated Project view
     url(r'^project/new$', views.project_new, name='project_new'),
+
+    # Create Allocated Project view
+    url(r'^project/allocated/new$', views.project_new_allocated, name='project_new_allocated'),
     
+    # Create Service Project view
+    url(r'^project/service/new$', views.project_new_service, name='project_new_service'),
+
+    # Project view
+    url(r'^project/(?P<project_id>[0-9]+)$', views.project, name='project'),
+      
     # Edit Project view
     url(r'^project/(?P<project_id>[0-9]+)/edit$', views.project_edit, name='project_edit'),
     
@@ -25,18 +37,49 @@ urlpatterns = [
     url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations, name='project_allocations'),
     
     # Allocation delete (forwards to project allocation view)
-    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_view_delete.as_view(), name='project_allocations_view_delete'),
-
-    # RSE team view all
-    url(r'^team$', views.team_view, name='team_view'),
+    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_delete.as_view(), name='project_allocations_delete'),
     
-    # RSE team commitment view all
-    url(r'^commitment$', views.commitment_view, name='commitment_view'),
+    # Project delete
+    url(r'^project/(?P<pk>[0-9]+)/delete$', views.project_delete.as_view(), name='project_delete'),
 
-    # RSE view
-    url(r'^rse/(?P<rse_username>[\w]+)$', views.rse_view, name='rse_view'),
+    ###############
+    ### Clients ###
+    ###############
+
+    # View All Clients (list view)
+    url(r'^clients$', views.clients, name='clients'),
+    
+    # View a client (and associated projects)
+    url(r'^client/(?P<client_id>[0-9]+)$', views.client, name='client'),
+    
+    # Add a new client
+    url(r'^client/new$', views.client_new, name='client_new'),
+    
+    # Edit a client (and associated projects)
+    url(r'^client/(?P<client_id>[0-9]+)/edit$', views.client_edit, name='client_edit'),
+    
+    # Edit a client (and associated projects)
+    url(r'^client/(?P<pk>[0-9]+)/delete$', views.client_delete.as_view(), name='client_delete'),
+
+
+    ############
+    ### RSEs ###
+    ############
+
+    # View a single RSE
+    url(r'^rse/(?P<rse_username>[\w]+)$', views.rse, name='rse'),
+    
+    # RSE view list
+    url(r'^rses$', views.rses, name='rses'),
         
     # RSE allocation view by rse id
-    url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid_view, name='rseid_view'),
-    url(r'^rse/id/$', views.rseid_view, name='rseid_view'), # without id parameter
+    url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid, name='rseid'),
+    url(r'^rse/id/$', views.rseid, name='rseid'), # without id parameter
+       
+    # RSE team view all
+    url(r'^team$', views.team, name='team'),
+    
+    # RSE team commitment view all
+    url(r'^commitment$', views.commitment, name='commitment'),
+
 ]

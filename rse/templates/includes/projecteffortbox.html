@@ -1,7 +1,7 @@
-<div class="box box-solid">
+<div class="box box-default">
 	<div class="box-header with-border">
 		<h3 class="box-title"> Effort Reporting </h3>
-		{% if edit_icon %} <span class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted"><i class="fa fa-edit"></i></a></span>{% endif %}
+		{% if edit_icon %} <span class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></span>{% endif %}
 	</div>
 	<div class="box-body">
 		<p><span class="float-left badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated >= 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated}}%</span> of Project Allocated</p>

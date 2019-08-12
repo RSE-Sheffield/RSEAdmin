@@ -1,0 +1,79 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block page_name %}View Clients{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			
+			<div class="box-body table-responsive padding">
+				<table id="clients" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="id">ID</th>
+							<th id="name">Name</th>
+							<th id="department">Department</th>
+							<th id="description">Description</th>
+							<th id="num_active_projects">Active Projects</th>
+							<th id="num_active_projects_label"></th>
+							<th id="more"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for c in clients %}
+						<tr>
+							<td>{{ c.id }}</td>
+							<td>{{ c.name }}</td>
+							<td>{{ c.department }}</td>
+							<td>{{ c.description|truncatechars:100 }}</td>
+							<td> 
+								<div class="progress progress-xs progress-striped active">
+									<div class="progress-bar progress-bar-primary" style="width: {{c.funded_projects_percent}}%"></div>
+								</div>
+							</td>
+							<td>
+								<span class="badge bg-light-blue">{{ c.funded_projects }} / {{ c.total_projects }}</span>
+							 </td>
+							<td><a href="{% url 'client' c.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+						</tr>
+						{% endfor %}
+					</tbody></table>
+			</div>
+		</div>
+	</div>
+
+	
+
+
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+	<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#clients').DataTable({
+				pageLength: 25,
+				scrollX: false,
+			} );
+		} );
+		
+	</script>
+{% endblock %}
+

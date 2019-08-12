@@ -5,6 +5,7 @@ from typing import Optional
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.utils import OperationalError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -50,7 +51,7 @@ class SalaryBand(models.Model):
     grade = models.IntegerField(default=1)
     grade_point = models.IntegerField(default=1)
     salary = models.DecimalField(max_digits=8, decimal_places=2)
-    year = models.ForeignKey(FinancialYear, on_delete=models.DO_NOTHING)
+    year = models.ForeignKey(FinancialYear, on_delete=models.PROTECT)       # Don't allow a year to be removed if there are salary bands associated with it 
     increments = models.BooleanField(default=True)                          # Increments if in normal range
 
     def __str__(self) -> str:
@@ -211,6 +212,24 @@ class Client(models.Model):
     department = models.CharField(max_length=100)   # university department      
     description = models.TextField(blank=True)
 
+    @property
+    def total_projects(self) -> int:
+        """ Returns the number of projects associated with this client """
+        return Project.objects.filter(client=self).count()
+    
+    @property    
+    def funded_projects(self) -> int:
+        """ Returns the number of active projects associated with this client """
+        return Project.objects.filter(client=self, status=Project.FUNDED).count()
+    
+    @property    
+    def funded_projects_percent(self) -> float:
+        """ Returns the number percentage of active projects associated with this client """
+        if self.total_projects > 0:
+            return self.funded_projects / self.total_projects * 100.0
+        else:
+            return 0
+
     def __str__(self) -> str:
         return self.name
 
@@ -219,19 +238,27 @@ class RSE(models.Model):
     """
     RSE represents a RSE staff member within the RSE team
     """
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     employed_from = models.DateField()
     employed_until = models.DateField()
     
     @property
-    def current_employment(_self):
+    def current_employment(self):
         """
         Is the staff member currently employed
         """
-        return self.employed_from < timezone.now() and self.employed_until > timezone.now()
+        now = timezone.now().date()
+        return self.employed_from < now and self.employed_until > now
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name}"
+    
+    @property
+    def current_capacity(self) -> float:
+        """ Returns the current capacity of an RSE as a percentage of FTE """
+        now = timezone.now().date()
+        return sum(a.percentage for a in RSEAllocation.objects.filter(rse=self, start__lte=now, end__gt=now))
+        
 
     def lastSalaryGradeChange(self, date: date = timezone.now()):
         """
@@ -321,13 +348,13 @@ class Project(PolymorphicModel):
     Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheretance much cleaner.
     See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
-    creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    creator = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField()
 
     proj_costing_id = models.CharField(max_length=50, null=True)    # Internal URMS code
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    client = models.ForeignKey(Client, on_delete=models.DO_NOTHING)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT)
     internal = models.BooleanField(default=False)                    # Internal or in kind projects
 
 
@@ -427,7 +454,7 @@ class AllocatedProject(Project):
         ('E', 'EU'),
     )
     overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
 
     @property
     def duration(self) -> int:
@@ -470,6 +497,7 @@ class ServiceProject(Project):
     """
     days = models.IntegerField(default=1)                           # duration in days
     rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate 
+    charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
     
     @property
     def duration(self) -> int:
@@ -548,13 +576,25 @@ class RSEAllocation(models.Model):
         
     @staticmethod
     def min_allocation_start() -> date:
-        """ Returns the first start date for all allocations (i.e. the first allocation in the database) """
-        return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+        """ 
+        Returns the first start date for all allocations (i.e. the first allocation in the database) 
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return RSEAllocation.objects.aggregate(Min('start'))['start__min']
+        except OperationalError:
+            return timezone.now().date()
     
     @staticmethod
     def max_allocation_end() -> date:
-        """ Returns the last end date for all allocations (i.e. the last allocation end in the database) """
-        return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+        """ 
+        Returns the last end date for all allocations (i.e. the last allocation end in the database)
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return RSEAllocation.objects.aggregate(Max('end'))['end__max']
+        except OperationalError:
+            return timezone.now().date()
     
     @staticmethod    
     def commitment_summary(allocations : 'RSEAllocation', from_date: date = None, until_date : date = None):

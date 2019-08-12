@@ -1,0 +1,131 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - New Project View {% endblock %}
+{% block page_name %}{% if edit %}Edit{% else %}New{% endif %} Client{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-8">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">{% if edit %}Edit{% else %}New{% endif %} Client</h3>
+            </div>
+            
+			<form method="POST" action="">
+				{% csrf_token %}
+											
+				<div class="box-body no-padding">
+				
+					<table id="id_client_table" class="table table-striped">
+						<tbody>
+						
+							<tr><td>
+							<strong>Client Name:</strong>
+							{{ form.name}}
+							</td></tr>
+							
+							<tr><td>
+							<strong>Department</strong>
+							{{ form.department}}
+							</td></tr>
+							
+							<tr><td>
+							<strong>Description / Notes:</strong>
+							{{ form.description}}
+							</td></tr>
+							
+						</tbody>
+					</table>
+				</div>
+				
+				<div class="box-footer">
+					{% if form.errors %}
+						{% for field in form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+					{% if edit %}
+						<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
+					{% endif %}
+				</div>
+			
+			</form>
+          </div>
+        </div>
+			
+		
+    </div>
+
+
+    
+    {% if edit %}
+	
+		{% if form.instance.total_projects > 0 %}
+			<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+							<h4 class="modal-title" id="myModalLabel">Unable to delete client</h4>
+						</div>
+						<div class="modal-body">
+						<p>It is not possible to delete a client with associated projects. Manually delete the clients projects first.</p>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline" data-dismiss="modal">Ok</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		{% else %}
+			<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+							<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+						</div>
+						<div class="modal-body">
+						<p>Are you sure you wish to delete this client?</p>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+							<form method="POST" action="{% url 'client_delete' form.instance.id %}">
+								{% csrf_token %}
+								<input type="submit" value="Delete" class="btn btn-outline"></input>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>	
+		{% endif %}
+
+	{% endif %}
+   
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+
+{% endblock %}
