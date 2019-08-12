@@ -6,3 +6,4 @@ static-root
 *egg-info
 db.sqlite3
 .coverage
+/migrations/
