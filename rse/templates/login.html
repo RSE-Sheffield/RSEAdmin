@@ -1,0 +1,12 @@
+{% extends "adminlte/login.html" %}
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block logo_text %}<b>RSE</b>Admin{% endblock %}
+
+
+{% block form %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form  }}
+    </form>
+{% endblock %}

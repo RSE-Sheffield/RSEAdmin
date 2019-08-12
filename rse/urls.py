@@ -1,5 +1,6 @@
 """urlpatterns for the rse Django app."""
 from django.conf.urls import url
+from django.contrib.auth import views as auth_views
 
 from . import views
 
@@ -9,7 +10,16 @@ urlpatterns = [
     # ex: /training
     url(r'^$', views.index, name='index'),
 
-
+    #######################
+    ### Authentication ####
+    #######################
+    
+    # Login using built in auth view
+    url(r'^login/?$', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    
+    # Logout using built in auth view
+    url(r'^logout/?$', auth_views.LogoutView.as_view(), name='logout'),
+    
 
     ################################
     ### Projects and Allocations ###

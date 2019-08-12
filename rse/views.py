@@ -12,8 +12,11 @@ from .models import *
 from .forms import *
 
 
+
+@login_required
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html')
+
 
 
 ################################
