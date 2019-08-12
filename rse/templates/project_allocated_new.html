@@ -19,7 +19,7 @@
               <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Allocated Project</h3>
             </div>
             
-			<form method="POST" action="{% url 'project_new_allocated' %}">
+			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_allocated' %}{% endif %}">
 				{% csrf_token %} 
 											
 				<div class="box-body no-padding">

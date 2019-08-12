@@ -194,22 +194,30 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
     
     # Dict for view
     view_dict = {}
+    
+    # depending on project type change the form and template
+    if isinstance(proj, AllocatedProject):
+        formclass = AllocatedProjectForm
+        template = 'project_allocated_new.html'
+    else :
+        formclass = ServiceProjectForm
+        template = 'project_service_new.html'
 
     if request.method == 'POST':
-        form = AllocatedProjectForm(request.POST, instance=proj)
+        form = formclass(request.POST, instance=proj)
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             form.save()
             # Go to the project view
             return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': project_id}))
     else:
-        form = AllocatedProjectForm(instance=proj)
+        form = formclass(instance=proj)
     view_dict['form'] = form
     
     # Add edit field to indicate delete should be available
     view_dict['edit'] = True
     
-    return render(request, 'project_new.html', view_dict)
+    return render(request, template, view_dict)
  
 
  
