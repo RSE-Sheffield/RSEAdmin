@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404, HttpResponseServerError
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Max, Min, ProtectedError
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from .models import *
 from .forms import *
@@ -154,40 +156,6 @@ def project_new_service(request: HttpRequest) -> HttpResponse:
     
     return render(request, 'project_service_new.html', view_dict)
 
-@login_required
-def project_allocated_new(request: HttpRequest) -> HttpResponse:
-
-    # Dict for view
-    view_dict = {}
-    
-    # process or create form
-    if request.method == 'POST':
-        form = AllocatedProjectForm(request.POST)
-        if form.is_valid():
-            # Save to DB (add project as not a displayed field)
-            new_proj = form.save()
-            # If there is a url to go to next then go there otherwise go to project view
-            next = request.GET.get('next', None)
-            if next:
-                return HttpResponseRedirect(next)
-            else:
-                return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
-    else:
-        form = AllocatedProjectForm()
-        # If request has a client id then automatically set this in the initial form data
-        client_id = request.GET.get('client', None)
-        if client_id:
-            try:
-                client = Client.objects.get(id=client_id)
-                form.initial['client'] = client
-            except:
-                pass
-        form.initial['creator'] = request.user
-        form.initial['created'] = timezone.now().date()
-
-    view_dict['form'] = form
-    
-    return render(request, 'project_new.html', view_dict)
  
 @login_required
 def project_edit(request: HttpRequest, project_id) -> HttpResponse:
@@ -237,28 +205,34 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
 
-    # Create new allocation form (this will fill in start date and end date automatically based of any previous commitments
-    if request.method == 'POST':
-        form = ProjectAllocationForm(request.POST, project=proj)
-        if form.is_valid():
-            # Save to DB (add project as not a displayed field)
-            a = form.save(commit=False)
-            a.project = proj
-            a.save()
-    else:
-        form = ProjectAllocationForm(project=proj)
+    # Create new allocation form (this will fill in start date and end date automatically based of any previous commitments)
+    # Only for super users
+    if request.user.is_superuser:
+        if request.method == 'POST':
+            form = ProjectAllocationForm(request.POST, project=proj)
+            if form.is_valid():
+                # Save to DB (add project as not a displayed field)
+                a = form.save(commit=False)
+                a.project = proj
+                a.save()
+        else:
+            form = ProjectAllocationForm(project=proj)
 
-    view_dict['form'] = form
+        view_dict['form'] = form
     
 	
 
     return render(request, 'project_allocations.html', view_dict)
 
 
-class project_allocations_delete(DeleteView):
+class project_allocations_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = RSEAllocation
     
+    def test_func(self):
+        """ Only for super users """
+        return self.request.user.is_superuser
+        
     def get(self, request, *args, **kwargs):
         """ disable this view when arriving by get (i.e. only allow post) """
         raise Http404("Page does not exist")
@@ -266,10 +240,14 @@ class project_allocations_delete(DeleteView):
     def get_success_url(self):
         return reverse_lazy('project_allocations', kwargs={'project_id': self.object.project.id})
     
-class project_delete(DeleteView):
+class project_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = Project
     
+    def test_func(self):
+        """ Only for super users """
+        return self.request.user.is_superuser
+        
     def get(self, request, *args, **kwargs):
         """ disable this view when arriving by get (i.e. only allow post) """
         raise Http404("Page does not exist")
@@ -359,10 +337,15 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
     
     return render(request, 'client_new.html', view_dict)
  
-class client_delete(DeleteView):
+class client_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to clients list view """
     model = Client
     
+    def test_func(self):
+        """ Only for super users """
+        return self.request.user.is_superuser
+     
+     
     def get(self, request, *args, **kwargs):
         """ disable this view when arriving by get (i.e. only allow post) """
         raise Http404("Page does not exist")
@@ -370,13 +353,6 @@ class client_delete(DeleteView):
     def get_success_url(self):
         return reverse_lazy('clients')
         
-    #def post(self, request, *args, **kwargs):
-    #    """  Custom error handling for forbidden delete (due to on_delete.PROTECTED) when client has active projects """
-    #    try:
-    #        return self.delete(request, *args, **kwargs)
-    #    except ProtectedError:
-    #        return HttpResponseServerError("Unable to delete client with existing projects")
-            
        
 ########################
    

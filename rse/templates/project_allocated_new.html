@@ -119,7 +119,7 @@
 						{% endfor %}
 					{% endif %}
 					<input type="submit" name="project_submit" value="Save" class="btn btn-primary btn-xm"></input>
-					{% if edit %}
+					{% if edit and user.is_superuser%}
 					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
 					{% endif %}
 				</div>
@@ -132,7 +132,7 @@
     </div>
 
 
-    {% if edit %}
+    {% if edit and user.is_superuser %}%}
 	<div class="modal modal-danger fade" id="delete_modal" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">

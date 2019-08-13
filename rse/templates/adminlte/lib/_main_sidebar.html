@@ -10,10 +10,12 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Add New RSE</a></li>
 			<li {% if request.resolver_match.url_name == "project_new"%} class="active" {% endif %} ><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
 			<li {% if request.resolver_match.url_name == "client_new"%} class="active" {% endif %} ><a href="{% url 'client_new' %}"><i class="fa fa-circle-o"></i>Add Client</a></li>
+			{% if user.is_superuser %}
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Add New RSE</a></li>
 			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Years</a></li>
+			{% endif %}
 		</ul>
 	</li>
 	
@@ -34,6 +36,7 @@
 		</ul>
 	</li>
 	
+	{% if user.is_superuser %}
 	<li class="treeview"">
 		<a href="#">
 			<i class="fa fa-dashboard"></i> <span>Reports</span>
@@ -46,5 +49,6 @@
 			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Cost Recovery</a></li>
 		</ul>
 	</li>
+	{% endif %}
 	
 {% endblock nav_links %}
