@@ -1,6 +1,7 @@
 """urlpatterns for the rse Django app."""
 from django.conf.urls import url
 from django.contrib.auth import views as auth_views
+from django.urls import reverse_lazy
 
 from . import views
 
@@ -19,6 +20,9 @@ urlpatterns = [
     
     # Logout using built in auth view
     url(r'^logout/?$', auth_views.LogoutView.as_view(), name='logout'),
+    
+    # Logout using built in auth view
+    url(r'^changepassword/?$', auth_views.PasswordChangeView.as_view(template_name='changepassword.html', success_url=reverse_lazy('index')), name='change_password'),
     
 
     ################################
