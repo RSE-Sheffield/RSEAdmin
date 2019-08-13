@@ -24,6 +24,10 @@ urlpatterns = [
     # Logout using built in auth view
     url(r'^changepassword/?$', auth_views.PasswordChangeView.as_view(template_name='changepassword.html', success_url=reverse_lazy('index')), name='change_password'),
     
+    # Logout using built in auth view
+    url(r'^newuser/?$', views.newuser, name='newuser'),
+    
+
 
     ################################
     ### Projects and Allocations ###

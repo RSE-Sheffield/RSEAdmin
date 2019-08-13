@@ -1,5 +1,6 @@
 from django import forms
 from datetime import datetime, timedelta
+from django.contrib.auth.forms import UserCreationForm
 
 from .models import *
 
@@ -234,5 +235,45 @@ class ClientForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class' : 'form-control'}),    
         }
         
-  
+
+class UserTypeForm(forms.Form):
+    """
+    Class represents a filter form for filtering by date range and service type used by many views which display multiple project views.
+    Extends the filter range form by adding type and status fields
+    """
+
+    user_type = forms.ChoiceField(choices = (('A', 'Administrator'),('R', 'RSE')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     
+
+  
+class NewUserForm(UserCreationForm):    
+    """ Class for creating a new user """
+    
+    # Field to allow user to be an admin user
+    is_admin = forms.BooleanField()
+    
+    def save(self, commit=True):
+        """ Override save to make user a superuser """
+        user = super(UserCreationForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        # make an admin if checked
+        if self.cleaned_data["is_admin"]:
+            user.is_superuser = True
+        if commit:
+            user.save()
+        return user
+    
+class RSEForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a client
+    """
+    
+    employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+
+    
+    class Meta:
+        model = RSE
+        fields = ['employed_from', 'employed_until']
+  

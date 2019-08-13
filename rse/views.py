@@ -20,6 +20,49 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html')
 
 
+@user_passes_test(lambda u: u.is_superuser)
+def newuser(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':
+        user_type_form = UserTypeForm(request.POST)
+        
+        # if no username field then only the user type form exists
+        if 'username' not in request.GET():
+            type = user_type_form.cleaned_data['user_type']
+            if type == 'R':
+                rse_form = RSEForm()
+                view_dict['rse_form'] = rse_form
+            user_form = NewUserForm()
+            view_dict['user_form'] = user_form
+        else:
+            type = user_type_form.cleaned_data['user_type']
+            if type == 'R':
+                rse_form = RSEForm(request.POST)
+                view_dict['rse_form'] = rse_form
+            user_form = NewUserForm(request.POST)
+            view_dict['user_form'] = user_form
+            
+            # process rse user
+            if type == 'R' and rse_form.is_valid() and user_form.is_valid(): 
+                user = user_form.save()
+                rse = rse_form.save(commit=False)
+                rse.user = user
+                rse.save()
+                
+            # process admin user
+            if type == 'A' and user_form.is_valid(): 
+                user_form.save()
+        
+    else:
+        user_type_form = UserTypeForm()
+
+    view_dict['user_type_form'] = user_type_form
+
+    return render(request, 'index.html')
 
 ################################
 ### Projects and Allocations ###
