@@ -249,8 +249,19 @@ class UserTypeForm(forms.Form):
 class NewUserForm(UserCreationForm):    
     """ Class for creating a new user """
     
+    def __init__(self, *args, **kwargs):
+        """ Override init to customise the UserCreationForm widget class appearance """
+        super(NewUserForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].widget.attrs['class'] = 'form-control'
+        self.fields['password1'].widget.attrs['class'] = 'form-control'
+        self.fields['password2'].widget.attrs['class'] = 'form-control'
+        
+        for fieldname in ['username', 'password1', 'password2']:
+            self.fields[fieldname].help_text = None
+    
     # Field to allow user to be an admin user
-    is_admin = forms.BooleanField()
+    is_admin = forms.BooleanField(initial=False, required=False)
     
     def save(self, commit=True):
         """ Override save to make user a superuser """
@@ -263,7 +274,7 @@ class NewUserForm(UserCreationForm):
             user.save()
         return user
     
-class RSEForm(forms.ModelForm):    
+class NewRSEUserForm(forms.ModelForm):    
     """
     Class for creation and editing of a client
     """

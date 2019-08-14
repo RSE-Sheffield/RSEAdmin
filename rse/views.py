@@ -21,48 +21,76 @@ def index(request: HttpRequest) -> HttpResponse:
 
 
 @user_passes_test(lambda u: u.is_superuser)
-def newuser(request: HttpRequest) -> HttpResponse:
+def user_new(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
     view_dict = {}
     
     # process or create form
     if request.method == 'POST':
-        user_type_form = UserTypeForm(request.POST)
-        
-        # if no username field then only the user type form exists
-        if 'username' not in request.GET():
-            type = user_type_form.cleaned_data['user_type']
+        form = UserTypeForm(request.POST)
+        if form.is_valid():
+            type = form.cleaned_data['user_type']
             if type == 'R':
-                rse_form = RSEForm()
-                view_dict['rse_form'] = rse_form
-            user_form = NewUserForm()
-            view_dict['user_form'] = user_form
-        else:
-            type = user_type_form.cleaned_data['user_type']
-            if type == 'R':
-                rse_form = RSEForm(request.POST)
-                view_dict['rse_form'] = rse_form
-            user_form = NewUserForm(request.POST)
-            view_dict['user_form'] = user_form
-            
-            # process rse user
-            if type == 'R' and rse_form.is_valid() and user_form.is_valid(): 
-                user = user_form.save()
-                rse = rse_form.save(commit=False)
-                rse.user = user
-                rse.save()
-                
-            # process admin user
-            if type == 'A' and user_form.is_valid(): 
-                user_form.save()
-        
+                return user_new_rse(request)
+            else:
+                return user_new_admin(request)
+                 
     else:
-        user_type_form = UserTypeForm()
+        # default option is administrator view
+        form = UserTypeForm()
+    view_dict['form'] = form
 
-    view_dict['user_type_form'] = user_type_form
+    return render(request, 'user_new.html', view_dict)
+    
+    
+@user_passes_test(lambda u: u.is_superuser)
+def user_new_rse(request: HttpRequest) -> HttpResponse:
 
-    return render(request, 'index.html')
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':        
+        user_form = NewUserForm(request.POST) 
+        rse_form = NewRSEUserForm(request.POST) 
+        # process admin user
+        if user_form.is_valid() and rse_form.is_valid(): 
+            user = user_form.save()
+            rse = rse_form.save(commit=False)
+            rse.user = user
+            rse.save()
+            return HttpResponseRedirect(reverse_lazy('index'))
+                
+    else:
+        user_form = NewUserForm()
+        rse_form = NewRSEUserForm() 
+        
+    view_dict['user_form'] = user_form
+    view_dict['rse_form'] = rse_form
+
+    return render(request, 'user_new_rse.html', view_dict)
+    
+@user_passes_test(lambda u: u.is_superuser)
+def user_new_admin(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':        
+        user_form = NewUserForm(request.POST) 
+        # process admin user
+        if user_form.is_valid(): 
+            user_form.save()
+            return HttpResponseRedirect(reverse_lazy('index'))
+                
+    else:
+        user_form = NewUserForm()
+        
+    view_dict['user_form'] = user_form
+
+    return render(request, 'user_new_admin.html', view_dict)
 
 ################################
 ### Projects and Allocations ###

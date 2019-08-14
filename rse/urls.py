@@ -21,11 +21,17 @@ urlpatterns = [
     # Logout using built in auth view
     url(r'^logout/?$', auth_views.LogoutView.as_view(), name='logout'),
     
-    # Logout using built in auth view
+    # change password using built in auth view
     url(r'^changepassword/?$', auth_views.PasswordChangeView.as_view(template_name='changepassword.html', success_url=reverse_lazy('index')), name='change_password'),
     
-    # Logout using built in auth view
-    url(r'^newuser/?$', views.newuser, name='newuser'),
+    # New user (choose type) view
+    url(r'^user/new/?$', views.user_new, name='user_new'),
+    
+    # New rse user view
+    url(r'^user/new/rse?$', views.user_new_rse, name='user_new_rse'),
+    
+    # New admin user view
+    url(r'^user/new/admin?$', views.user_new_admin, name='user_new_admin'),
     
 
 

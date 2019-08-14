@@ -13,7 +13,7 @@
 			<li {% if request.resolver_match.url_name == "project_new"%} class="active" {% endif %} ><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
 			<li {% if request.resolver_match.url_name == "client_new"%} class="active" {% endif %} ><a href="{% url 'client_new' %}"><i class="fa fa-circle-o"></i>Add Client</a></li>
 			{% if user.is_superuser %}
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Add New RSE</a></li>
+			<li {% if request.resolver_match.url_name == "user_new"%} class="active" {% endif %} ><a href="{% url 'user_new' %}"><i class="fa fa-circle-o"></i>Add New User</a></li>
 			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Years</a></li>
 			{% endif %}
 		</ul>
