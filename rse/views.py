@@ -33,9 +33,9 @@ def user_new(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             type = form.cleaned_data['user_type']
             if type == 'R':
-                return user_new_rse(request)
+                return HttpResponseRedirect(reverse_lazy('user_new_rse'))
             else:
-                return user_new_admin(request)
+                return HttpResponseRedirect(reverse_lazy('user_new_admin'))
                  
     else:
         # default option is administrator view

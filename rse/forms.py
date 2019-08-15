@@ -262,6 +262,9 @@ class NewUserForm(UserCreationForm):
     
     # Field to allow user to be an admin user
     is_admin = forms.BooleanField(initial=False, required=False)
+    first_name =  forms.CharField(widget=forms.TextInput(attrs={'class' : 'form-control'}), required=True)
+    last_name =  forms.CharField(widget=forms.TextInput(attrs={'class' : 'form-control'}), required=True)
+    email =  forms.EmailField(widget=forms.EmailInput(attrs={'class' : 'form-control'}), required=True)
     
     def save(self, commit=True):
         """ Override save to make user a superuser """
@@ -270,6 +273,11 @@ class NewUserForm(UserCreationForm):
         # make an admin if checked
         if self.cleaned_data["is_admin"]:
             user.is_superuser = True
+        # add extra fields
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        user.email = self.cleaned_data["email"]
+        # commit
         if commit:
             user.save()
         return user
