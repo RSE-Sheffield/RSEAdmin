@@ -61,6 +61,7 @@ def user_new_rse(request: HttpRequest) -> HttpResponse:
             rse = rse_form.save(commit=False)
             rse.user = user
             rse.save()
+            messages.add_message(request, messages.SUCCESS, f'New RSE user {user.username} created.')
             return HttpResponseRedirect(reverse_lazy('index'))
                 
     else:
@@ -83,8 +84,8 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
         user_form = NewUserForm(request.POST) 
         # process admin user
         if user_form.is_valid(): 
-            user_form.save()
-            messages.add_message(request, messages.SUCCESS, f'New user {user.username} created.')
+            user = user_form.save()
+            messages.add_message(request, messages.SUCCESS, f'New admin user {user.username} created.')
             return HttpResponseRedirect(reverse_lazy('index'))
                 
     else:
@@ -171,6 +172,7 @@ def project_new_allocated(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
+            messages.add_message(request, messages.SUCCESS, f'New project {new_proj.name} created.')
             # If there is a url to go to next then go there otherwise go to project view
             next = request.GET.get('next', None)
             if next:
@@ -206,6 +208,7 @@ def project_new_service(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
+            messages.add_message(request, messages.SUCCESS, f'New project {new_proj.name} created.')
             # If there is a url to go to next then go there otherwise go to project view
             next = request.GET.get('next', None)
             if next:
@@ -251,7 +254,8 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
         form = formclass(request.POST, instance=proj)
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
-            form.save()
+            project = form.save()
+            messages.add_message(request, messages.SUCCESS, f'Project {project.name} details successfully updated.')
             # Go to the project view
             return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': project_id}))
     else:
@@ -288,6 +292,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
                 a = form.save(commit=False)
                 a.project = proj
                 a.save()
+                messages.add_message(request, messages.SUCCESS, f'Allocation created.')
         else:
             form = ProjectAllocationForm(project=proj)
 
@@ -301,6 +306,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
 class project_allocations_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = RSEAllocation
+    success_message = "Project allocation deleted successfully."
     
     def test_func(self):
         """ Only for super users """
@@ -312,10 +318,15 @@ class project_allocations_delete(UserPassesTestMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('project_allocations', kwargs={'project_id': self.object.project.id})
+        
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(project_allocations_delete, self).delete(request, *args, **kwargs)
     
 class project_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = Project
+    success_message = "Project deleted successfully."
     
     def test_func(self):
         """ Only for super users """
@@ -327,6 +338,10 @@ class project_delete(UserPassesTestMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('projects')
+        
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(project_delete, self).delete(request, *args, **kwargs)
     
 
 ###############
@@ -398,7 +413,8 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
-            form.save()
+            client = form.save()
+            messages.add_message(request, messages.SUCCESS, f'Client {client.name} details successfully updated.')
             # Go to the project view
             return HttpResponseRedirect(reverse_lazy('project', kwargs={'client_id': client_id}))
     else:
@@ -413,6 +429,7 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
 class client_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to clients list view """
     model = Client
+    success_message = "Client deleted successfully."
     
     def test_func(self):
         """ Only for super users """
@@ -425,6 +442,10 @@ class client_delete(UserPassesTestMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('clients')
+        
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(client_delete, self).delete(request, *args, **kwargs)
         
        
 ########################
