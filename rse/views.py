@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, render
 from django.db.models import Max, Min, ProtectedError
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib import messages
 
 from .models import *
 from .forms import *
@@ -83,6 +84,7 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
         # process admin user
         if user_form.is_valid(): 
             user_form.save()
+            messages.add_message(request, messages.SUCCESS, f'New user {user.username} created.')
             return HttpResponseRedirect(reverse_lazy('index'))
                 
     else:
