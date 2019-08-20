@@ -295,9 +295,9 @@
 	//update the delete url for modal dialogue on load
 	$('#delete_modal').on('show.bs.modal', function (event) {
 		var allocation_id = $(event.relatedTarget).data('val');
+		// construct url dynamically
 		var url_str = window.location.protocol + "//" + document.location.host + "{% url 'project_allocations_delete_noid' %}" + allocation_id;
 		var url = new URL(url_str);
-		console.log(url.toString());
 		$('#id_allocation_delete_form').attr('action', url.toString());
 	});
 

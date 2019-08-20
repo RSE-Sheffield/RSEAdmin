@@ -30,8 +30,14 @@ urlpatterns = [
     # New rse user view
     url(r'^user/new/rse?$', views.user_new_rse, name='user_new_rse'),
     
+    # Edit rse user
+    url(r'^user/edit/rse/(?P<rse_id>[0-9]+)?$', views.user_edit_rse, name='user_edit_rse'),
+    
     # New admin user view
     url(r'^user/new/admin?$', views.user_new_admin, name='user_new_admin'),
+    
+    # Edit admin user view
+    url(r'^user/edit/admin/(?P<user_id>[0-9]+)?$', views.user_edit_admin, name='user_edit_admin'),
     
 
 

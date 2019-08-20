@@ -1,6 +1,6 @@
 from django import forms
 from datetime import datetime, timedelta
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 from .models import *
 
@@ -249,34 +249,73 @@ class UserTypeForm(forms.Form):
 class NewUserForm(UserCreationForm):    
     """ Class for creating a new user """
     
+    # Field to allow user to be an admin user
+    is_admin = forms.BooleanField(initial=False, required=False)
+
+    class Meta:
+        model = User
+        fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email')
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'email': forms.EmailInput(attrs={'class' : 'form-control'}),
+        }
+ 
     def __init__(self, *args, **kwargs):
         """ Override init to customise the UserCreationForm widget class appearance """
         super(NewUserForm, self).__init__(*args, **kwargs)
-
+        
+        # set html attributes of fields in parent form
         self.fields['username'].widget.attrs['class'] = 'form-control'
         self.fields['password1'].widget.attrs['class'] = 'form-control'
         self.fields['password2'].widget.attrs['class'] = 'form-control'
-        
         for fieldname in ['username', 'password1', 'password2']:
             self.fields[fieldname].help_text = None
     
-    # Field to allow user to be an admin user
-    is_admin = forms.BooleanField(initial=False, required=False)
-    first_name =  forms.CharField(widget=forms.TextInput(attrs={'class' : 'form-control'}), required=True)
-    last_name =  forms.CharField(widget=forms.TextInput(attrs={'class' : 'form-control'}), required=True)
-    email =  forms.EmailField(widget=forms.EmailInput(attrs={'class' : 'form-control'}), required=True)
-    
+ 
     def save(self, commit=True):
         """ Override save to make user a superuser """
-        user = super(UserCreationForm, self).save(commit=False)
+        user = super(NewUserForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
         # make an admin if checked
         if self.cleaned_data["is_admin"]:
             user.is_superuser = True
-        # add extra fields
-        user.first_name = self.cleaned_data["first_name"]
-        user.last_name = self.cleaned_data["last_name"]
-        user.email = self.cleaned_data["email"]
+        # commit
+        if commit:
+            user.save()
+        return user
+        
+class EditUserForm(UserChangeForm):    
+    """ Class for creating a new user """
+    
+    # Field to allow user to be an admin user
+    is_admin = forms.BooleanField(initial=False, required=False)
+ 
+    def __init__(self, *args, **kwargs):
+        """ Override init to customise the UserCreationForm widget class appearance """
+        super(EditUserForm, self).__init__(*args, **kwargs)
+        
+        # if super user then set the is_admin initial value
+        if self.instance.is_superuser:
+            self.fields['is_admin'].initial = True
+            
+    
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+        widgets = {
+            'username': forms.TextInput(attrs={'class' : 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'email': forms.EmailInput(attrs={'class' : 'form-control'}),
+        }
+ 
+    def save(self, commit=True):
+        """ Override save to make user a superuser """
+        user = super(EditUserForm, self).save(commit=False)
+        # make an admin if checked
+        if self.cleaned_data["is_admin"]:
+            user.is_superuser = True
         # commit
         if commit:
             user.save()

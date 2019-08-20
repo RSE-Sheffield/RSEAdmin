@@ -72,6 +72,39 @@ def user_new_rse(request: HttpRequest) -> HttpResponse:
     view_dict['rse_form'] = rse_form
 
     return render(request, 'user_new_rse.html', view_dict)
+
+@user_passes_test(lambda u: u.is_superuser)
+def user_edit_rse(request: HttpRequest, rse_id) -> HttpResponse:
+
+    # Get the RSE
+    rse = get_object_or_404(RSE, pk=rse_id)
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':        
+        user_form = EditUserForm(request.POST, instance=rse.user) 
+        rse_form = NewRSEUserForm(request.POST, instance=rse) 
+        # process admin user
+        if user_form.is_valid() and rse_form.is_valid(): 
+            user = user_form.save()
+            rse = rse_form.save(commit=False)
+            rse.user = user
+            rse.save()
+            messages.add_message(request, messages.SUCCESS, f'RSE user {user.username} detais updated.')
+            return HttpResponseRedirect(reverse_lazy('index'))
+                
+    else:
+        user_form = EditUserForm(instance=rse.user)
+        rse_form = NewRSEUserForm(instance=rse) 
+        
+    view_dict['user_form'] = user_form
+    view_dict['rse_form'] = rse_form
+    view_dict['edit'] = True
+
+    return render(request, 'user_new_rse.html', view_dict)
+  
     
 @user_passes_test(lambda u: u.is_superuser)
 def user_new_admin(request: HttpRequest) -> HttpResponse:
@@ -94,6 +127,41 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
     view_dict['user_form'] = user_form
 
     return render(request, 'user_new_admin.html', view_dict)
+
+@user_passes_test(lambda u: u.is_superuser)
+def user_edit_admin(request: HttpRequest, user_id) -> HttpResponse:
+
+    # Get the RSE
+    user = get_object_or_404(User, pk=user_id)
+    
+    # TODO: Redirect if RSE as well
+    try:
+        rse = RSE.objects.get(user=user)
+        return HttpResponseRedirect(reverse_lazy('user_edit_rse', kwargs={'rse_id': rse.id}))
+    except RSE.DoesNotExist:
+        pass
+
+
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':        
+        user_form = EditUserForm(request.POST, instance=user) 
+        # process admin user
+        if user_form.is_valid(): 
+            user = user_form.save()
+            messages.add_message(request, messages.SUCCESS, f'Admin user {user.username} details updated.')
+            return HttpResponseRedirect(reverse_lazy('index'))
+                
+    else:
+        user_form = EditUserForm(instance=user)
+        
+    view_dict['user_form'] = user_form
+    view_dict['edit'] = True
+
+    return render(request, 'user_new_admin.html', view_dict)
+
 
 ################################
 ### Projects and Allocations ###
