@@ -55,16 +55,18 @@ urlpatterns = [
     url(r'^project/(?P<project_id>[0-9]+)$', views.project, name='project'),
       
     # Edit Project view
-    url(r'^project/(?P<project_id>[0-9]+)/edit$', views.project_edit, name='project_edit'),
+    url(r'^project/edit/(?P<project_id>[0-9]+)$', views.project_edit, name='project_edit'),
     
     # Project allocation view
     url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations, name='project_allocations'),
     
     # Allocation delete (forwards to project allocation view)
-    url(r'^project/allocations/(?P<pk>[0-9]+)/delete$', views.project_allocations_delete.as_view(), name='project_allocations_delete'),
+    url(r'^project/allocations/delete/(?P<pk>[0-9]+)$', views.project_allocations_delete.as_view(), name='project_allocations_delete'),
+    url(r'^project/allocations/delete/$', views.project_allocations_delete.as_view(), name='project_allocations_delete_noid'), # trailing id version for dynamically (JS) constructed urls
     
     # Project delete
-    url(r'^project/(?P<pk>[0-9]+)/delete$', views.project_delete.as_view(), name='project_delete'),
+    url(r'^project/delete/(?P<pk>[0-9]+)$', views.project_delete.as_view(), name='project_delete'),
+    
 
     ###############
     ### Clients ###
@@ -80,10 +82,10 @@ urlpatterns = [
     url(r'^client/new$', views.client_new, name='client_new'),
     
     # Edit a client (and associated projects)
-    url(r'^client/(?P<client_id>[0-9]+)/edit$', views.client_edit, name='client_edit'),
+    url(r'^client/edit/(?P<client_id>[0-9]+)$', views.client_edit, name='client_edit'),
     
     # Edit a client (and associated projects)
-    url(r'^client/(?P<pk>[0-9]+)/delete$', views.client_delete.as_view(), name='client_delete'),
+    url(r'^client/delete/(?P<pk>[0-9]+)$', views.client_delete.as_view(), name='client_delete'),
 
 
     ############
