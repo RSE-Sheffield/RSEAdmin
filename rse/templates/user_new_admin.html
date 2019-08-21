@@ -80,6 +80,9 @@
 					{% endif %}
 					
 					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+					{% if edit %}
+					<a class="btn btn-danger btn-xm pull-right" href="{% url 'user_change_password' user_form.instance.id %}">Change Password</a>
+					{% endif %}
 				</div>
 			</form>
           </div>

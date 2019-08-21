@@ -10,7 +10,7 @@
 
 {% block title %}RSE Group Administration Tool{% endblock %}
 
-{% block page_name %}View RSE Team{% endblock %}
+{% block page_name %}View all Users{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -18,42 +18,38 @@
 		<div class="box">
 			
 			<div class="box-body table-responsive padding">
-				<table id="rses" class="table table-hover">
+				<table id="users" class="table table-hover">
 					<thead>
 						<tr>
-							<th id="name">Name</th>
-							<th id="name">Username</th>
-							<th id="department">Employed From</th>
-							<th id="description">Employed Until</th>
-							<th id="description">Currently Employment</th>
-							<th id="num_active_projects">Current Capacity</th>
-							<th id="num_active_projects_label"></th>
+							<th id="name">First Name</th>
+							<th id="name">Last Name</th>
+							<th id="department">Username</th>
+							<th id="description">User Type</th>
+							<th id="description">Is Admin</th>
 							<th id="more"></th>
 						</tr>
 					</thead>
 					<tbody>
-						{% for rse in rses %}
+						{% for user in users %}
 						<tr>
-							<td>{{ rse.user.first_name }} {{ rse.user.last_name }}</td>
-							<td>{{ rse.user.username }}</td>
-							<td>{{ rse.employed_from }}</td>
-							<td>{{ rse.employed_until }}</td>
+							<td>{{ user.first_name }}</td>
+							<td>{{ user.last_name }}</td>
+							<td>{{ user.username }}</td>
 							<td>
-								{% if rse.current_employment %}
+								{% if user|isrseuser %}
+								<span class="badge bg-green">RSE Team Member</span>
+								{%else %}
+								<span class="badge bg-red">Admin</span>
+								{% endif %}
+							</td>
+							<td>{% if user.is_superuser %}
 									<span class="badge bg-green">Yes</span>
 								{% else %}
 									<span class="badge bg-red">No</span>
 								{% endif %}
 							</td>
-							<td> 
-								<div class="progress progress-xs progress-striped active">
-									<div class="progress-bar progress-bar-primary" style="width: {{rse.current_capacity}}%"></div>
-								</div>
-							</td>
-							<td>
-								<span class="badge bg-light-blue">{{rse.current_capacity|floatformat:2}}%</span>
-							 </td>
-							<td><a href="{% url 'rse' rse.user.username %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+							
+							<td><a href="{% url 'user_edit_admin' user.id %}" class="btn btn-block btn-primary btn-xs">Edit</a></td>
 						</tr>
 						{% endfor %}
 					</tbody></table>
@@ -76,7 +72,7 @@
 	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
 	<script type="text/javascript">
 		$(document).ready(function() {
-			$('#rses').DataTable({
+			$('#users').DataTable({
 				pageLength: 25,
 				scrollX: false,
 			} );

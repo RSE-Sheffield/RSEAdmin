@@ -39,6 +39,12 @@ urlpatterns = [
     # Edit admin user view
     url(r'^user/edit/admin/(?P<user_id>[0-9]+)?$', views.user_edit_admin, name='user_edit_admin'),
     
+    # User change password view
+    url(r'^user/changepassword/(?P<user_id>[0-9]+)?$', views.user_change_password, name='user_change_password'),
+    
+    # View all users (RSE and admin)
+    url(r'^users?$', views.users, name='users'),
+    
 
 
     ################################

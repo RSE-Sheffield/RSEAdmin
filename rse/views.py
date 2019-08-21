@@ -10,6 +10,7 @@ from django.db.models import Max, Min, ProtectedError
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from django.contrib.auth.forms import AdminPasswordChangeForm
 
 from .models import *
 from .forms import *
@@ -131,10 +132,10 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
 @user_passes_test(lambda u: u.is_superuser)
 def user_edit_admin(request: HttpRequest, user_id) -> HttpResponse:
 
-    # Get the RSE
+    # Get the User
     user = get_object_or_404(User, pk=user_id)
     
-    # TODO: Redirect if RSE as well
+    # Redirect if user is an RSE rather than admin user
     try:
         rse = RSE.objects.get(user=user)
         return HttpResponseRedirect(reverse_lazy('user_edit_rse', kwargs={'rse_id': rse.id}))
@@ -162,6 +163,41 @@ def user_edit_admin(request: HttpRequest, user_id) -> HttpResponse:
 
     return render(request, 'user_new_admin.html', view_dict)
 
+@user_passes_test(lambda u: u.is_superuser)
+def user_change_password(request: HttpRequest, user_id) -> HttpResponse:
+    # Get the User
+    user = get_object_or_404(User, pk=user_id)
+    
+    # Dict for view
+    view_dict = {}
+    
+    # process or create form
+    if request.method == 'POST':        
+        password_form = AdminPasswordChangeForm(user, request.POST) 
+        # process admin user
+        if password_form.is_valid(): 
+            user = password_form.save()
+            messages.add_message(request, messages.SUCCESS, f'User {user.username} password updated.')
+            return HttpResponseRedirect(reverse_lazy('index'))
+                
+    else:
+        password_form = AdminPasswordChangeForm(user)
+        
+    # modify the css and label attributes
+    password_form.fields['password1'].widget.attrs['class'] = 'form-control'
+    password_form.fields['password1'].label = "New Password:"
+    password_form.fields['password2'].widget.attrs['class'] = 'form-control'
+    password_form.fields['password2'].label = "New Password (again):"
+        
+    view_dict['form'] = password_form
+    view_dict['user'] = user
+
+    return render(request, 'user_change_password.html', view_dict)
+
+def users(request: HttpRequest) -> HttpResponse:
+    users = User.objects.all()
+    
+    return render(request, 'users.html', { "users": users })
 
 ################################
 ### Projects and Allocations ###
