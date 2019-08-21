@@ -44,7 +44,6 @@ urlpatterns = [
     
     # View all users (RSE and admin)
     url(r'^users?$', views.users, name='users'),
-    
 
 
     ################################
@@ -120,7 +119,10 @@ urlpatterns = [
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
     
-    # Add RSE View
+        
+    #################################
+    ### Salary and Grade Changes ####
+    #################################
     
 
 ]
