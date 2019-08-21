@@ -194,6 +194,7 @@ def user_change_password(request: HttpRequest, user_id) -> HttpResponse:
 
     return render(request, 'user_change_password.html', view_dict)
 
+@user_passes_test(lambda u: u.is_superuser)
 def users(request: HttpRequest) -> HttpResponse:
     users = User.objects.all()
     
@@ -698,3 +699,40 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
     return render(request, 'commitments.html', view_dict)
 
+#################################
+### Salary and Grade Changes ####
+#################################
+
+@user_passes_test(lambda u: u.is_superuser)
+def financialyear(request: HttpRequest) -> HttpResponse:
+    
+    # Dict for view
+    view_dict = {}
+    
+    # Get all financial years
+    years = FinancialYear.objects.all()
+    if years is None:
+        return HttpResponseServerError("No financial years in database")
+    view_dict['years'] = years
+    
+    # Caclulate the default year. i.e. the current current financial year
+    now = timezone.now()
+    if now.month > 7:
+        default_year = now.year
+    else:
+        default_year = now.year-1
+        
+    # Set year from get or use current financial year
+    y = request.GET.get('year', default_year)
+    try:
+        year = FinancialYear.objects.get(year=y)
+    except FinancialYear.DoesNotExist:
+        messages.add_message(request, messages.DANGER, f'The {y} financial year does not exist in the database.')
+        year = years[0]
+    view_dict['year'] = year
+    
+    # Get all salary bands for the financial year
+    salary_bands = SalaryBand.objects.filter(year=year).order_by('-grade', '-grade_point')
+    view_dict['salary_bands'] = salary_bands
+ 
+    return render(request, 'financialyear.html', view_dict)

@@ -19,8 +19,7 @@ class FinancialYear(models.Model):
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
     year = models.IntegerField(primary_key=True, default=2018)  # Must relate to a financial year
-    inflation = models.FloatField()
-
+    
     def start_date(self) -> date:
         """Get start date of the financial year."""
         return date(self.year, 8, 1)

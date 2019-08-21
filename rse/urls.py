@@ -124,5 +124,12 @@ urlpatterns = [
     ### Salary and Grade Changes ####
     #################################
     
+    # View Salary Bands (by financial year)
+    url(r'^financialyear$', views.financialyear, name='financialyear'),
+    
+    # Edit Salary Bands (by financial year) - add a salary band
+    
+    # Create new financial year
+    
 
 ]
