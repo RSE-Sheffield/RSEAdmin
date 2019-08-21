@@ -4,13 +4,12 @@
 
 {% block stylesheets %}
 {{ block.super}}
-<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
 {% endblock %}
 
 
 {% block title %}RSE Group Administration Tool{% endblock %}
 
-{% block page_name %}View {{year}} Financial Year{% endblock %}
+{% block page_name %}View {{year}} Financial Year (<i>01/08/{{year}} - 31/07/{{year.year|add:"1"}}</i>){% endblock %}
 
 {% block content %}
 <div class="row">
