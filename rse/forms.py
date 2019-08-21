@@ -1,5 +1,6 @@
 from django import forms
 from datetime import datetime, timedelta
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 from .models import *
 
@@ -234,5 +235,103 @@ class ClientForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class' : 'form-control'}),    
         }
         
-  
+
+class UserTypeForm(forms.Form):
+    """
+    Class represents a filter form for filtering by date range and service type used by many views which display multiple project views.
+    Extends the filter range form by adding type and status fields
+    """
+
+    user_type = forms.ChoiceField(choices = (('A', 'Administrator'),('R', 'RSE')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     
+
+  
+class NewUserForm(UserCreationForm):    
+    """ Class for creating a new user """
+    
+    # Field to allow user to be an admin user
+    is_admin = forms.BooleanField(initial=False, required=False)
+
+    class Meta:
+        model = User
+        fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email')
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'email': forms.EmailInput(attrs={'class' : 'form-control'}),
+        }
+ 
+    def __init__(self, *args, **kwargs):
+        """ Override init to customise the UserCreationForm widget class appearance """
+        super(NewUserForm, self).__init__(*args, **kwargs)
+        
+        # set html attributes of fields in parent form
+        self.fields['username'].widget.attrs['class'] = 'form-control'
+        self.fields['password1'].widget.attrs['class'] = 'form-control'
+        self.fields['password2'].widget.attrs['class'] = 'form-control'
+        for fieldname in ['username', 'password1', 'password2']:
+            self.fields[fieldname].help_text = None
+    
+ 
+    def save(self, commit=True):
+        """ Override save to make user a superuser """
+        user = super(NewUserForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        # make an admin if checked
+        if self.cleaned_data["is_admin"]:
+            user.is_superuser = True
+        # commit
+        if commit:
+            user.save()
+        return user
+        
+class EditUserForm(UserChangeForm):    
+    """ Class for creating a new user """
+    
+    # Field to allow user to be an admin user
+    is_admin = forms.BooleanField(initial=False, required=False)
+ 
+    def __init__(self, *args, **kwargs):
+        """ Override init to customise the UserCreationForm widget class appearance """
+        super(EditUserForm, self).__init__(*args, **kwargs)
+        
+        # if super user then set the is_admin initial value
+        if self.instance.is_superuser:
+            self.fields['is_admin'].initial = True
+            
+    
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+        widgets = {
+            'username': forms.TextInput(attrs={'class' : 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class' : 'form-control'}),
+            'email': forms.EmailInput(attrs={'class' : 'form-control'}),
+        }
+ 
+    def save(self, commit=True):
+        """ Override save to make user a superuser """
+        user = super(EditUserForm, self).save(commit=False)
+        # make an admin if checked
+        if self.cleaned_data["is_admin"]:
+            user.is_superuser = True
+        # commit
+        if commit:
+            user.save()
+        return user
+    
+class NewRSEUserForm(forms.ModelForm):    
+    """
+    Class for creation and editing of a client
+    """
+    
+    employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+
+    
+    class Meta:
+        model = RSE
+        fields = ['employed_from', 'employed_until']
+  

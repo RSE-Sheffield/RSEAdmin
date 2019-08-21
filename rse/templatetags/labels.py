@@ -1,5 +1,6 @@
 from django import template
 from rse.models import *
+from django.core.exceptions import ObjectDoesNotExist
 
 register = template.Library()
 
@@ -14,3 +15,13 @@ def projectstatuslabel(value):
         return "label-success"
     else:
         return "label-danger"        
+        
+
+@register.filter      
+def isrseuser(value):
+    """ Return true for users who are RSEs. Value must eb a user. """
+    try:
+        rse = RSE.objects.get(user=value)
+        return True
+    except ObjectDoesNotExist:
+        return False

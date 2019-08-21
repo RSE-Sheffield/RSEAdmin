@@ -1,0 +1,42 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+{% if rse_form %}
+{% endif %}
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - New User View {% endblock %}
+{% block page_name %}New User{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-8">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Select Project Type</h3>
+            </div>
+            
+			 
+			<form method="POST" action="">
+				{% csrf_token %} 
+				<div class="box-body">	
+						{{ form }}
+				</div>
+				<div class="box-footer">
+					<input type="submit" value="Select" class="btn btn-primary btn-xm"></input>
+				</div>
+	
+          </form>
+        </div>
+
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+{% endblock %}

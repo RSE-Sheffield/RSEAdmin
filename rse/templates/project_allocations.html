@@ -31,7 +31,6 @@
 									<th id="duration">FTE Days</th>
 									<th id="progress">Allocation Total</th>
 									<th id="progress_label"></th>
-									<th id="edit"></th>
 									<th id="delete"></th>
 								</tr>
 							</thead>
@@ -52,12 +51,10 @@
 									<td>
 										<span class="badge bg-light-blue">{{a.project_allocation_percentage}}%</span>
 									</td>
-									<td></td>
 									<td>
-										<form method="POST" action="{% url 'project_allocations_delete' a.id %}">
-											{% csrf_token %}
-											<input type="submit" value="Delete" class="btn btn-block btn-danger btn-xs"></input>
-										</form>
+										{% if user.is_superuser %}
+										<button type="button" class="btn btn-danger btn-xs pull-right" data-val="{{a.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
+										{% endif %}
 									</td>
 								</tr>
 									{% endfor %}
@@ -68,6 +65,7 @@
 			</div>
 		</div>
 
+		{% if user.is_superuser %}
 		<div class="row">
 			<div class="col-md-4">
 				<div class="box box-default">
@@ -140,6 +138,7 @@
 				</div>
 			</div>
 		</div>
+		{% endif %}
 	</div>
 
 	<div class="col-md-4">
@@ -152,8 +151,27 @@
 </div>
 
 
-
-						
+<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+			</div>
+			<div class="modal-body">
+			<p>Are you sure you wish to delete this allocation?</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+				<form id="id_allocation_delete_form" method="POST" action="#">
+					{% csrf_token %}
+					<input type="submit" value="Delete" class="btn btn-outline"></input>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+			
 
    
     
@@ -274,7 +292,14 @@
 		$('#id_rse_summary').tooltip();
 	});
 
-	
+	//update the delete url for modal dialogue on load
+	$('#delete_modal').on('show.bs.modal', function (event) {
+		var allocation_id = $(event.relatedTarget).data('val');
+		// construct url dynamically
+		var url_str = window.location.protocol + "//" + document.location.host + "{% url 'project_allocations_delete_noid' %}" + allocation_id;
+		var url = new URL(url_str);
+		$('#id_allocation_delete_form').attr('action', url.toString());
+	});
 
 
 </script>
