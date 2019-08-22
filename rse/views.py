@@ -715,7 +715,7 @@ def financialyear(request: HttpRequest) -> HttpResponse:
         return HttpResponseServerError("No financial years in database")
     view_dict['years'] = years
     
-    # Caclulate the default year. i.e. the current current financial year
+    # Calculate the default year. i.e. the current current financial year
     now = timezone.now()
     if now.month > 7:
         default_year = now.year
@@ -730,6 +730,15 @@ def financialyear(request: HttpRequest) -> HttpResponse:
         messages.add_message(request, messages.DANGER, f'The {y} financial year does not exist in the database.')
         year = years[0]
     view_dict['year'] = year
+    
+    # Form handling for new salary bands
+    if request.method == 'POST':
+        sb_form = NewSalaryBandForm(request.POST, year=year)
+        if sb_form.is_valid():
+            sb_form.save()
+    else:
+        sb_form = NewSalaryBandForm(year=year)
+    view_dict['sb_form'] = sb_form
     
     # Get all salary bands for the financial year
     salary_bands = SalaryBand.objects.filter(year=year).order_by('-grade', '-grade_point')

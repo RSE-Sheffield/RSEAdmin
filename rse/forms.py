@@ -329,9 +329,36 @@ class NewRSEUserForm(forms.ModelForm):
     employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
-
-    
     class Meta:
         model = RSE
         fields = ['employed_from', 'employed_until']
+        
+class NewSalaryBandForm(forms.ModelForm):
+    """
+    Class represents a form for creating a new salary band with a given year
+    """
+    
+    def __init__(self, *args, **kwargs):
+        # if no instance then we expect a year to set as initial value
+        if not 'instance' in kwargs:
+            if not 'year' in kwargs:
+                raise TypeError("NewSalaryBandForm requires either an 'instance' or a 'year'")
+            year = kwargs.pop('year', None)
+        else:
+            year = instance.year
+        super(NewSalaryBandForm, self).__init__(*args, **kwargs)
+        self.fields['year'].initial = year
+
+    class Meta:
+        model = SalaryBand
+        fields = ['grade', 'grade_point', 'year', 'salary', 'increments']
+        widgets = {
+            'grade': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'grade_point': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'year': forms.HiddenInput(),
+            'salary': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'increments': forms.CheckboxInput(),
+        }
+
+
   
