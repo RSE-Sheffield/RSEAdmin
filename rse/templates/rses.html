@@ -26,6 +26,7 @@
 							<th id="department">Employed From</th>
 							<th id="description">Employed Until</th>
 							<th id="description">Currently Employment</th>
+							{% if user.is_superuser %} <th id="description">Grade Point</th> {% endif %}
 							<th id="num_active_projects">Current Capacity</th>
 							<th id="num_active_projects_label"></th>
 							<th id="more"></th>
@@ -45,6 +46,12 @@
 									<span class="badge bg-red">No</span>
 								{% endif %}
 							</td>
+							{% if user.is_superuser %} 
+								<td>
+									{{rse.grade}}
+									<a href="{% url 'rse_salary' rse.user.username %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit Salary Data"><i class="fa fa-edit"></i></a>
+								</td> 
+							{% endif %}
 							<td> 
 								<div class="progress progress-xs progress-striped active">
 									<div class="progress-bar progress-bar-primary" style="width: {{rse.current_capacity}}%"></div>

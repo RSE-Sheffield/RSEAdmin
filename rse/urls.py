@@ -118,6 +118,16 @@ urlpatterns = [
     
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
+
+    # RSE salary grade change view
+    url(r'^rse/(?P<rse_username>[\w]+)/salary$', views.rse_salary, name='rse_salary'),
+
+    # RSE salary grade change delete
+    url(r'^rse/salarychange/delete/(?P<pk>[0-9]+)$', views.rse_salarygradechange_delete.as_view(), name='rse_salarygradechange_delete'),
+    url(r'^rse/salarychange/delete/$', views.rse_salarygradechange_delete.as_view(), name='rse_salarygradechange_delete_noid'), # trailing id version for dynamically (JS) constructed urls
+
+    # AJAX salary band options by year
+    url(r'^ajax/salaryband$', views.ajax_salary_band_by_year, name='ajax_salary_band_by_year'),    
     
         
     #################################

@@ -625,9 +625,71 @@ def rses(request: HttpRequest) -> HttpResponse:
     """
     
     rses = RSE.objects.all()
+
+    # calculate grade point (only displayed for superusers)
+    for rse in rses:
+        try:
+            rse.grade = rse.futureSalaryBand(date=timezone.now().date()).short_str
+        except:
+            rse.grade = "No Data"
     
     return render(request, 'rses.html', { "rses": rses })
 
+def ajax_salary_band_by_year(request):
+    year = request.GET.get('year')
+    sbs = SalaryBand.objects.filter(year=year).order_by('year')
+    return render(request, 'includes/salaryband_options.html', {'sbs': sbs})
+
+@user_passes_test(lambda u: u.is_superuser)
+def rse_salary(request: HttpRequest, rse_username: str) -> HttpResponse:
+    
+     # Get the user
+    user = get_object_or_404(User, username=rse_username)
+
+    # Dict for view
+    view_dict = {}
+
+    # Get RSE if exists
+    rse = get_object_or_404(RSE, user=user)
+    view_dict['rse'] = rse
+
+    # get salary grade changes
+    sgcs = SalaryGradeChange.objects.filter(rse=rse)
+    view_dict['sgcs'] = sgcs
+
+    # salary grade change form
+    if request.method == 'POST':
+        form = SalaryGradeChangeForm(request.POST, rse=rse)
+        if form.is_valid():
+            sgc = form.save()
+            messages.add_message(request, messages.SUCCESS, f'Salary Grade Change {sgc} successfully added.')
+    else:
+        form = SalaryGradeChangeForm(rse=rse)
+    view_dict['form'] = form
+    
+    return render(request, 'rse_salary.html', view_dict)
+
+
+class rse_salarygradechange_delete(UserPassesTestMixin, DeleteView):
+    """ POST only special delete view which redirects to project allocation view """
+    model = SalaryGradeChange
+    success_message = "Salary grade change deleted successfully."
+
+    def test_func(self):
+        """ Only for super users """
+        return self.request.user.is_superuser
+        
+    def get(self, request, *args, **kwargs):
+        """ disable this view when arriving by get (i.e. only allow post) """
+        raise Http404("Page does not exist")
+
+    def get_success_url(self):
+        return reverse_lazy('rse_salary', kwargs={'rse_username': self.get_object().rse.user.username})
+        
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(rse_salarygradechange_delete, self).delete(request, *args, **kwargs)
+    
 
 @login_required
 def team(request: HttpRequest) -> HttpResponse:

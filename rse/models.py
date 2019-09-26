@@ -56,6 +56,9 @@ class SalaryBand(models.Model):
     def __str__(self) -> str:
         return f"{self.grade}.{self.grade_point} ({self.year}): £{self.salary}"
 
+    @property
+    def short_str(self) -> str:
+        return f"{self.grade}.{self.grade_point} ({self.year})"
 
     def salary_band_after_increment(self):
         """

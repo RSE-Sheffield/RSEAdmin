@@ -81,7 +81,6 @@ class ProjectTypeForm(forms.Form):
 
     type = forms.ChoiceField(choices = (('S', 'Service'),('A', 'Allocated')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     
-
         
 class FilterProjectForm(FilterDateRangeForm):
     """
@@ -393,4 +392,34 @@ class NewFinancialYearForm(forms.ModelForm):
 
         return financial_year
 
-  
+class SalaryGradeChangeForm(forms.ModelForm):
+    """
+    Class represents a form for a salary grade change for an RSE
+    """
+
+    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    
+    def __init__ (self, *args, **kwargs):
+        """ Set the initial data """
+        if not 'rse' in kwargs:
+            raise TypeError("SalaryGradeChangeForm missing required argument: 'rse'")
+        rse = kwargs.pop('rse', None)
+
+        # call super 
+        super(SalaryGradeChangeForm, self).__init__(*args, **kwargs)
+
+        # set RSE (as it is a hidden field)
+        self.fields['rse'].initial = rse
+
+        # not required as query set will be dynamically loaded via ajax
+        #self.fields['salary_band'].queryset = SalaryBand.objects.all()
+
+    
+    class Meta:
+        model = SalaryGradeChange
+        fields = ['rse', 'salary_band']
+        widgets = {
+            'rse': forms.HiddenInput(),
+            'salary_band': forms.Select(attrs={'class' : 'form-control pull-right'}) # choices set dynamically
+            
+        }

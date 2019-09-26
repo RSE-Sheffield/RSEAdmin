@@ -1,0 +1,167 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool - RSE Salary{% endblock %}
+
+{% block page_name %}View {{rse.user.firstname}} {{rse.user.lastname}} Salary Information{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			<div class="box-header with-border">
+              <h3 class="box-title"> {{year}} Salary Grade Changes</h3>
+			  
+			</div>
+			<div class="box-body table-responsive padding">
+				<table id="grade_point_table" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="year">Year</th>
+							<th id="grade">Grade and Point</th>
+							<th id="salary">Salary</th>
+							<th id="buttons"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for sgc in sgcs %}
+						<tr>
+						    <td>{{sgc.salary_band.year}}</td>
+							<td>G{{ sgc.salary_band.grade }}.{{ sgc.salary_band.grade_point }}</td>
+							<td>{{ sgc.salary_band.salary }}</td>
+							<td align="right">  
+								<button type="button" class="btn btn-danger btn-xs" data-val="{{sgc.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			<div class="box-footer">
+				<i>Add new salary grade change</i>
+				
+				<form method="POST" action="" id="id_new_salary_grade_change_form">
+					{% csrf_token %}  
+					
+					<div class="box-body">  
+
+						{{ form.rse }}
+
+						<div class="form-group">
+							{{ form.year.label_tag }}
+							{{ form.year }}
+						</div>
+
+						<div class="form-group">
+							{{ form.salary_band.label_tag }}
+							{{ form.salary_band }}
+						</div>
+
+					</div>
+
+
+				
+					
+					{% if form.errors %}
+						{% for field in form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+					
+					<input type="submit" value="Add Salary Grade Change" class="btn btn-primary btn-xm"></input>
+
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	
+
+
+</div>
+
+
+
+<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+			</div>
+			<div class="modal-body">
+			<p>Are you sure you wish to delete this salary grade change?</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+				<form id="id_salarygradechange_delete_form" method="POST" action="#">
+					{% csrf_token %}
+					<input type="submit" value="Delete" class="btn btn-outline"></input>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+   
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+<script type="text/javascript">	
+	
+	function populate_salary_band(year) {
+      var url = "{% url 'ajax_salary_band_by_year' %}"
+
+      $.ajax({
+        url: url,
+        data: {
+          'year': year       
+        },
+        success: function (data) {
+          $("#id_salary_band").html(data); 
+        }
+      });
+	}
+	
+	//update the delete url for modal dialogue on load
+	$('#delete_modal').on('show.bs.modal', function (event) {
+		var salarygradechange_id = $(event.relatedTarget).data('val');
+		// construct url dynamically
+		var url_str = window.location.protocol + "//" + document.location.host + "{% url 'rse_salarygradechange_delete_noid' %}" + salarygradechange_id ;
+		var url = new URL(url_str);
+		$('#id_salarygradechange_delete_form').attr('action', url.toString());
+	});
+
+	// set values in salary band options form based off a responsive ajax query
+	$("#id_year").change(function(){
+		var year = $(this).val();
+		populate_salary_band(year);
+	});
+
+	//set initial values of salary band options
+	$(document).ready(function()
+    {
+		var year = $("#id_year").val();
+        populate_salary_band(year);
+    });
+</script>
+{% endblock %}
+
