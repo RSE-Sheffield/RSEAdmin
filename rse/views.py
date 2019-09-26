@@ -585,8 +585,12 @@ def rse(request: HttpRequest, rse_username: str) -> HttpResponse:
 
             # apply status type query
             status = form.cleaned_data["status"]
-            if status != 'A':
+            if status in 'PRFX':
                 q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
     else:
         form = FilterProjectForm()
     
@@ -643,8 +647,12 @@ def team(request: HttpRequest) -> HttpResponse:
 
             # apply status type query
             status = form.cleaned_data["status"]
-            if status != 'A':
+            if status in 'PRFX':
                 q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
     else:
         form = FilterProjectForm()
     
@@ -680,8 +688,12 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
             # apply status type query
             status = form.cleaned_data["status"]
-            if status != 'A':
+            if status in 'PRFX':
                 q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
     else:
         form = FilterProjectForm()
         

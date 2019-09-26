@@ -89,7 +89,7 @@ class FilterProjectForm(FilterDateRangeForm):
     Extends the filter range form by adding type and status fields
     """
 
-    status = forms.ChoiceField(choices = (('A', 'All'),) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    status = forms.ChoiceField(choices = (('A', 'All'), ('L', 'Funded and Review'), ('U', 'Funded, Review and in Preperation')) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     # Type cant be filtered at database level as it is a property
     #type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
       
