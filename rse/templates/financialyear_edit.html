@@ -1,0 +1,171 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block page_name %}View {{year}} Financial Year (<i>01/08/{{year}} - 31/07/{{year.year|add:"1"}}</i>){% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			<div class="box-header with-border">
+              <h3 class="box-title"> {{year}} Grade Points</h3>
+			  <div class="pull-right">
+				
+					<a href="{% url 'financialyears' %}?year={{year}}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Return to Financial Year View"><i class="fa fa-th-list"></i></a>
+				</div>
+			</div>
+			<div class="box-body table-responsive padding">
+				<table id="grade_point_table" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="name">Grade (and point)</th>
+							<th id="department">Salary</th>
+							<th id="description">Increments</th>
+							<th id="buttons"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for sb in salary_bands %}
+						<tr>
+							<td>G{{ sb.grade }}.{{ sb.grade_point }}</td>
+							<td>{{ sb.salary }}</td>
+							<td>
+								{% if sb.increments %}
+								<span class="badge bg-green">Increments</span>
+								{%else %}
+								<span class="badge bg-red">No Increment</span>
+								{% endif %}
+							</td>
+							<td align="right"> 
+								<a href="{% url 'salaryband_edit' sb.id %}?next={{request.get_full_path}}" class="btn btn-primary btn-xs">Edit</a> 
+								<button type="button" class="btn btn-danger btn-xs" data-val="{{sb.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			<div class="box-footer">
+				<i>Add new grade point to financial year</i>
+				
+				<form method="POST" action="">
+					{% csrf_token %}  
+					<table id="new_grade_point_table" class="table table-hover">
+						<thead>
+							<tr>
+								<th id="name">Grade</th>
+								<th id="name">Point</th>
+								<th id="department">Salary</th>
+								<th id="description">Increments</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>{{ sb_form.grade }}</td>
+								<td>{{ sb_form.grade_point }}</td>
+								<td>{{ sb_form.salary }}</td>
+								<td>{{ sb_form.increments }}</td>
+							</tr>
+						</tbody>
+					</table>
+					
+					{{ sb_form.year }}
+					
+					{% if sb_form.errors %}
+						{% for field in sb_form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in sb_form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+					
+					<input type="submit" value="Add Grade Point" class="btn btn-primary btn-xm"></input>
+
+					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_financialyear_modal">Delete Financial Year</button>
+				</form>
+			</div>
+		</div>
+	</div>
+	
+	
+
+
+</div>
+
+
+
+<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+			</div>
+			<div class="modal-body">
+			<p>Are you sure you wish to delete this salary band?</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+				<form id="id_salaryband_delete_form" method="POST" action="#">
+					{% csrf_token %}
+					<input type="submit" value="Delete" class="btn btn-outline"></input>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal modal-danger fade" id="delete_financialyear_modal" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+			</div>
+			<div class="modal-body">
+			<p>Are you sure you wish to delete this financial year?</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+				<form id="id_financialyear_delete_form" method="POST" action="{% url 'financialyear_delete' year %}">
+					{% csrf_token %}
+					<input type="submit" value="Delete" class="btn btn-outline"></input>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+   
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+<script type="text/javascript">	
+	//update the delete url for modal dialogue on load
+	$('#delete_modal').on('show.bs.modal', function (event) {
+		var salaryband_id = $(event.relatedTarget).data('val');
+		// construct url dynamically
+		var url_str = window.location.protocol + "//" + document.location.host + "{% url 'financialyear_salaryband_delete_noid' %}" + salaryband_id + "?next={{request.get_full_path}}";
+		var url = new URL(url_str);
+		$('#id_salaryband_delete_form').attr('action', url.toString());
+	});
+</script>
+{% endblock %}
+

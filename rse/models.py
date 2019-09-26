@@ -18,7 +18,7 @@ class FinancialYear(models.Model):
     """
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
-    year = models.IntegerField(primary_key=True, default=2018)  # Must relate to a financial year
+    year = models.IntegerField(primary_key=True)  # Must relate to a financial year
     
     def start_date(self) -> date:
         """Get start date of the financial year."""
@@ -295,8 +295,8 @@ class SalaryGradeChange(models.Model):
     This is different to annual increments which occur in January and are considered when calculating salary.
     """
     
-    rse = models.ForeignKey(RSE, on_delete=models.DO_NOTHING)
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.DO_NOTHING)
+    rse = models.ForeignKey(RSE, on_delete=models.CASCADE)
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)
 
     # Gets the incremented salary given some point in the future
     def salary_band_at_future_date(self, future_date):

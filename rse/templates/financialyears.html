@@ -18,8 +18,7 @@
 			<div class="box-header with-border">
               <h3 class="box-title"> {{year}} Grade Points</h3>
 			  <div class="pull-right">
-				
-					<a href="" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit Salary Band Data"><i class="fa fa-edit"></i></a>
+					<a href="{% url 'financialyear_edit' year %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit Salary Band Data"><i class="fa fa-edit"></i></a>
 				</div>
 			</div>
 			<div class="box-body table-responsive padding">
@@ -48,50 +47,7 @@
 					</tbody>
 				</table>
 			</div>
-			<div class="box-footer">
-				<i>Add new grade point to financial year</i>
-				
-				<form method="POST" action="">
-					{% csrf_token %}  
-					<table id="new_grade_point_table" class="table table-hover">
-						<thead>
-							<tr>
-								<th id="name">Grade</th>
-								<th id="name">Point</th>
-								<th id="department">Salary</th>
-								<th id="description">Increments</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>{{ sb_form.grade }}</td>
-								<td>{{ sb_form.grade_point }}</td>
-								<td>{{ sb_form.salary }}</td>
-								<td>{{ sb_form.increments }}</td>
-							</tr>
-						</tbody>
-					</table>
-					
-					{{ sb_form.year }}
-					
-					{% if sb_form.errors %}
-						{% for field in sb_form %}
-							{% for error in field.errors %}
-								<div class="alert alert-danger">
-									<strong>{{field.label}}: {{ error|escape }}</strong>
-								</div>
-							{% endfor %}
-						{% endfor %}
-						{% for error in sb_form.non_field_errors %}
-							<div class="alert alert-danger">
-								<strong>{{ error|escape }}</strong>
-							</div>
-						{% endfor %}
-					{% endif %}
-					
-					<input type="submit" value="Add" class="btn btn-primary btn-xm"></input>
-				</form>
-			</div>
+
 		</div>
 	</div>
 	
@@ -129,6 +85,8 @@
 
 
 </div>
+
+
 
 
 {% endblock %}

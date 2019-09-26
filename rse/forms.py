@@ -345,7 +345,7 @@ class NewSalaryBandForm(forms.ModelForm):
                 raise TypeError("NewSalaryBandForm requires either an 'instance' or a 'year'")
             year = kwargs.pop('year', None)
         else:
-            year = instance.year
+            year = kwargs['instance'].year
         super(NewSalaryBandForm, self).__init__(*args, **kwargs)
         self.fields['year'].initial = year
 
@@ -360,5 +360,37 @@ class NewSalaryBandForm(forms.ModelForm):
             'increments': forms.CheckboxInput(),
         }
 
+
+class NewFinancialYearForm(forms.ModelForm):
+    """
+    Class represents a form for creating a new salary band with a given year
+    """
+    copy_from = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label="", required=False, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+
+    class Meta:
+        model = FinancialYear
+        fields = ['year']
+        widgets = {
+            'year': forms.NumberInput(attrs={'class' : 'form-control'}),
+        }
+
+    def save(self, commit=True):
+        """ Override to copy salary band data from previous finanical year """
+        financial_year = super(NewFinancialYearForm, self).save(commit=False)
+
+        if commit:
+            # save the year
+            financial_year.save()
+
+            # copy salary band data
+            if self.cleaned_data["copy_from"]:
+                copy_year = self.cleaned_data["copy_from"]
+                sbs = SalaryBand.objects.filter(year=copy_year)
+                for sb in sbs:
+                    sb.pk = None # remove pk to save as new item in database
+                    sb.year = financial_year
+                    sb.save()
+
+        return financial_year
 
   

@@ -16,7 +16,8 @@
 			{% if user.is_superuser %}
 			<li {% if request.resolver_match.url_name == "users"%} class="active" {% endif %} ><a href="{% url 'users' %}"><i class="fa fa-circle-o"></i>All Users</a></li>
 			<li {% if request.resolver_match.url_name == "user_new"%} class="active" {% endif %} ><a href="{% url 'user_new' %}"><i class="fa fa-circle-o"></i>Add New User</a></li>
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Years</a></li>
+			<li {% if request.resolver_match.url_name == "financialyears"%} class="active" {% endif %} ><a href="{% url 'financialyears' %}"><i class="fa fa-circle-o"></i>Financial Years</a></li>
+			<li {% if request.resolver_match.url_name == "financialyear_new"%} class="active" {% endif %} ><a href="{% url 'financialyear_new' %}"><i class="fa fa-circle-o"></i>New Financial Year</a></li>
 			{% endif %}
 		</ul>
 	</li>

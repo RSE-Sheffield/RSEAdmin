@@ -1,0 +1,91 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - Edit Salary Band {% endblock %}
+{% block page_name %} Edit Salary Band for {{ form.instance.year }} Year {% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-8">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Select Project Type</h3>
+            </div>
+            
+			<form method="POST" action="">
+                {% csrf_token %}  
+
+                <div class="box-body">                                      
+				
+                    {{form.year}}
+
+                    <div class="form-group">
+                        {{ form.grade.label_tag }}
+                        {{ form.grade }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.grade_point.label_tag }}
+                        {{ form.grade_point }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.salary.label_tag }}
+                        {{ form.salary }}
+                    </div>
+                    
+                    <div class="checkbox">
+                        <label>
+                        {{ form.increments }}
+                        Salary Automatically Increments to Next Grade Point
+                        </label>
+                    </div>
+                </div>
+
+				<div class="box-footer">
+
+                    {% if form.errors %}
+						{% for field in form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+
+					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+				</div>
+			
+			</form>
+          </div>
+        </div>
+        
+            
+		
+    </div>
+
+
+    
+
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+{% endblock %}

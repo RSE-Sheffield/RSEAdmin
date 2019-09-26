@@ -124,10 +124,25 @@ urlpatterns = [
     ### Salary and Grade Changes ####
     #################################
     
-    # View Salary Bands (by financial year)
-    url(r'^financialyear$', views.financialyear, name='financialyear'),
+    # View Salary Bands (by financial year) - view all financial years
+    url(r'^financialyears$', views.financialyears, name='financialyears'),
+
+    # Edit Salary Bands (by financial year)
+    url(r'^financialyear/edit/(?P<year_id>[0-9]+)$', views.financialyear_edit, name='financialyear_edit'),
+
+    # Create a new financial year
+    url(r'^financialyear/new$', views.financialyear_new, name='financialyear_new'),
+
+    # Create a new financial year
+    url(r'^financialyear/delete/(?P<pk>[0-9]+)$', views.financialyear_delete.as_view(), name='financialyear_delete'),
     
     # Edit Salary Bands (by financial year) - add a salary band
+    url(r'^salaryband/edit/(?P<sb_id>[0-9]+)$', views.salaryband_edit, name='salaryband_edit'),
+
+    # Salary Band delete (forwards to current finanical year view)
+    url(r'^salaryband/delete/(?P<pk>[0-9]+)$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband'),
+    url(r'^salaryband/delete/$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband_delete_noid'), # trailing id version for dynamically (JS) constructed urls
+    
     
     # Create new financial year
     
