@@ -601,10 +601,6 @@ class RSEAllocation(models.Model):
     @staticmethod    
     def commitment_summary(allocations : 'RSEAllocation', from_date: date = None, until_date : date = None):
         
-        # TODO: Return exclusive date in which RSE effort changes with list of allocations maintained
-        # I.e. (date, FTE, (allocations))
-        
-        
         # Helpful lambda function for max where a value may be None
         # lambda function returns a if b is None or f(a,b) if b is not none
         f_bnone = lambda f, a, b: a if b is None else f(a, b)  
@@ -615,24 +611,38 @@ class RSEAllocation(models.Model):
 
         # Combine start and end dates and sort
         events = sorted(starts + ends, key=lambda x: x[0])
-        
-        # iterate dates (d), percentages (p) and allocations (a) and accumulate allocations
-        cumulative_allocations = []
+
+        # lists of unique 
+        unique_cumulative_allocations = []
+        unique_dates = []
+        unique_effort = []
+
+        # temporary cumulative variables
         active_allocations = []
-        for d, p, a in events:
-            # add or remove allocation depending on percentage
-            if p > 0 :
-                active_allocations.append(a)
-            if p < 0 :
-                active_allocations.remove(a)
-            # add list of allocations to to cumulative allocations
-            cumulative_allocations.append(list(active_allocations))
-            
-        # Accumulate effort by unpacking events and then apply prefix sum to deltas (FTE accumulations)
-        dates, deltas, allocs = zip(*events)
-        effort = list(it.accumulate(deltas))
-        
-        # return list of (date, effort, [RSEAllocation])
-        return list(zip(dates, effort, cumulative_allocations))
+        effort = 0
+
+        # use itertools groupby to process by unique day
+        for k, g in it.groupby(events, lambda x: x[0]):
+
+            # iterate dates (d), percentages (p), effort (e), and allocations (a) and accumulate allocations
+            for d, p, a in g: # k will be the same a d
+                # add or remove allocation depending on percentage
+                if p > 0 :
+                    active_allocations.append(a)
+                if p < 0 :
+                    active_allocations.remove(a)
+
+                # accumulate effort
+                effort += p
+
+            # add date to unique
+            unique_dates.append(d)
+            unique_effort.append(effort)
+            # add list of allocations to to unique cumulative allocations (make a copy)
+            unique_cumulative_allocations.append(list(active_allocations))
+
+
+        # return list of unique (date, effort, [RSEAllocation])
+        return list(zip(unique_dates, unique_effort, unique_cumulative_allocations))
     
 
