@@ -1,12 +1,14 @@
+{% load labels %}
+
 <div class="box box-default">
 	<div class="box-header with-border">
 		<h3 class="box-title"> Effort Reporting </h3>
 		{% if edit_icon %} <span class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></span>{% endif %}
 	</div>
 	<div class="box-body">
-		<p><span class="float-left badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated >= 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated}}%</span> of Project Allocated</p>
-		<div class="progress progress {% if project.percent_allocated >= 50 and project.percent_allocated < 100%} progress-striped active {% endif %}">
-			<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated >= 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated}}%">
+		<p><span class="badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated|percent}}%</span> of Project Allocated</p>
+		<div class="progress progress {% if project.percent_allocated >= 50 and project.percent_allocated <= 99.5 %} progress-striped active {% endif %}">
+			<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated|percent}}%">
 			</div>
 		</div>
 
@@ -14,16 +16,16 @@
 		<table class="table table-striped">
 			<tbody>
 				<tr><td>
-					<p><strong>Total Project Days: </strong>{{ project.project_days }} days</p>
+					<p><strong>Total Project Days: </strong>{{ project.project_days|dp2 }} days</p>
 					</td></tr>
 				<tr><td>
-					<p><strong>Total Allocated Days: </strong>{{ project.committed_days }} days</p>
+					<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }} days</p>
 				</td></tr> 
 				<tr><td>
-					<p><strong>Remaining Full Days: </strong>{{ project.remaining_days }} days</p>
+					<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
 				</td></tr> 
 				<tr><td>
-					<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte }} days</p>
+					<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
 				</td></tr> 
 			</tbody>
 		</table>
