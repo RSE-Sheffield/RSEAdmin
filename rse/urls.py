@@ -154,7 +154,9 @@ urlpatterns = [
     url(r'^salaryband/delete/$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband_delete_noid'), # trailing id version for dynamically (JS) constructed urls
     
     
-    # Create new financial year
+    ##################
+    ### Reporting ####
+    ##################
     
 
 ]
