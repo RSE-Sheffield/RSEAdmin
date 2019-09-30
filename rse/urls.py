@@ -112,10 +112,7 @@ urlpatterns = [
     # RSE allocation view by rse id
     url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid, name='rseid'),
     url(r'^rse/id/$', views.rseid, name='rseid'), # without id parameter
-       
-    # RSE team view all
-    url(r'^team$', views.team, name='team'),
-    
+          
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
 

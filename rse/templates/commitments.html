@@ -14,23 +14,32 @@
 {% block page_name %}Team Commitment Overview {{ rse }} {% endblock %}
 {% block content %}
 
+
+
    
     <div class ="row">
         
         <div class="col-md-9">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title"> FTE Team Commitment Overview</h3>
-			  <div style="float: right">
-				
-					<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon" data-toggle="tooltip" title="" data-original-title="Expand/Contract View"></i></button>
-				
-			  </div>
-            </div>
-            <div class="box-body">
-              <canvas id="commitmentChart" width="100%"></canvas>
-            </div>
-          </div>
+			<div class="nav-tabs-custom">
+				<ul class="nav nav-tabs">
+					<li class="active"><a href="#tab_commitment" data-toggle="tab">Commitment (RSE FTE)</a></li>
+					<li><a href="#tab_allocation" data-toggle="tab">Allocations (Project Gantt)</a></li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="tab_commitment">
+							<div style="float: right">
+								<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon" data-toggle="tooltip" title="" data-original-title="Expand/Contract View"></i></button>
+							</div>
+							<canvas id="commitmentChart" width="100%"></canvas>
+					</div>
+					
+					<div class="tab-pane" id="tab_allocation">
+						<div style="position:relative" class="gantt" id="GanttChartDIV"></div>
+					</div>
+				</div>
+			</div>
+
+          
         </div>
 		
 		<div class="col-md-3">
@@ -79,6 +88,8 @@
 
 {% block javascript %}
 {{ block.super}}
+
+{% include "includes/rsesgantt.html" with rses=rse_allocations %}
 
 {% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
 

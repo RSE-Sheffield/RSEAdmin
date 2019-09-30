@@ -692,44 +692,6 @@ class rse_salarygradechange_delete(UserPassesTestMixin, DeleteView):
     
 
 @login_required
-def team(request: HttpRequest) -> HttpResponse:
-    # Dict for view
-    view_dict = {}
-
-    # Construct q query and check the project filter form
-    q = Q()
-    if request.method == 'GET':
-        form = FilterProjectForm(request.GET)
-        if form.is_valid():
-            filter_range = form.cleaned_data["filter_range"]
-            from_date = filter_range[0]
-            q &= Q(end__gte=from_date)
-            until_date = filter_range[1]
-            q &= Q(start__lte=until_date)
-
-            # apply status type query
-            status = form.cleaned_data["status"]
-            if status in 'PRFX':
-                q &= Q(project__status=status)
-            elif status == 'L':
-                q &= Q(project__status='F')|Q(project__status='R')
-            elif status == 'U':
-                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
-    else:
-        form = FilterProjectForm()
-    
-
-    # Get RSE allocations grouped by RSE based off Q filter and save the form
-    rses = {}
-    for rse in RSE.objects.all():
-        rses[rse] = RSEAllocation.objects.filter(q, rse=rse)
-    view_dict['rses'] = rses
-    view_dict['form'] = form
-
-
-    return render(request, 'team.html', view_dict)
-
-@login_required
 def commitment(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
@@ -766,11 +728,14 @@ def commitment(request: HttpRequest) -> HttpResponse:
     # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
     allocation_unique_rses = allocations.values('rse').distinct()
     commitment_data = []
+    rse_allocations = {}
     for a in allocation_unique_rses:
-        rse_allocations = allocations.filter(rse__id=a['rse'])
+        r_a = allocations.filter(rse__id=a['rse'])
         rse = RSE.objects.get(id=a['rse'])
-        commitment_data.append((rse, RSEAllocation.commitment_summary(rse_allocations, from_date, until_date)))
+        rse_allocations[rse] = r_a
+        commitment_data.append((rse, RSEAllocation.commitment_summary(r_a, from_date, until_date)))
     view_dict['commitment_data'] = commitment_data
+    view_dict['rse_allocations'] = rse_allocations
 	
 
     return render(request, 'commitments.html', view_dict)

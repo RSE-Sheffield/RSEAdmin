@@ -33,9 +33,8 @@
 			{% if user|isrseuser %} <li {% if request.resolver_match.url_name == "rse"%} class="active" {% endif %} ><a href="{% url 'rse' user.get_username%}"><i class="fa fa-circle-o"></i>My Summary</a></li> {% endif %}
 			<li {% if request.resolver_match.url_name == "clients"%} class="active" {% endif %} ><a href="{% url 'clients' %}"><i class="fa fa-circle-o"></i>Clients</a></li>
 			<li {% if request.resolver_match.url_name == "projects"%} class="active" {% endif %} ><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
-			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>RSE Team Members</a></li>
-			<li {% if request.resolver_match.url_name == "team"%} class="active" {% endif %} ><a href="{% url 'team' %}"><i class="fa fa-circle-o"></i>RSE Team Allocations</a></li>
-			<li {% if request.resolver_match.url_name == "commitment"%} class="active" {% endif %} ><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>RSE Team Overview</a></li>
+			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>RSE Team</a></li>
+			<li {% if request.resolver_match.url_name == "commitment"%} class="active" {% endif %} ><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>Team &amp; Project Overview</a></li>
 		</ul>
 	</li>
 	
