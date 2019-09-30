@@ -53,12 +53,12 @@
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
 							<td>
-								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 100%} progress-striped active {% endif %}">
-									<div class="progress-bar {% if p.percent_allocated < 50 %}progress-bar-danger{% elif p.percent_allocated == 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated}}%"></div>
+								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
+									<div class="progress-bar {% if p.percent_allocated|percent < 50 %}progress-bar-danger{% elif p.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated|percent}}%"></div>
 								</div>
 							</td>
 							<td>
-								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated == 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated}}%</span>
+								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated|percent}}%</span>
 							</td>
 							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
 						</tr>

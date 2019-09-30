@@ -1,5 +1,6 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
+{% load labels %}
 
 
 {% block stylesheets %}
@@ -49,7 +50,7 @@
 										</div>
 									</td>
 									<td>
-										<span class="badge bg-light-blue">{{a.project_allocation_percentage}}%</span>
+										<span class="badge bg-light-blue">{{a.project_allocation_percentage|percent}}%</span>
 									</td>
 									<td>
 										{% if user.is_superuser %}
