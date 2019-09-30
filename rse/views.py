@@ -1023,9 +1023,9 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
     view_dict['form'] = form
         
     # Get a commitment summary for the RSE
-    commitments = RSEAllocation.commitment_summary(r_a, from_date, until_date)
+    commitments = RSEAllocation.commitment_summary(allocations, from_date, until_date)
     view_dict['commitments'] = commitments
 
 	
 
-    return render(request, 'costdistributions.html', view_dict)
+    return render(request, 'costdistribution.html', view_dict)

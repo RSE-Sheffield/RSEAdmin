@@ -159,5 +159,5 @@ urlpatterns = [
     url(r'^costdistributions$', views.costdistributions, name='costdistributions'),
 
     # View projected cost distrubution (for an individual)
-    url(r'^costdistribution/(?P<rse_username>[0-9]+)$', views.costdistribution, name='costdistribution'),
+    url(r'^costdistribution/(?P<rse_username>[\w]+)$', views.costdistribution, name='costdistribution'),
 ]
