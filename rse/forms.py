@@ -81,7 +81,6 @@ class ProjectTypeForm(forms.Form):
 
     type = forms.ChoiceField(choices = (('S', 'Service'),('A', 'Allocated')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     
-
         
 class FilterProjectForm(FilterDateRangeForm):
     """
@@ -89,7 +88,7 @@ class FilterProjectForm(FilterDateRangeForm):
     Extends the filter range form by adding type and status fields
     """
 
-    status = forms.ChoiceField(choices = (('A', 'All'),) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    status = forms.ChoiceField(choices = (('A', 'All'), ('L', 'Funded and Review'), ('U', 'Funded, Review and in Preperation')) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     # Type cant be filtered at database level as it is a property
     #type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
       
@@ -329,9 +328,98 @@ class NewRSEUserForm(forms.ModelForm):
     employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
-
-    
     class Meta:
         model = RSE
         fields = ['employed_from', 'employed_until']
-  
+        
+class NewSalaryBandForm(forms.ModelForm):
+    """
+    Class represents a form for creating a new salary band with a given year
+    """
+    
+    def __init__(self, *args, **kwargs):
+        # if no instance then we expect a year to set as initial value
+        if not 'instance' in kwargs:
+            if not 'year' in kwargs:
+                raise TypeError("NewSalaryBandForm requires either an 'instance' or a 'year'")
+            year = kwargs.pop('year', None)
+        else:
+            year = kwargs['instance'].year
+        super(NewSalaryBandForm, self).__init__(*args, **kwargs)
+        self.fields['year'].initial = year
+
+    class Meta:
+        model = SalaryBand
+        fields = ['grade', 'grade_point', 'year', 'salary', 'increments']
+        widgets = {
+            'grade': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'grade_point': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'year': forms.HiddenInput(),
+            'salary': forms.NumberInput(attrs={'class' : 'form-control'}),
+            'increments': forms.CheckboxInput(),
+        }
+
+
+class NewFinancialYearForm(forms.ModelForm):
+    """
+    Class represents a form for creating a new salary band with a given year
+    """
+    copy_from = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label="", required=False, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+
+    class Meta:
+        model = FinancialYear
+        fields = ['year']
+        widgets = {
+            'year': forms.NumberInput(attrs={'class' : 'form-control'}),
+        }
+
+    def save(self, commit=True):
+        """ Override to copy salary band data from previous finanical year """
+        financial_year = super(NewFinancialYearForm, self).save(commit=False)
+
+        if commit:
+            # save the year
+            financial_year.save()
+
+            # copy salary band data
+            if self.cleaned_data["copy_from"]:
+                copy_year = self.cleaned_data["copy_from"]
+                sbs = SalaryBand.objects.filter(year=copy_year)
+                for sb in sbs:
+                    sb.pk = None # remove pk to save as new item in database
+                    sb.year = financial_year
+                    sb.save()
+
+        return financial_year
+
+class SalaryGradeChangeForm(forms.ModelForm):
+    """
+    Class represents a form for a salary grade change for an RSE
+    """
+
+    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    
+    def __init__ (self, *args, **kwargs):
+        """ Set the initial data """
+        if not 'rse' in kwargs:
+            raise TypeError("SalaryGradeChangeForm missing required argument: 'rse'")
+        rse = kwargs.pop('rse', None)
+
+        # call super 
+        super(SalaryGradeChangeForm, self).__init__(*args, **kwargs)
+
+        # set RSE (as it is a hidden field)
+        self.fields['rse'].initial = rse
+
+        # not required as query set will be dynamically loaded via ajax
+        #self.fields['salary_band'].queryset = SalaryBand.objects.all()
+
+    
+    class Meta:
+        model = SalaryGradeChange
+        fields = ['rse', 'salary_band']
+        widgets = {
+            'rse': forms.HiddenInput(),
+            'salary_band': forms.Select(attrs={'class' : 'form-control pull-right'}) # choices set dynamically
+            
+        }

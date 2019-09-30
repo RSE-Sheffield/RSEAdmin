@@ -1,0 +1,99 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool{% endblock %}
+
+{% block page_name %}View {{year}} Financial Year (<i>01/08/{{year}} - 31/07/{{year.year|add:"1"}}</i>){% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			<div class="box-header with-border">
+              <h3 class="box-title"> {{year}} Grade Points</h3>
+			  <div class="pull-right">
+					<a href="{% url 'financialyear_edit' year %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit Salary Band Data"><i class="fa fa-edit"></i></a>
+				</div>
+			</div>
+			<div class="box-body table-responsive padding">
+				<table id="grade_point_table" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="name">Grade (and point)</th>
+							<th id="department">Salary</th>
+							<th id="description">Increments</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for sb in salary_bands %}
+						<tr>
+							<td>G{{ sb.grade }}.{{ sb.grade_point }}</td>
+							<td>{{ sb.salary }}</td>
+							<td>
+								{% if sb.increments %}
+								<span class="badge bg-green">Increments</span>
+								{%else %}
+								<span class="badge bg-red">No Increment</span>
+								{% endif %}
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	</div>
+	
+	<div class="col-md-3">
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+					
+					
+					<div class="form-group">
+						<label>Financial Year</label>
+						<p><i>Select Financial Year</i></p>
+						<select class="form-control" id="year" name="year">
+							{% for y in years %}
+							<option value="{{y.year}}" {% if y.year == year.year%}selected{% endif %}>{{y.year}}</option>
+							{% endfor %}
+						</select>
+					</div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	
+
+
+</div>
+
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+
+{% endblock %}
+

@@ -44,7 +44,6 @@ urlpatterns = [
     
     # View all users (RSE and admin)
     url(r'^users?$', views.users, name='users'),
-    
 
 
     ################################
@@ -119,8 +118,43 @@ urlpatterns = [
     
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
+
+    # RSE salary grade change view
+    url(r'^rse/(?P<rse_username>[\w]+)/salary$', views.rse_salary, name='rse_salary'),
+
+    # RSE salary grade change delete
+    url(r'^rse/salarychange/delete/(?P<pk>[0-9]+)$', views.rse_salarygradechange_delete.as_view(), name='rse_salarygradechange_delete'),
+    url(r'^rse/salarychange/delete/$', views.rse_salarygradechange_delete.as_view(), name='rse_salarygradechange_delete_noid'), # trailing id version for dynamically (JS) constructed urls
+
+    # AJAX salary band options by year
+    url(r'^ajax/salaryband$', views.ajax_salary_band_by_year, name='ajax_salary_band_by_year'),    
     
-    # Add RSE View
+        
+    #################################
+    ### Salary and Grade Changes ####
+    #################################
+    
+    # View Salary Bands (by financial year) - view all financial years
+    url(r'^financialyears$', views.financialyears, name='financialyears'),
+
+    # Edit Salary Bands (by financial year)
+    url(r'^financialyear/edit/(?P<year_id>[0-9]+)$', views.financialyear_edit, name='financialyear_edit'),
+
+    # Create a new financial year
+    url(r'^financialyear/new$', views.financialyear_new, name='financialyear_new'),
+
+    # Create a new financial year
+    url(r'^financialyear/delete/(?P<pk>[0-9]+)$', views.financialyear_delete.as_view(), name='financialyear_delete'),
+    
+    # Edit Salary Bands (by financial year) - add a salary band
+    url(r'^salaryband/edit/(?P<sb_id>[0-9]+)$', views.salaryband_edit, name='salaryband_edit'),
+
+    # Salary Band delete (forwards to current finanical year view)
+    url(r'^salaryband/delete/(?P<pk>[0-9]+)$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband'),
+    url(r'^salaryband/delete/$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband_delete_noid'), # trailing id version for dynamically (JS) constructed urls
+    
+    
+    # Create new financial year
     
 
 ]

@@ -39,11 +39,11 @@ def setup_salary_and_banding_data():
     rse = RSE.objects.get(user=user)
     
     # Create some financial years
-    y2017 = FinancialYear(year=2017, inflation=0)
+    y2017 = FinancialYear(year=2017)
     y2017.save()
-    y2018 = FinancialYear(year=2018, inflation=0)
+    y2018 = FinancialYear(year=2018)
     y2018.save()
-    y2019 = FinancialYear(year=2019, inflation=0)
+    y2019 = FinancialYear(year=2019)
     y2019.save()
 
     # Create an incremental range for 2017 year

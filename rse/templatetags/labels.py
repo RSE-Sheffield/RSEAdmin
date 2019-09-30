@@ -25,3 +25,11 @@ def isrseuser(value):
         return True
     except ObjectDoesNotExist:
         return False
+
+@register.filter
+def percent(value):
+    return f"{value:.0f}"
+
+@register.filter
+def dp2(value):
+    return f"{value:.2f}"
