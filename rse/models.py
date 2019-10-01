@@ -375,6 +375,10 @@ class Project(PolymorphicModel):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
+    SCHEDULE_ACTIVE = "Active"
+    SCHEDULE_COMPLETED = "Completed"
+    SCHEDULE_SCHEDULED = "Scheduled"
+
     @property
     def chargable(self):
         """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
@@ -435,6 +439,16 @@ class Project(PolymorphicModel):
     def percent_allocated(self) -> float:
         """ Gets all allocations for this project and sums FTE*days to calculate committed effort """
         return round(self.committed_days / self.project_days * 100, 2)
+
+    @property
+    def get_schedule_display(self) -> str:
+        now = timezone.now().date()
+        if now < self.start:
+            return Project.SCHEDULE_SCHEDULED
+        elif now > self.end:
+            return Project.SCHEDULE_COMPLETED
+        else:
+            return Project.SCHEDULE_ACTIVE
         
         
             

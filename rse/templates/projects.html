@@ -30,6 +30,7 @@
 							<th id="fte">FTE</th>
 							<th id="start">Start</th>
 							<th id="end">End</th>
+							<th id="schedule">Schedule</th>
 							<th id="department">Department</th>
 							<th id="progress">Commitment</th>
 							<th id="progress_label"></th>
@@ -48,6 +49,7 @@
 							<td>{{ p.fte }}</td>
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
+							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
 							<td>{{ p.client.department }}</td>
 							<td>
 								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
@@ -99,6 +101,17 @@
 					</select>
 					
 					</br>
+
+					<label>Schedule</label>
+					<p><i>Filter projects based on current schedule</i></p>
+					<select class="form-control" id="schedule_filter">
+						<option value="">All</option>
+						<option value="Active">Active</option>
+						<option value="Scheduled">Scheduled</option>
+						<option value="Completed">Completed</option>
+					</select>
+					
+					</br>
 					
 				</div>
 				
@@ -146,6 +159,20 @@
 						var column = this;
 
 						var select = $('#status_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
+					// Schedule filter
+					this.api().column("#schedule").every( function () {
+						var column = this;
+
+						var select = $('#schedule_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()

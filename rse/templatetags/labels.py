@@ -16,7 +16,21 @@ def projectstatuslabel(value):
         return "label-success"
     else:
         return "label-danger"        
-        
+
+
+@register.filter
+def schedulestatuslabel(value):
+    """Concerts a project status to a bootstrap label"""
+    if value == Project.SCHEDULE_SCHEDULED:
+        return "label-warning"
+    elif value == Project.SCHEDULE_ACTIVE:
+        return "label-info"
+    elif value == Project.SCHEDULE_ACTIVE:
+        return "label-success"
+    else:
+        return "label-danger"        
+              
+
 
 @register.filter      
 def isrseuser(value):
