@@ -47,8 +47,10 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Project Spends</a></li>
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Cost Recovery</a></li>
+			<li {% if request.resolver_match.url_name == "costdistributions"%} class="active" {% endif %} ><a href="{% url 'costdistributions' %}"><i class="fa fa-circle-o"></i>Cost Distributions</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Service Income</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Summary</a></li>
+			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Internal Project Costs</a></li>
 		</ul>
 	</li>
 	{% endif %}

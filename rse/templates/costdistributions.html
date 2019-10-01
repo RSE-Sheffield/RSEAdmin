@@ -1,6 +1,7 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load labels %}
 
 
 {% block stylesheets %}
@@ -9,9 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool - Cost Distributions {% endblock %}
+{% block title %}RSE Group Administration Tool - Team Cost Distributions{% endblock %}
 
-{% block page_name %}Current Team Cost Distrubtions{{ rse }} {% endblock %}
+{% block page_name %}Current Team Current Cost Distributions{% endblock %}
 {% block content %}
 
 
@@ -20,65 +21,54 @@
     <div class ="row">
         
         <div class="col-md-9">
-			<div class="nav-tabs-custom">
-				<ul class="nav nav-tabs">
-					<li class="active"><a href="#tab_commitment" data-toggle="tab">Commitment (RSE FTE)</a></li>
-					<li><a href="#tab_allocation" data-toggle="tab">Allocations (Project Gantt)</a></li>
-				</ul>
-				<div class="tab-content">
-					<div class="tab-pane active" id="tab_commitment">
-							<div style="float: right">
-								<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon" data-toggle="tooltip" title="" data-original-title="Expand/Contract View"></i></button>
-							</div>
-							<canvas id="commitmentChart" width="100%"></canvas>
-					</div>
-					
-					<div class="tab-pane" id="tab_allocation">
-						<div style="position:relative" class="gantt" id="GanttChartDIV"></div>
-					</div>
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Current Team Cost Distribution Summary</h3>
+					<p><i>Showing project allocations active today for projects with a status of funded. This does not include any internal projects or service projects which are not chargable.</i></p>
+				</div>
+				<div class="box-body">
+					<table id="projects" class="table table-hover">
+						<thead>
+							<tr>
+								<th>Date</th>
+								{% for project in projects %}
+								<th id="project_{{project.id}}"> 
+									<!--<div style="writing-mode: vertical-lr;">-->
+									{{project.name}} <br> ({{project.proj_costing_id}})
+									<!--</div>-->
+								</th>
+								{% endfor %}
+								<th id="sum">Total</th>
+								<th id="more"></th>
+								
+							</tr>
+						</thead>
+						<tbody>
+							{% for rse, rse_allocs in rse_allocations.items %}
+							<tr>
+								<td><strong>{{rse}}</strong></td>
+								{% for project in projects %}
+								<td>
+									{% sum_project_allocation_percentage project rse_allocs %}
+								</td>
+								{% endfor %}
+								<td>
+									<strong>{% sum_allocation_percentage rse_allocs %}</strong>
+								</td>
+								<td>
+									<a href="{% url 'costdistribution' rse.user.username %}?status=F" class="btn btn-primary btn-xs">More</a>
+								</td>
+							</tr>
+							{% endfor %}
+							
+							
+						</tbody>
+					</table>
 				</div>
 			</div>
-
-          
         </div>
 		
-		<div class="col-md-3">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title">Filter</h3>
-			  <div class="box-tools pull-right">
-					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
-					</button>
-				</div>
-            </div>
-			<form method='GET' id="filter_form">
-				<div class="box-body">
-				  <div class="form-group">
-					
-					<label>Date range:</label>
-					<p><i>Will show any projects which have any time within the selected date range</i><p>
-					<div class="input-group">
-					  <div class="input-group-addon">
-						<i class="fa fa-calendar"></i>
-					  </div>
-					  {{ form.filter_range }}
-					</div>
-					</br>
-					
-						
-					<label>Funding Status</label>
-					<p><i>Filter projects based current funding status</i></p>
-					{{ form.status }}
-					</br>
-					
-				  </div>
-				</div>
-				<div class="box-footer">
-					<button type="submit" class="btn btn-primary">Apply</button>
-				</div> {{temp}}
-			</form>
-          </div>
-        </div>
+		
 		
     </div>
     
@@ -89,13 +79,5 @@
 {% block javascript %}
 {{ block.super}}
 
-{% include "includes/rsesgantt.html" with rses=rse_allocations %}
-
-{% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
-
-{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
-
-
-    
     
 {% endblock %}

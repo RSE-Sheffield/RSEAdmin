@@ -375,6 +375,11 @@ class Project(PolymorphicModel):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
+    @property
+    def chargable(self):
+        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
+        pass
+
     @staticmethod
     def status_choice_keys():
         """ Returns the available choices for status field """
@@ -459,6 +464,11 @@ class AllocatedProject(Project):
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
 
     @property
+    def chargable(self):
+        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable."""
+        return not self.internal
+
+    @property
     def duration(self) -> int:
         """
         Duration is determined by start and end dates
@@ -501,6 +511,11 @@ class ServiceProject(Project):
     rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate 
     charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
     
+    @property
+    def chargable(self):
+        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
+        return not self.internal and charged
+
     @property
     def duration(self) -> int:
         """

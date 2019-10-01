@@ -1,6 +1,7 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load labels %}
 
 
 {% block stylesheets %}
@@ -23,30 +24,34 @@
 			<div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Cost Distribution Summary</h3>
+					<p><i>Note: This does not include any internal projects or service projects which are not chargable.</i></p>
 				</div>
 				<div class="box-body">
 					<table id="projects" class="table table-hover">
 						<thead>
 							<tr>
 								<th>Date</th>
-								{% for a in allocations %}
-								<th id="project_{{a.project.id}}"> 
+								{% for project in projects %}
+								<th id="project_{{project.id}}"> 
 									<!--<div style="writing-mode: vertical-lr;">-->
-									{{a.project.name}} <br> ({{a.project.proj_costing_id}})
+									{{project.name}} <br> ({{project.proj_costing_id}})
 									<!--</div>-->
 								</th>
 								{% endfor %}
+								<th>Total</th>
 								
 							</tr>
 						</thead>
 						<tbody>
-							{% for date, value, allocs in commitments %}
+							{% for date, total_effort, allocs in commitments %}
 							<tr>
 								<td><strong>{{date}}</strong></td>
-								{% for a in allocations %}
-								<td>{% if a in allocs %}{{a.percentage}} %{% endif %}</td>
+								{% for project in projects %}
+								<td>
+									{% sum_project_allocation_percentage project allocs %}
+								</td>
 								{% endfor %}
-								
+								<td><strong>{{total_effort}}%</strong></td>
 							</tr>
 							{% endfor %}
 							

@@ -1,4 +1,5 @@
 from django import template
+from django.db.models import QuerySet
 from rse.models import *
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -33,3 +34,31 @@ def percent(value):
 @register.filter
 def dp2(value):
     return f"{value:.2f}"
+
+@register.simple_tag
+def sum_project_allocation_percentage(project: Project, allocations: QuerySet):
+    """
+    Cost distributions include any active allocation. It is possible that there may be multiple allocations active within a cost
+    distribution period related to the same project (i.e. someone is allocated 5% and 10% on the same project but for different 
+    overlapping durations). This filter will provide a sum (or empty string if 0) of allocation percentages for the given proejct.
+    """
+    sum = 0
+    for a in allocations:
+        if a.project == project:
+            sum += a.percentage
+    if sum > 0:
+        return f"{sum}%"
+    else:
+        return ""
+
+@register.simple_tag
+def sum_allocation_percentage(allocations: QuerySet):
+    """
+    Sums the allocation percentages for a cost distribution.
+    """
+    sum = 0
+    for a in allocations:
+        sum += a.percentage
+
+    return f"{sum}%"
+

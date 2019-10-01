@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import DeleteView
@@ -937,47 +937,42 @@ def costdistributions(request: HttpRequest) -> HttpResponse:
     # Dict for view
     view_dict = {}
 
-    # Construct q query and check the project filter form
+    # Construct q query for allocation query
     q = Q()
-    from_date = None
-    until_date = None
-    if request.method == 'GET':
-        form = FilterProjectForm(request.GET)
-        if form.is_valid():
-            filter_range = form.cleaned_data["filter_range"]
-            from_date = filter_range[0]
-            q &= Q(end__gte=from_date)
-            until_date = filter_range[1]
-            q &= Q(start__lte=until_date)
+    # filter to exclude internal projects (these dont have a cost distrubution)
+    # filter to only include chargable service projects (or allocated projects)
+    # additional query on allocatedproject_internal is required to include any elibable allocated projects (is_instance can be used on member)
+    q &= Q(project__internal=False)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
+    # filter by funded only projects
+    q &= Q(project__status='F')
 
-            # apply status type query
-            status = form.cleaned_data["status"]
-            if status in 'PRFX':
-                q &= Q(project__status=status)
-            elif status == 'L':
-                q &= Q(project__status='F')|Q(project__status='R')
-            elif status == 'U':
-                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
-    else:
-        form = FilterProjectForm()
-        
+    # filter to include allocations active today
+    from_date = timezone.now().date()
+    until_date = from_date + timedelta(days=1)
+    q &= Q(end__gte=from_date)
+    q &= Q(start__lte=until_date)
+
+    # save date range
+    view_dict['from_date'] = from_date
+    view_dict['until_date'] = until_date
+           
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
-    view_dict['form'] = form
+
+    # Get Unique projects from allocations
+    allocation_unique_project_ids = allocations.values('project').distinct()
+    allocation_unique_projects = Project.objects.filter(id__in=allocation_unique_project_ids)
+    view_dict['projects'] = allocation_unique_projects
         
-    # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
-    allocation_unique_rses = allocations.values('rse').distinct()
-    commitment_data = []
+    # Gett the allocations per active RSE
     rse_allocations = {}
-    for a in allocation_unique_rses:
-        r_a = allocations.filter(rse__id=a['rse'])
-        rse = RSE.objects.get(id=a['rse'])
-        rse_allocations[rse] = r_a
-        commitment_data.append((rse, RSEAllocation.commitment_summary(r_a, from_date, until_date)))
-    view_dict['commitment_data'] = commitment_data
+    for rse in RSE.objects.all() :
+        if rse.current_employment:
+            r_a = allocations.filter(rse=rse)
+            rse_allocations[rse] = r_a
     view_dict['rse_allocations'] = rse_allocations
 	
-
     return render(request, 'costdistributions.html', view_dict)
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -1016,15 +1011,25 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
     else:
         form = FilterProjectForm()
+
+    # filter to exclude internal projects (these dont have a cost distrubution)
+    # filter to only include chargable service projects (or allocated projects)
+    # additional query on allocatedproject_internal is required to include any elibable allocated projects (is_instance can be used on member)
+    q &= Q(project__internal=False)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
-    view_dict['allocations'] = allocations
     view_dict['form'] = form
+
+    # Get Unique projects from allocations
+    allocation_unique_project_ids = allocations.values('project').distinct()
+    allocation_unique_projects = Project.objects.filter(id__in=allocation_unique_project_ids)
+    view_dict['projects'] = allocation_unique_projects
         
     # Get a commitment summary for the RSE
     commitments = RSEAllocation.commitment_summary(allocations, from_date, until_date)
-    view_dict['commitments'] = commitments
+    view_dict['commitments'] = commitments # (tuple of date, total FTE effort, [allocations])
 
 	
 
