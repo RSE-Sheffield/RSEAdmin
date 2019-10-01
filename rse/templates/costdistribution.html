@@ -34,7 +34,9 @@
 								{% for project in projects %}
 								<th id="project_{{project.id}}"> 
 									<!--<div style="writing-mode: vertical-lr;">-->
-									{{project.name}} <br> ({{project.proj_costing_id}})
+									{{project.name}} <br> 
+									({{project.proj_costing_id}})
+									<a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit project Allocations"><i class="fa fa-edit"></i></a>
 									<!--</div>-->
 								</th>
 								{% endfor %}
