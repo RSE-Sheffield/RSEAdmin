@@ -190,10 +190,11 @@ class ServiceProjectForm(forms.ModelForm):
     # Fields are created manually to set the date input format
     start =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    invoice_received = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',), required=False)
     
     class Meta:
         model = ServiceProject
-        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'days', 'rate', 'charged', 'created', 'creator']
+        fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'days', 'rate', 'charged', 'invoice_received', 'created', 'creator']
         widgets = {
             'proj_costing_id': forms.TextInput(attrs={'class' : 'form-control'}),
             'name': forms.TextInput(attrs={'class' : 'form-control'}),

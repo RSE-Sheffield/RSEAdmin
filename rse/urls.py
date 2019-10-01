@@ -160,4 +160,7 @@ urlpatterns = [
 
     # View projected cost distrubution (for an individual)
     url(r'^costdistribution/(?P<rse_username>[\w]+)$', views.costdistribution, name='costdistribution'),
+
+    # View service income
+    url(r'^serviceincome$', views.serviceincome, name='serviceincome'),
 ]

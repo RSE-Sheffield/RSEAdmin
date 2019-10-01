@@ -1034,3 +1034,57 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
 	
 
     return render(request, 'costdistribution.html', view_dict)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def serviceincome(request: HttpRequest) -> HttpResponse:
+
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = None
+    until_date = None
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lte=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+    else:
+        form = FilterProjectForm()
+
+    # Only get non internal service projects
+    q &= Q(project__serviceproject__internal=False)
+        
+    # Get RSE allocations grouped by RSE based off Q filter and save the form
+    allocations = RSEAllocation.objects.filter(q)
+    view_dict['form'] = form
+
+    # Get Unique projects from allocations
+    allocation_unique_project_ids = allocations.values('project').distinct()
+    allocation_unique_projects = Project.objects.filter(id__in=allocation_unique_project_ids)
+    view_dict['projects'] = allocation_unique_projects
+
+    # Get costs assiciated with each project
+    for p in allocation_unique_projects:
+        # get assiciated allocations
+        p_a = allocations.filter(project=p)
+        # sum value, staff cost and calculate remainder
+        value = sum(a.cost for a in p_a)
+	
+
+    return render(request, 'serviceincome.html', view_dict)

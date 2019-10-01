@@ -96,6 +96,16 @@
 									<strong>Charged to RSE account:</strong>
 									{{ form.charged}}
 									</td></tr>
+
+									<tr><td>
+										<strong>Invoice Received Date:</strong>
+										<div class="input-group">
+											<div class="input-group-addon">
+												<i class="fa fa-calendar"></i>
+											</div>
+											{{ form.invoice_received}}
+										</div>
+									</td></tr>
 									
 								</tbody>
 								{{ form.created}}
@@ -180,6 +190,18 @@
 		locale: {
 			"format": "DD/MM/YYYY"
 		},
+	});
+	//Invoice receievd date picker
+	$('#{{form.invoice_received.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		autoUpdateInput: false,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+	//disable auto update of picker to have a default null value
+	$('#{{form.invoice_received.id_for_label}}').on('apply.daterangepicker', function (ev, picker) {
+		$(this).val(picker.startDate.format('DD/MM/YYYY'));
 	});
 
 
