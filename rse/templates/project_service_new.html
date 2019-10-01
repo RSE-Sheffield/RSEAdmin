@@ -16,7 +16,7 @@
         <div class="col-md-8">
           <div class="box box-default">
             <div class="box-header with-border">
-              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Service Project</h3>
+              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Service Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
             </div>
             
 			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_service' %}{% endif %}">
