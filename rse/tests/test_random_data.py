@@ -119,7 +119,7 @@ def random_project_and_allocation_data():
     # Create some random projects for test database
     for x in range(20):
         proj_costing_id = random.randint(1,99999)
-        start=date(random.randint(2017, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
+        start=date(random.randint(2018, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
         # if start month is dec then end year cant start in same year
         if start.month == 12:
             end_year=random.randint(start.year+1, 2022)

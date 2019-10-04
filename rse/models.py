@@ -87,7 +87,7 @@ class SalaryBand(models.Model):
     def salary_band_next_financial_year(self):
         """
         Provides the salary and for the next financial year
-        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used. 
+        Normal behavior is to use the next years financial data. If there is no next year financial data then the current years financial data is used. 
         Grade point should not change as this represents just the salary change in August which is the inflation adjustment.
         """
         # Query database to find a salary band for next years financial data
@@ -102,6 +102,9 @@ class SalaryBand(models.Model):
         # There is no more salary band data (probably not released yet)
         else:  
             # Return current salary band
+            # TODO: Assume 3% inflation (modify salary but DO NOT SAVE)
+            # TODO: thread local variable to get the request and save warning
+            # self.salary *= 1.03
             return self
             
 
@@ -168,11 +171,6 @@ class SalaryBand(models.Model):
         if end < start:
             raise ValueError('End date is before start date')
             
-        # Check that the start date is in the financial year of this salary band
-        if not self.year.date_in_financial_year(start):
-            raise ValueError('SalaryBand staff costs can only be calculated for dates starting in the specified financial year')
-        
-        
         # Now calculate the staff costs through iteration of chargeable periods (applying any increments)
         # Note salary band data may be estimated in future years so the date of increment must be tracked rather than just the salary band
         next_increment = start
@@ -203,6 +201,22 @@ class SalaryBand(models.Model):
         cost += SalaryBand.salaryCost((end - next_increment).days, next_sb.salary)
         
         return cost*percentage/100.0
+
+    def days_from_budget(self, date: date, budget: float, percent: float) -> int:
+        """
+        Get the number of days which this salary band can be charged given a budget and FTE
+        """
+
+        # TODO: Base days of salary accounting for increments and financial year changes
+        # This may have to increment through days or use the estimate and adjust down )Lots of test cases required for this)
+
+        # estimate off current salary
+        days = budget / (float(self.salary) / 365.0)
+        # adjust based of FTE percent
+        days *= 100.0/percent
+
+        return int(days)
+
 
 
 class Client(models.Model):
@@ -257,9 +271,9 @@ class RSE(models.Model):
     
     @property
     def current_capacity(self) -> float:
-        """ Returns the current capacity of an RSE as a percentage of FTE """
+        """ Returns the current capacity of an RSE as a percentage of FTE. Only includes funded projects. """
         now = timezone.now().date()
-        return sum(a.percentage for a in RSEAllocation.objects.filter(rse=self, start__lte=now, end__gt=now))
+        return sum(a.percentage for a in RSEAllocation.objects.filter(rse=self, start__lte=now, end__gt=now, project__status='F'))
         
 
     def lastSalaryGradeChange(self, date: date = timezone.now()):
@@ -450,9 +464,6 @@ class Project(PolymorphicModel):
         else:
             return Project.SCHEDULE_ACTIVE
         
-        
-            
-        
     def __str__(self):
         return self.name
 
@@ -461,6 +472,28 @@ class Project(PolymorphicModel):
             raise ValidationError(_('Project proj_costing_id cannot be null if the grant has passed the preparation stage.'))
         if self.start and self.end and self.end < self.start:
             raise ValidationError(_('Project end cannot be earlier than project start.'))
+
+    @staticmethod
+    def min_start_date() -> date:
+        """ 
+        Returns the first start date for all allocations (i.e. the first allocation in the database) 
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return Project.objects.aggregate(Min('start'))['start__min']
+        except OperationalError:
+            return timezone.now().date()
+    
+    @staticmethod
+    def max_end_date() -> date:
+        """ 
+        Returns the last end date for all allocations (i.e. the last allocation end in the database)
+        It is possible that the database does not exist when this function is called in which case function returns todays date.
+        """
+        try:
+            return Project.objects.aggregate(Max('end'))['end__max']
+        except OperationalError:
+            return timezone.now().date()
             
 
 class AllocatedProject(Project):
@@ -543,7 +576,7 @@ class ServiceProject(Project):
         """
         Value is determined by service days multiplied by rate
         """
-        return self.days*self.rate
+        return self.days*float(self.rate)
       
     @property
     def type_str(self) -> str:
@@ -604,7 +637,18 @@ class RSEAllocation(models.Model):
         if end is None or end > self.end:
             end = self.end
 
-        return self.rse.staff_cost(start, end, self.percentage)
+        # if it is a non chargable service project then cost is 0
+        if isinstance(self.project, ServiceProject):
+            if self.project.charged == False:
+                return 0
+
+        # Get the last salary grade charge for the RSE at the start of the cost query
+        sgc = self.rse.lastSalaryGradeChange(start)
+        # Get the salary band at the start date of the cost query
+        sb = sgc.salary_band_at_future_date(start)
+
+        # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
+        return sb.staff_cost(start, end, self.percentage)
         
     @staticmethod
     def min_allocation_start() -> date:

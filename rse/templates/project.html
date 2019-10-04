@@ -17,11 +17,11 @@
           <div class="box box-default">
             <div class="box-header with-border">
               <h3 class="box-title"> FTE Commitment Overview for {{project.name}}</h3>
-			  <div style="float: right">
-				
-					<button id="committment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="committment_graph_scale_icon"></i></button>
-				
-			  </div>
+              <div style="float: right">
+              
+                <button id="committment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="committment_graph_scale_icon"></i></button>
+              
+              </div>
             </div>
             <div class="box-body">
               <canvas id="commitmentChart" width="100%"></canvas>
@@ -31,11 +31,15 @@
 		
 		<div class="col-md-4">
           
-		{% include 'includes/projectdetailsbox.html' with project=project %}
+        {% include 'includes/projectdetailsbox.html' with project=project %}
 
-		{% include 'includes/projecteffortbox.html' with project=project edit_icon=True%}
+        {% if user.is_superuser %}
+          {% include 'includes/projecteffortbox.html' with project=project edit_icon=True%}
+        {% else %}
+          {% include 'includes/projecteffortbox.html' with project=project edit_icon=False%}
+        {% endif %}
 		  
-        </div>
+       
 		
 		
 		

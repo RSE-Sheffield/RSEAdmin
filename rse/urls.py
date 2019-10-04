@@ -70,6 +70,9 @@ urlpatterns = [
     
     # Project allocation view
     url(r'^project/(?P<project_id>[0-9]+)/allocations$', views.project_allocations, name='project_allocations'),
+
+    # Project allocation edit view
+    url(r'^project/(?P<project_id>[0-9]+)/allocations/edit$', views.project_allocations_edit, name='project_allocations_edit'),
     
     # Allocation delete (forwards to project allocation view)
     url(r'^project/allocations/delete/(?P<pk>[0-9]+)$', views.project_allocations_delete.as_view(), name='project_allocations_delete'),
@@ -111,7 +114,7 @@ urlpatterns = [
         
     # RSE allocation view by rse id
     url(r'^rse/id/(?P<rse_id>[0-9]+)$', views.rseid, name='rseid'),
-    url(r'^rse/id/$', views.rseid, name='rseid'), # without id parameter
+    url(r'^rse/id/$', views.rseid, name='rseid'),  # without id parameter for dynamically constructed queries
           
     # RSE team commitment view all
     url(r'^commitment$', views.commitment, name='commitment'),
@@ -146,7 +149,7 @@ urlpatterns = [
     # Edit Salary Bands (by financial year) - add a salary band
     url(r'^salaryband/edit/(?P<sb_id>[0-9]+)$', views.salaryband_edit, name='salaryband_edit'),
 
-    # Salary Band delete (forwards to current finanical year view)
+    # Salary Band delete (forwards to current financial year view)
     url(r'^salaryband/delete/(?P<pk>[0-9]+)$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband'),
     url(r'^salaryband/delete/$', views.financialyear_salaryband_delete.as_view(), name='financialyear_salaryband_delete_noid'), # trailing id version for dynamically (JS) constructed urls
     
@@ -155,12 +158,23 @@ urlpatterns = [
     ### Reporting ####
     ##################
     
-    # View current cost distrubution (staff charging)
+    # View current cost distribution (staff charging)
     url(r'^costdistributions$', views.costdistributions, name='costdistributions'),
 
-    # View projected cost distrubution (for an individual)
+    # View projected cost distribution (for an individual)
     url(r'^costdistribution/(?P<rse_username>[\w]+)$', views.costdistribution, name='costdistribution'),
 
+    # View service projects and invoice status
+    url(r'^serviceincome/outstanding$', views.serviceoutstanding, name='serviceoutstanding'),
+
     # View service income
-    url(r'^serviceincome$', views.serviceincome, name='serviceincome'),
+    url(r'^serviceincome/summary$', views.serviceincome, name='serviceincome'),
+
+    # View allocated project income summary
+    url(r'^projectincome/summary$', views.projectincome_summary, name='projectincome_summary'),
+
+    # AJAX query to get remain time on project for a given RSE (based off salary project)
+    url(r'^project/budget/remainingdays/(?P<project_id>[0-9]+)/(?P<rse_id>[0-9]+)/(?P<start>\d{2}-\d{2}-\d{4})/(?P<percent>[0-9]+)$', views.project_remaining_days, name='project_remaining_days'),
+    url(r'^project/budget/remainingdays$', views.project_remaining_days, name='project_remaining_days'), # no id version for dynamically constructed urls
+
 ]

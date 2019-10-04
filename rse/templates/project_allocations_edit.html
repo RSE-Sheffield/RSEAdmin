@@ -1,0 +1,386 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+{% load humanize %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - Project View {% endblock %}
+{% block page_name %}View Project Allocations  for {{project.name}}(Project Internal ID: {{project.id}}){% endblock %}
+{% block content %}
+
+<div class ="row">
+	<div class="col-md-8">
+		<div class="row">
+			<div class="col-md-12">
+				
+				<div class="nav-tabs-custom">
+					<ul class="nav nav-tabs">
+					<li class="active"><a href="#tab_effort" data-toggle="tab">Effort View</a></li>
+					<li><a href="#tab_budget" data-toggle="tab">Budget View</a></li>
+					</ul>
+					<div class="tab-content">
+						<div class="tab-pane active" id="tab_effort">
+							<table id="allocations_effort" class="table table-hover">
+								<thead>
+									<tr>
+										<th>RSE</th>
+										<th id="type">Start Date</th>
+										<th id="internal">End Date</th>
+										<th id="title">FTE</th>
+										<th id="duration">Duration (Days)</th>
+										<th id="duration">FTE Days</th>
+										<th id="progress">Allocation of Days</th>
+										<th id="progress_label"></th>
+										<th id="delete"></th>
+									</tr>
+								</thead>
+								<tbody>
+										{% for a in allocations %}
+									<tr>
+										<td>{{ a.rse }}</td>
+										<td>{{ a.start }}</td>
+										<td>{{ a.end }}</td>
+										<td>{{ a.percentage }}</td>
+										<td>{{ a.duration }}</td>
+										<td>{{ a.effort }}</td>
+										<td>
+											<div class="progress progress-xs">
+												<div class="progress-bar progress-bar-primary " style="width: {{ a.project_allocation_percentage }}%"></div>
+											</div>
+										</td>
+										<td>
+											<span class="badge bg-light-blue">{{a.project_allocation_percentage|percent}}%</span>
+										</td>
+										<td>
+											<button type="button" class="btn btn-danger btn-xs pull-right" data-val="{{a.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
+										</td>
+									</tr>
+										{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						<div class="tab-pane" id="tab_budget">
+							<table id="allocations_budget" class="table table-hover">
+								<thead>
+									<tr>
+										<th>RSE</th>
+										<th id="type">Start Date</th>
+										<th id="internal">End Date</th>
+										<th id="title">FTE</th>
+										<th id="duration">Duration (Days)</th>
+										<th id="staff_cost">Staff Cost</th>
+										<th id="overheads">Overheads</th>
+										<th id="allocaton">Allocation of Budget</th>
+										<th id="allocation_label"></th>
+										<th id="delete"></th>
+									</tr>
+								</thead>
+								<tbody>
+										{% for a in allocations %}
+									<tr>
+										<td>{{ a.rse }}</td>
+										<td>{{ a.start }}</td>
+										<td>{{ a.end }}</td>
+										<td>{{ a.percentage }}</td>
+										<td>{{ a.duration }}</td>
+										<td>£{{ a.staff_cost|floatformat:2|intcomma }}</td>
+										<td>£{{ a.overhead|floatformat:2|intcomma }}</td>
+										<td>
+											<div class="progress progress-xs">
+												<div class="progress-bar progress-bar-primary " style="width: {{a.project_budget_percentage}} %"></div>
+											</div>
+										</td>
+										<td>
+											<span class="badge bg-light-blue">{{a.project_budget_percentage|dp2}} %</span>
+										</td>
+										<td>
+											<button type="button" class="btn btn-danger btn-xs pull-right" data-val="{{a.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
+										</td>
+									</tr>
+										{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+
+						
+					
+			</div>
+		</div>
+
+		<div class="row">
+			
+			<div class="col-md-4">
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Add an allocation</h3>
+					</div>
+					<div class="box-body">
+						<form method='POST' id="allocation_form">
+							{% csrf_token %}
+							<div class="form-group">
+								<label>Start Date:</label>
+								<div class="input-group">
+									<div class="input-group-addon">
+										<i class="fa fa-calendar"></i>
+									</div>
+									{{ form.start }}
+								</div>
+								<br>
+
+								<label>End Date <span style="font-weight: normal">(inital value based on effort)<span>:</label>
+								<div class="input-group">
+									<div class="input-group-addon">
+										<i class="fa fa-calendar"></i>
+									</div>
+									{{ form.end }}
+									<div class="input-group-addon">
+										<a href="" id="id_end_effort_autocomplete" class="fa fa-clock-o" data-toggle="tooltip" title="Auto complete end date based on remaining FTE days of project"></a>
+									</div>
+									<div class="input-group-addon">
+										<a href="" id="id_end_budget_autocomplete" class="fa fa-calculator" data-toggle="tooltip" title="Auto complete end date based on remaining project budget"></a>
+									</div>
+								</div>
+								<br>
+
+								<label>RSE:</label>
+								<div class="input-group">
+									{{ form.rse }} 
+									<div class="input-group-addon">
+										<a href="" id="id_rse_summary" target="_blank" class="fa fa-area-chart" data-toggle="tooltip" title="View RSE or Team commitment summary between allocation dates"></a>
+									</div>
+								</div>
+								<br>
+
+								<label>FTE Percentage:</label>
+									{{ form.percentage }}
+								<br>
+
+								{% if form.errors %}
+									{% for field in form %}
+										{% for error in field.errors %}
+											<div class="alert alert-danger">
+												<strong>{{ error|escape }}</strong>
+											</div>
+										{% endfor %}
+									{% endfor %}
+									{% for error in form.non_field_errors %}
+										<div class="alert alert-danger">
+											<strong>{{ error|escape }}</strong>
+										</div>
+									{% endfor %}
+								{% endif %}
+
+								<button type="submit" class="btn btn-primary">Add Allocation</button>
+							</div>
+						</form>
+					</div>
+					<div class="box-footer">
+						<p>Proposed allocation is <span id="id_new_days">100.0</span> days </p>
+					</div>
+				</div>
+						
+			</div>
+				
+		</div>
+	</div>
+
+	<div class="col-md-4">
+		{% include 'includes/projectdetailsbox.html' with project=project summary_icon=True%}
+
+		{% include 'includes/projecteffortbox.html' with project=project %}
+		
+
+	</div>
+</div>
+
+
+<div class="modal modal-danger fade" id="delete_modal" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel">Are you sure?</h4>
+			</div>
+			<div class="modal-body">
+			<p>Are you sure you wish to delete this allocation?</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
+				<form id="id_allocation_delete_form" method="POST" action="#">
+					{% csrf_token %}
+					<input type="submit" value="Delete" class="btn btn-outline"></input>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+			
+
+   
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('#allocations_effort').DataTable({
+			pageLength: 25,
+			searching: false,
+			scrollX: false,
+		} );
+	} );
+
+	$(document).ready(function() {
+		$('#allocations_budget').DataTable({
+			pageLength: 25,
+			searching: false,
+			scrollX: false,
+		} );
+	} );
+	
+</script>
+
+
+
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+<script type="text/javascript">	
+	// function for getting address string for commitment view
+	function commitment_view_url(rse_id){
+		var url_str;
+		
+		//get base url
+		if (rse_id)
+			url_str = window.location.protocol + "//" + document.location.host + '{% url 'rseid' %}' + rse_id;
+		else
+			url_str = window.location.protocol + "//" + document.location.host + '{% url 'commitment' %}' + rse_id;
+		var url = new URL(url_str);	
+			
+		//append filter range
+		var filter_range = new URLSearchParams();
+		date_str = $('#id_start').val() + ' - ' + $('#id_end').val()
+		filter_range.set('filter_range', date_str);
+		filter_range.set('status', 'A');
+		url.search = filter_range.toString()
+			
+		return url;
+	}
+	
+	// function for updating the url
+	function commitment_view_update_url(){
+		var rse_id = $('#id_rse').val();
+		$('#id_rse_summary').attr('href', commitment_view_url(rse_id).toString());
+	}
+	
+	function allocation_info_update(){
+		var from = moment($('#id_start').val(), 'DD/MM/YYYY');
+		var until = moment($('#id_end').val(), 'DD/MM/YYYY');
+		var full_days = until.diff(from, 'days') * $('#id_percentage').val() / 100;
+		//set html information
+		$('#id_new_days').text(full_days.toFixed(2));
+	}
+	
+
+	//Start Date Picker
+	$('#{{form.start.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+	//End date picker
+	$('#{{form.end.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+	
+	// form option changes update the url and information
+	$('#id_rse').change(function(){
+		commitment_view_update_url();
+	});
+	$('#id_start').on('apply.daterangepicker', function(){
+		commitment_view_update_url();
+		allocation_info_update();
+	});
+	$('#id_end').on('apply.daterangepicker', function(){
+		commitment_view_update_url();
+		allocation_info_update();
+	});
+	$('#id_percentage').change(function(){
+		allocation_info_update();
+	});
+	
+	//calculate end date click for EFFORT distribution
+	$('#id_end_effort_autocomplete').click(function(e){
+		//stop postback
+		e.preventDefault();
+		//calculate new end date based off current start date
+		var fte_days = {{project.remaining_days}} / $('#id_percentage').val() * 100.0
+		var until = moment($('#id_start').val(), 'DD/MM/YYYY').add(fte_days, 'days');
+		$('#id_end').val(until.format('DD/MM/YYYY'));
+		//update information text
+		allocation_info_update();
+	});
+
+	//calculate end date click for BUDGET distribution
+	$('#id_end_budget_autocomplete').click(function(e){
+		//stop postback
+		e.preventDefault();
+		//check for a selected RSE
+		if (!$('#id_rse').val()){
+			alert("Select an RSE to calculate end date for the budget allocation!");
+		}
+		//start date
+		var start = moment($('#id_start').val(), 'DD/MM/YYYY');
+		//AJAX query to get number of RSE days 
+		$.ajax({
+			url: "{% url 'project_remaining_days' %}/{{project.id}}/" + $('#id_rse').val() + "/" + start.format('DD-MM-YYYY') + "/" + $('#id_percentage').val(),
+			type: "GET",
+			success: function(result){
+			var fte_days = result.days;
+			//update end date
+			var until = moment($('#id_start').val(), 'DD/MM/YYYY').add(fte_days, 'days');
+			$('#id_end').val(until.format('DD/MM/YYYY'));
+			//update information text
+			allocation_info_update();
+			}
+
+		});
+	});
+	
+	//document ready set the initial commitment view url and tooltips
+	$( document ).ready(function() {
+		commitment_view_update_url();
+		allocation_info_update();
+		$('#id_end_effort_autocomplete').tooltip();
+		$('#id_rse_summary').tooltip();
+	});
+
+	//update the delete url for modal dialogue on load
+	$('#delete_modal').on('show.bs.modal', function (event) {
+		var allocation_id = $(event.relatedTarget).data('val');
+		// construct url dynamically
+		var url_str = window.location.protocol + "//" + document.location.host + "{% url 'project_allocations_delete_noid' %}" + allocation_id;
+		var url = new URL(url_str);
+		$('#id_allocation_delete_form').attr('action', url.toString());
+	});
+
+
+</script>
+{% endblock %}

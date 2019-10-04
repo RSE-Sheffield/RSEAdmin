@@ -7,7 +7,7 @@ register = template.Library()
 
 @register.filter
 def projectstatuslabel(value):
-    """Concerts a project status to a bootstrap label"""
+    """Converts a project status to a bootstrap label"""
     if value == Project.PREPARATION:
         return "label-warning"
     elif value == Project.REVIEW:
@@ -20,7 +20,7 @@ def projectstatuslabel(value):
 
 @register.filter
 def schedulestatuslabel(value):
-    """Concerts a project status to a bootstrap label"""
+    """Converts a project status to a bootstrap label"""
     if value == Project.SCHEDULE_SCHEDULED:
         return "label-warning"
     elif value == Project.SCHEDULE_COMPLETED:
@@ -28,7 +28,17 @@ def schedulestatuslabel(value):
     elif value == Project.SCHEDULE_ACTIVE:
         return "label-success"
     else:
-        return "label-danger"        
+        return "label-danger"    
+
+@register.filter
+def progressbar_colour(value: float):
+    """Converts a percentage to a bootstrap label"""
+    if value > 99.5:
+        return "progress-bar-green"
+    elif value < 50.0:
+        return "progress-bar-red"
+    else:
+        return "progress-bar-yellow"    
               
 
 

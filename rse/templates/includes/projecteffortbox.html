@@ -1,33 +1,66 @@
 {% load labels %}
+{% load humanize %}
 
-<div class="box box-default">
-	<div class="box-header with-border">
-		<h3 class="box-title"> Effort Reporting </h3>
-		{% if edit_icon %} <span class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></span>{% endif %}
-	</div>
-	<div class="box-body">
-		<p><span class="badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated|percent}}%</span> of Project Allocated</p>
-		<div class="progress progress {% if project.percent_allocated >= 50 and project.percent_allocated <= 99.5 %} progress-striped active {% endif %}">
-			<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated|percent}}%">
+<div class="nav-tabs-custom">
+	<ul class="nav nav-tabs">
+	  	<li class="active"><a href="#tab_effort_summary" data-toggle="tab">Effort Summary</a></li>
+	  	{% if request.user.is_superuser %}<li><a href="#tab_budget_summary" data-toggle="tab">Budget Summary</a></li>{% endif %}
+	  	{% if edit_icon %} 
+	  		<li class="pull-right"><a href="{% url 'project_allocations_edit' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></li>
+	  	{% else %} 
+	  		<li class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View project allocations"><i class="fa fa-edit"></i></a></li>
+		{% endif %}
+	</ul>
+	<div class="tab-content">
+	  	<div class="tab-pane active" id="tab_effort_summary">
+			<div class="progress-group">
+                    <span class="progress-text">Full Days Allocated on Project</span>
+                    <span class="progress-number"><b>{{ project.committed_days|dp2 }}</b>/{{ project.project_days|dp2 }}</span>
+
+                    <div class="progress sm">
+                      <div class="progress-bar {{project.percent_allocated|progressbar_colour}}" style="width: {{project.percent_allocated|percent}}%"></div>
+                    </div>
 			</div>
-		</div>
+			<table class="table table-striped">
+				<tbody>
+					<tr><td>
+						<p><strong>Total Project Days: </strong>{{ project.project_days|dp2 }} days</p>
+						</td></tr>
+					<tr><td>
+						<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }} days</p>
+					</td></tr> 
+					<tr><td>
+						<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
+					</td></tr> 
+					<tr><td>
+						<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
+					</td></tr> 
+				</tbody>
+			</table>
 
+	  	</div>
+		{% if request.user.is_superuser %}
+			<div class="tab-pane" id="tab_budget_summary">
+				<div class="progress-group">
+						<span class="progress-text">Project Staff Budget Spend</span>
+						<span class="progress-number"><b>£{{ project.staff_cost|floatformat:2|intcomma }}</b>/£{{ project.value|floatformat:2|intcomma }}</span>
 
-		<table class="table table-striped">
-			<tbody>
-				<tr><td>
-					<p><strong>Total Project Days: </strong>{{ project.project_days|dp2 }} days</p>
-					</td></tr>
-				<tr><td>
-					<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }} days</p>
-				</td></tr> 
-				<tr><td>
-					<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
-				</td></tr> 
-				<tr><td>
-					<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
-				</td></tr> 
-			</tbody>
-		</table>
+						<div class="progress sm">
+						<div class="progress-bar {{project.percent_budget|progressbar_colour}}" style="width: {{project.percent_budget|percent}}%"></div>
+						</div>
+				</div>
+				<table class="table table-striped">
+					<tbody>
+						<tr><td>
+							<p><strong>Project Staff Budget: </strong>£{{ project.value|floatformat:2|intcomma }}</p>
+							</td></tr>
+						<tr><td>
+							<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
+						</td></tr> 
+					</tbody>
+				</table>
+			</div>
+		{% endif %}
 	</div>
 </div>
+

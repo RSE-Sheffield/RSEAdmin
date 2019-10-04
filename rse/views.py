@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
 from django.contrib.auth.forms import AdminPasswordChangeForm
+from django.http import JsonResponse
 
 
 from .models import *
@@ -376,6 +377,48 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
  
 
  
+@user_passes_test(lambda u: u.is_superuser)
+def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
+    # Get the project
+    proj = get_object_or_404(Project, pk=project_id)
+
+    # calculate project budget and effort
+    proj.value = proj.value()
+    
+    # Dict for view
+    view_dict = {}
+    view_dict['project'] = proj
+    
+    # Create new allocation form for effort
+    if request.method == 'POST':
+        form = ProjectAllocationForm(request.POST, project=proj)
+        if form.is_valid():
+            # Save to DB (add project as not a displayed field)
+            a = form.save(commit=False)
+            a.project = proj
+            a.save()
+            messages.add_message(request, messages.SUCCESS, f'New allocation created.')
+    else:
+        form = ProjectAllocationForm(project=proj)
+    
+    # Get allocations for project
+    allocations = RSEAllocation.objects.filter(project=proj)
+    # calculate staff costs and overheads
+    total_staff_cost = 0
+    for a in allocations:
+        # staff cost
+        a.staff_cost = a.staff_cost()
+        a.overhead = 0
+        a.project_budget_percentage = a.staff_cost / proj.value * 100.0
+        total_staff_cost += a.staff_cost
+    view_dict['allocations'] = allocations
+    proj.staff_cost = total_staff_cost
+    proj.percent_budget = proj.staff_cost / proj.value * 100.0
+
+    view_dict['form'] = form
+
+    return render(request, 'project_allocations_edit.html', view_dict)
+
 @login_required
 def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
@@ -389,23 +432,6 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
 
-    # Create new allocation form (this will fill in start date and end date automatically based of any previous commitments)
-    # Only for super users
-    if request.user.is_superuser:
-        if request.method == 'POST':
-            form = ProjectAllocationForm(request.POST, project=proj)
-            if form.is_valid():
-                # Save to DB (add project as not a displayed field)
-                a = form.save(commit=False)
-                a.project = proj
-                a.save()
-                messages.add_message(request, messages.SUCCESS, f'Allocation created.')
-        else:
-            form = ProjectAllocationForm(project=proj)
-
-        view_dict['form'] = form
-    
-	
 
     return render(request, 'project_allocations.html', view_dict)
 
@@ -424,7 +450,7 @@ class project_allocations_delete(UserPassesTestMixin, DeleteView):
         raise Http404("Page does not exist")
     
     def get_success_url(self):
-        return reverse_lazy('project_allocations', kwargs={'project_id': self.object.project.id})
+        return reverse_lazy('project_allocations_edit', kwargs={'project_id': self.object.project.id})
         
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
@@ -636,6 +662,10 @@ def rses(request: HttpRequest) -> HttpResponse:
     return render(request, 'rses.html', { "rses": rses })
 
 def ajax_salary_band_by_year(request):
+    """ 
+    Simple responsive AJAX query to return options (for html options drop down) displaying salary bands per year.
+    Not required to be post logged in (publically available information)
+    """
     year = request.GET.get('year')
     sbs = SalaryBand.objects.filter(year=year).order_by('year')
     return render(request, 'includes/salaryband_options.html', {'sbs': sbs})
@@ -1012,9 +1042,9 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
     else:
         form = FilterProjectForm()
 
-    # filter to exclude internal projects (these dont have a cost distrubution)
+    # filter to exclude internal projects (these dont have a cost distribution)
     # filter to only include chargable service projects (or allocated projects)
-    # additional query on allocatedproject_internal is required to include any elibable allocated projects (is_instance can be used on member)
+    # additional query on allocatedproject_internal is required to include any eligible allocated projects (is_instance can be used on member)
     q &= Q(project__internal=False)
     q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
         
@@ -1035,18 +1065,35 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
 
     return render(request, 'costdistribution.html', view_dict)
 
+@user_passes_test(lambda u: u.is_superuser)
+def serviceoutstanding(request: HttpRequest) -> HttpResponse:
+    """
+    View for any outstanding service projects (invoice not received)
+    """
+
+    # Dict for view
+    view_dict = {}
+    # Get Service projects in date range
+    projects = ServiceProject.objects.filter(internal=False)
+    view_dict['projects'] = projects
+
+
+    return render(request, 'serviceoutstanding.html', view_dict)
 
 @user_passes_test(lambda u: u.is_superuser)
 def serviceincome(request: HttpRequest) -> HttpResponse:
-
+    """
+    View reports on service income and staff expenditure.
+    Internal projects are not considered.
+    """
 
     # Dict for view
     view_dict = {}
 
     # Construct q query and check the project filter form
     q = Q()
-    from_date = None
-    until_date = None
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
     if request.method == 'GET':
         form = FilterProjectForm(request.GET)
         if form.is_valid():
@@ -1054,7 +1101,7 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
             from_date = filter_range[0]
             q &= Q(end__gte=from_date)
             until_date = filter_range[1]
-            q &= Q(start__lte=until_date)
+            q &= Q(start__lt=until_date)
 
             # apply status type query
             status = form.cleaned_data["status"]
@@ -1067,24 +1114,161 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
     else:
         form = FilterProjectForm()
 
-    # Only get non internal service projects
-    q &= Q(project__serviceproject__internal=False)
-        
-    # Get RSE allocations grouped by RSE based off Q filter and save the form
-    allocations = RSEAllocation.objects.filter(q)
+    # save the form
     view_dict['form'] = form
 
-    # Get Unique projects from allocations
+    # Only get non internal service projects
+    q &= Q(project__serviceproject__internal=False)
+    # Get allocations based off Q filter and save the form
+    allocations = RSEAllocation.objects.filter(q)
     allocation_unique_project_ids = allocations.values('project').distinct()
-    allocation_unique_projects = Project.objects.filter(id__in=allocation_unique_project_ids)
-    view_dict['projects'] = allocation_unique_projects
 
-    # Get costs assiciated with each project
+    # construct a query which filters for projects with allocations within time period (based off the unique ids)
+    # OR where invoice is received within time period (no from or until date assume that it is received)
+    qp = Q()
+    qp &= Q(id__in=allocation_unique_project_ids) | (Q(invoice_received__gte=from_date) & Q(invoice_received__lt=until_date))
+    allocation_unique_projects = ServiceProject.objects.filter(qp)
+
+    # Get costs associated with each project
+    project_costs = {}
+    total_staff_cost = 0
+    total_value = 0
+    total_margin = 0
     for p in allocation_unique_projects:
         # get assiciated allocations
         p_a = allocations.filter(project=p)
-        # sum value, staff cost and calculate remainder
-        value = sum(a.cost for a in p_a)
+        p_data = {}
+        # sum value, staff cost and calculate remainder (income)
+        p_data['staff_cost'] = sum(a.staff_cost(from_date, until_date) for a in p_a) 
+        # value is only considered if it is invoiced within the reporting period
+        p_data['value'] = 0
+        if p.invoice_received: # test that value is not null
+            # test if the invoice received was within specified period
+            if  p.invoice_received > from_date and p.invoice_received <= until_date:
+                p_data['value'] = p.value()
+        # income margin within report period
+        p_data['margin'] = p_data['value'] - p_data['staff_cost']
+        # add project and project costs to dictionary and calculate sums
+        project_costs[p] = p_data
+        total_staff_cost += p_data['staff_cost']
+        total_value +=  p_data['value']
+        total_margin += p_data['margin']
+    # Add project data and sums to view dict
+    view_dict['project_costs'] = project_costs
+    view_dict['total_staff_cost'] = total_staff_cost
+    view_dict['total_value'] = total_value
+    view_dict['total_margin'] = total_margin
 	
 
     return render(request, 'serviceincome.html', view_dict)
+
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def projectincome_summary(request: HttpRequest) -> HttpResponse:
+    """
+    View reports on allocated project income and staff expenditure.
+    Internal projects are not considered.
+    """
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lt=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+    else:
+        form = FilterProjectForm()
+
+    # save the form
+    view_dict['form'] = form
+
+    # Only get non internal allocated projects
+    q &= Q(project__allocatedproject__percentage__gte=0)
+    # Get allocations based off Q filter and save the form
+    allocations = RSEAllocation.objects.filter(q)
+    allocation_unique_project_ids = allocations.values('project').distinct()
+
+    # construct a query which filters for projects with allocations within time period (based off the unique ids)
+    qp = Q(id__in=allocation_unique_project_ids)
+    allocation_unique_projects = AllocatedProject.objects.filter(qp)
+
+    # Get costs associated with each allocated project
+    project_costs = {}
+    total_staff_cost = 0
+    total_overhead = 0
+    for p in allocation_unique_projects:
+        # get associated allocations
+        p_a = allocations.filter(project=p)
+        p_data = {}
+        if not p.internal:
+            # sum value, staff cost and calculate remainder (income)
+            p_data['staff_cost'] = sum(a.staff_cost(from_date, until_date) for a in p_a) 
+            # TODO: Overheads are not currently calculated
+            p_data['overhead'] = 0
+        else:
+            p_data['staff_cost'] = 0
+            p_data['overhead'] = 0
+        # add project and project costs to dictionary and calculate sums
+        project_costs[p] = p_data
+        total_staff_cost += p_data['staff_cost']
+        total_overhead +=  p_data['overhead']
+
+    # Add project data and sums to view dict
+    view_dict['project_costs'] = project_costs
+    view_dict['total_staff_cost'] = total_staff_cost
+    view_dict['total_overhead'] = total_overhead
+	
+    return render(request, 'projectincome_summary.html', view_dict)
+
+@user_passes_test(lambda u: u.is_superuser)
+def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, start: str, percent: int) -> HttpResponse:
+
+    # get the RSE and project
+    try:
+        rse = RSE.objects.get(id=rse_id)
+        project = Project.objects.get(id=project_id)
+    except ObjectDoesNotExist:
+        JsonResponse({'days': 0})
+
+    # get start date as a date
+    start_date = datetime.strptime(start, '%d-%m-%Y').date()
+
+    # get remaining staff budget for project
+    allocations = RSEAllocation.objects.filter(project=project)
+    # sum staff time contributions so far from existing allocations
+    staff_cost = 0
+    for a in allocations:
+        staff_cost += a.staff_cost()
+    remaining_budget = project.value() - staff_cost
+
+    # get the remaining FTE days for rse given remaining budget
+    try:
+        # get the last salary grade change before the start date of the project
+        last_sgc = rse.lastSalaryGradeChange(date=start_date)
+        # get the salary band of the rse at the start date
+        sb = last_sgc.salary_band_at_future_date(start_date)
+        # project salary to find remaining days
+        days = sb.days_from_budget(start_date, float(remaining_budget), float(percent))
+    except ValueError:
+        return JsonResponse({'days': 0})
+
+    return JsonResponse({'days': days})

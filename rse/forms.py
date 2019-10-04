@@ -51,8 +51,8 @@ class FilterDateRangeForm(forms.Form):
     Property functions are used to be able to obtain date ranges without cluttering views
     """
 
-    min_date = RSEAllocation.min_allocation_start()
-    max_date = RSEAllocation.max_allocation_end()
+    min_date = Project.min_start_date()
+    max_date = Project.max_end_date()
     
     
     # Use custom date range field
@@ -95,7 +95,7 @@ class FilterProjectForm(FilterDateRangeForm):
     
 class ProjectAllocationForm(forms.ModelForm):
     """
-    Form for adding and editing allocations within a project. Uses model form base type.
+    Form for adding and editing EFFORT allocations within a project. Uses model form base type.
     Sets the start and end day of the allocation as follows
     - Start day is start of project
     - End day is start day plus remaining commitment to the project (by calculating sum of already committed hours)
@@ -135,15 +135,14 @@ class ProjectAllocationForm(forms.ModelForm):
         cleaned_data=super(ProjectAllocationForm, self).clean()
         errors = {}
         
-        # Validation checks that the dates are correct (no need to raise errors if fiedls are empty as they are required so superclass will have done this)
+        # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if cleaned_data['start'] and cleaned_data['end']:
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Allocation end date can not be before start date')
         
         if errors:
             raise ValidationError(errors)
-    
-
+     
 class AllocatedProjectForm(forms.ModelForm):    
     """
     Class for creation and editing of a project
