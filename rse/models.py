@@ -30,6 +30,7 @@ class SalaryValue():
     """
     Class to represent a salary calculation.
     Has a salary and overhead. Also has a dictionary for each to log how the salary/overhead was calculated (for each chargable period)
+    Overhead only makes sense for allocated projects as service budgets have a budget surplus rather than overhead
     """
     staff_cost = 0
     overhead = 0
@@ -45,19 +46,6 @@ class SalaryValue():
         Overhead is calculated pro rata
         """
         self.overhead = SalaryValue.calculate_allocated_overhead(from_date=from_date, until_date=until_date, overhead_rate=overhead_rate, percentage=percentage)
-        return self.overhead
-
-    def set_service_overhead(self, from_date: date, until_date: date, rate: float, percentage: float = 100.0):
-        """
-        Overhead is what is left from the charged day rate and the staff costs
-        """
-        # TRACK days (with holidays etc)
-        days = (until_date-from_date).days
-        # Non track days
-        days *= (220.0/365.0)
-        # by percentage commitment
-        days = (days * percentage/100.0)
-        self.overhead = (rate*days) - self.staff_cost
         return self.overhead
 
     @staticmethod
@@ -742,11 +730,8 @@ class RSEAllocation(models.Model):
         # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
         salary_cost = sb.staff_cost(start, end, self.percentage)
 
-        # if service then overheads are based on service rate less the staff costs
-        if self.project.is_service:
-            salary_cost.set_service_overhead(from_date=start, until_date=end, rate=float(self.project.rate), percentage=self.percentage)
-        # else project overheads should be caluclated from pro rate overhead rate
-        else:
+        # allocated project overheads should be calculated from pro-rata overhead rate
+        if not self.project.is_service:
             salary_cost.set_allocated_overhead(from_date=start, until_date=end, overhead_rate=self.project.overheads, percentage=self.percentage)
 
         return salary_cost

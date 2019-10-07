@@ -1197,7 +1197,6 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
         for a in p_a:
             salary_value = a.staff_cost(from_date, until_date)
             staff_cost += salary_value.staff_cost
-            overhead += salary_value.overhead
             cost_breakdown += salary_value.cost_breakdown
         # calculate income value
         value = 0
