@@ -205,7 +205,7 @@ class SalaryBand(models.Model):
     def days_from_budget(self, start: date, budget: float, percent: float) -> int:
         """
         Get the number of days which this salary band can be charged given a budget and FTE
-        TODO: This works but man it is slow.
+        TODO: This works but it is slow.
         """
         # estimate off current salary
         days = budget / (float(self.salary) / 365.0)
@@ -217,10 +217,12 @@ class SalaryBand(models.Model):
 
         # increment down (salary never decreases!)
         temp_end_date = end
-        temp_staff_cost = self.staff_cost(start, temp_end_date, percent)
+        temp_staff_cost = float(self.staff_cost(start, temp_end_date, percent))
         while temp_staff_cost > budget:
+            # estimate days of reduction based of starting salary
+            reduce_days = 1#(temp_staff_cost - budget) / (salary_at_end_date) / 365.0)
             # reduce end date
-            temp_end_date -= timedelta(days=1)
+            temp_end_date -= timedelta(days=reduce_days)
             # recalculate the cost
             temp_staff_cost = self.staff_cost(start, temp_end_date, percent)
 
