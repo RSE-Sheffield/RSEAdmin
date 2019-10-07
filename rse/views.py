@@ -26,19 +26,43 @@ from .forms import *
 def append_project_and_allocation_costs(project: Project, allocations: TypedQuerySet[RSEAllocation]):
     
     # calculate project budget and effort
-    project.value = project.value()
+    total_value = project.value()
+
+    # service project
+    if project.is_service:
+        staff_budget = total_value
+    # allocated project
+    else:
+        staff_budget = project.staff_budget()
 
     # calculate staff costs and overheads
     total_staff_cost = 0
     for a in allocations:
         # staff cost
-        a.staff_cost = a.staff_cost()
-        a.overhead = 0
-        a.project_budget_percentage = a.staff_cost / project.value * 100.0
+        salary_value = a.staff_cost()
+        a.staff_cost = salary_value.staff_cost
+        a.project_budget_percentage = a.staff_cost / staff_budget * 100.0
         total_staff_cost += a.staff_cost
-    project.staff_cost = total_staff_cost
-    project.percent_budget = project.staff_cost / project.value * 100.0
-    project.remaining_budget = project.value - total_staff_cost
+
+
+    # Set project fields
+    # service project
+    if project.is_service:
+        project.total_value = total_value
+        project.staff_cost = total_staff_cost
+        project.percent_total_budget = project.staff_cost / total_value * 100.0
+        project.remaining_surplus = total_value - total_staff_cost
+    # allocated project
+    else:   
+        project.total_value = total_value
+        project.staff_budget = staff_budget
+        project.overhead = SalaryValue.calculate_allocated_overhead(from_date=project.start, until_date=project.end, overhead_rate=project.overheads, percentage=project.percentage)
+        project.staff_cost = total_staff_cost
+        project.percent_staff_budget = project.staff_cost / staff_budget * 100.0
+        project.remaining_staff_budget = staff_budget - total_staff_cost
+        
+
+
 
 
 #######################
@@ -1163,24 +1187,35 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
     total_value = 0
     total_margin = 0
     for p in allocation_unique_projects:
-        # get assiciated allocations
+        # get associated allocations
         p_a = allocations.filter(project=p)
         p_data = {}
-        # sum value, staff cost and calculate remainder (income)
-        p_data['staff_cost'] = sum(a.staff_cost(from_date, until_date) for a in p_a) 
-        # value is only considered if it is invoiced within the reporting period
-        p_data['value'] = 0
+        staff_cost = 0
+        overhead = 0
+        cost_breakdown = []
+        # loop over allocations and calculate staff cost, overheads and the cost breakdown
+        for a in p_a:
+            salary_value = a.staff_cost(from_date, until_date)
+            staff_cost += salary_value.staff_cost
+            overhead += salary_value.overhead
+            cost_breakdown += salary_value.cost_breakdown
+        # calculate income value
+        value = 0
         if p.invoice_received: # test that value is not null
-            # test if the invoice received was within specified period
-            if  p.invoice_received > from_date and p.invoice_received <= until_date:
-                p_data['value'] = p.value()
-        # income margin within report period
-        p_data['margin'] = p_data['value'] - p_data['staff_cost']
+            if  p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
+                value = p.value()
+        # margin (overheads)
+        margin = value - staff_cost
+        # sum value, staff cost and calculate remainder (income)
+        p_data['staff_cost'] = staff_cost 
+        p_data['value'] = value
+        p_data['margin'] = value - staff_cost
+        p_data['cost_breakdown'] = cost_breakdown
         # add project and project costs to dictionary and calculate sums
         project_costs[p] = p_data
-        total_staff_cost += p_data['staff_cost']
-        total_value +=  p_data['value']
-        total_margin += p_data['margin']
+        total_staff_cost += staff_cost
+        total_value +=  value
+        total_margin += margin
     # Add project data and sums to view dict
     view_dict['project_costs'] = project_costs
     view_dict['total_staff_cost'] = total_staff_cost
@@ -1248,13 +1283,23 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
         p_a = allocations.filter(project=p)
         p_data = {}
         if not p.internal:
+            staff_cost = 0
+            overhead = 0
+            cost_breakdown = []
+            # loop over allocations and calculate staff cost, overheads and the cost breakdown
+            for a in p_a:
+                salary_value = a.staff_cost(from_date, until_date)
+                staff_cost += salary_value.staff_cost
+                overhead += salary_value.overhead
+                cost_breakdown += salary_value.cost_breakdown
             # sum value, staff cost and calculate remainder (income)
-            p_data['staff_cost'] = sum(a.staff_cost(from_date, until_date) for a in p_a) 
-            # TODO: Overheads are not currently calculated
-            p_data['overhead'] = 0
+            p_data['staff_cost'] = staff_cost
+            p_data['overhead'] = overhead
+            p_data['cost_breakdown'] = cost_breakdown
         else:
             p_data['staff_cost'] = 0
             p_data['overhead'] = 0
+            p_data['cost_breakdown'] = 0
         # add project and project costs to dictionary and calculate sums
         project_costs[p] = p_data
         total_staff_cost += p_data['staff_cost']
@@ -1269,11 +1314,15 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
 
 @user_passes_test(lambda u: u.is_superuser)
 def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, start: str, percent: int) -> HttpResponse:
+    """
+    Responsive query to get the number of remaining days on an allocated project.
+    Required to autocomplete days when creating a new RSE allocation by budget on an allocated project
+    """
 
     # get the RSE and project
     try:
         rse = RSE.objects.get(id=rse_id)
-        project = Project.objects.get(id=project_id)
+        project = AllocatedProject.objects.get(id=project_id)
     except ObjectDoesNotExist:
         JsonResponse({'days': 0})
 
@@ -1285,8 +1334,8 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
     # sum staff time contributions so far from existing allocations
     staff_cost = 0
     for a in allocations:
-        staff_cost += a.staff_cost()
-    remaining_budget = project.value() - staff_cost
+        staff_cost += a.staff_cost().staff_cost
+    remaining_budget = project.staff_budget() - staff_cost
 
     # get the remaining FTE days for rse given remaining budget
     try:

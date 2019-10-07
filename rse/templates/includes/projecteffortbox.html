@@ -39,27 +39,64 @@
 	  	</div>
 		{% if request.user.is_superuser %}
 			<div class="tab-pane" id="tab_budget_summary">
-				<div class="progress-group">
-						<span class="progress-text">Project Staff Budget Spend</span>
-						<span class="progress-number"><b>{{ project.percent_budget|percent }}%</b></span>
+				{% if project.is_service %}
+					<div class="progress-group">
+						<span class="progress-text">Total Budget Spend</span>
+						<span class="progress-number"><b>{{ project.percent_total_budget|percent }}%</b></span>
 
 						<div class="progress sm">
-						<div class="progress-bar {{project.percent_budget|progressbar_colour}}" style="width: {{project.percent_budget|percent}}%"></div>
+							<div class="progress-bar {{project.percent_total_budget|progressbar_colour}}" style="width: {{project.percent_total_budget|percent}}%"></div>
 						</div>
-				</div>
-				<table class="table table-striped">
-					<tbody>
-						<tr><td>
-							<p><strong>Project Staff Budget: </strong>£{{ project.value|floatformat:2|intcomma }}</p>
+					</div>
+					<table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<p><strong>Project Total Value: </strong>£{{ project.total_value|floatformat:2|intcomma }}</p>
 							</td></tr>
-						<tr><td>
-							<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
-						</td></tr> 
-						<tr><td>
-							<p><strong>Remaining Project Budget: </strong>£{{ project.remaining_budget|floatformat:2|intcomma }}</p>
-						</td></tr> 
-					</tbody>
-				</table>
+							<tr><td>
+
+							<tr><td>
+								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Remaining Project Surpless (Overheads): </strong>£{{ project.remaining_surplus|floatformat:2|intcomma }}</p>
+							</td></tr> 
+						</tbody>
+					</table>
+				{% else %}
+					<div class="progress-group">
+						<span class="progress-text">Staff Budget Spend</span>
+						<span class="progress-number"><b>{{ project.percent_staff_budget|percent }}%</b></span>
+
+						<div class="progress sm">
+							<div class="progress-bar {{project.percent_staff_budget|progressbar_colour}}" style="width: {{project.percent_staff_budget|percent}}%"></div>
+						</div>
+					</div>
+					<table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<p><strong>Project Total Value: </strong>£{{ project.total_value|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Project Staff Budget: </strong>£{{ project.staff_budget|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Project Overheads: </strong>£{{ project.overhead|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Remaining Staff Budget: </strong>£{{ project.remaining_staff_budget|floatformat:2|intcomma }}</p>
+							</td></tr> 
+						</tbody>
+					</table>
+				{% endif %}
 			</div>
 		{% endif %}
 	</div>

@@ -35,10 +35,44 @@ class SalaryValue():
     overhead = 0
     cost_breakdown = []
 
-    def add_staff_cost(self, staff_cost: float, overhead: float, from_date: date, until_date: date, estimated: bool = False):
-        self.staff_cost += staff_cost
-        self.overhead += overhead
-        self.cost_breakdown.append((from_date, until_date, staff_cost, overhead, estimated))
+    def add_staff_cost(self, salary: float, from_date: date, until_date: date, percentage: float = 100.0, estimated: bool = False):
+        cost_in_period = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=salary, percentage=percentage)
+        self.staff_cost += cost_in_period
+        self.cost_breakdown.append({'from_date': from_date, 'until_date': until_date, 'staff_cost': cost_in_period, 'estimated': estimated})
+
+    def set_allocated_overhead(self, from_date: date, until_date: date, overhead_rate: float, percentage: float = 100.0):
+        """
+        Overhead is calculated pro rata
+        """
+        self.overhead = SalaryValue.calculate_allocated_overhead(from_date=from_date, until_date=until_date, overhead_rate=overhead_rate, percentage=percentage)
+        return self.overhead
+
+    def set_service_overhead(self, from_date: date, until_date: date, rate: float, percentage: float = 100.0):
+        """
+        Overhead is what is left from the charged day rate and the staff costs
+        """
+        # TRACK days (with holidays etc)
+        days = (until_date-from_date).days
+        # Non track days
+        days *= (220.0/365.0)
+        # by percentage commitment
+        days = (days * percentage/100.0)
+        self.overhead = (rate*days) - self.staff_cost
+        return self.overhead
+
+    @staticmethod
+    def calculate_allocated_overhead(from_date: date, until_date: date, overhead_rate: float, percentage: float = 100.0):
+        """
+        Overhead is calculated pro rata
+        """
+        overhead = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=overhead_rate)
+        return overhead
+
+
+    @property
+    def value(self) -> float:
+        return self.staff_cost + self.overhead
+
 
 
 # Start of the models
@@ -187,16 +221,13 @@ class SalaryBand(models.Model):
         """
         return (days / 365.0) * float(salary) * (float(percentage) / 100.0)
         
-    def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> float :
+    def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> SalaryValue :
         """
         Gets the staff cost for this salary band by considering any future increments
         Start must be a date in the current financial year in which this salary band represents
         End (up to not including )can be any date after start and may require increments
         
         Function operates in same way as salary_band_at_future_date
-
-        TODO: Calculate overheads
-        TODO: Log amounts per period
         """
         
         # Check for obvious stupid
@@ -207,7 +238,7 @@ class SalaryBand(models.Model):
         # Note salary band data may be estimated in future years so the date of increment must be tracked rather than just the salary band
         next_increment = start
         next_sb = self
-        cost = 0
+        salary_value = SalaryValue()
         
         # If the salary can change between the date range then advance increment or year
         while ( SalaryBand.spans_salary_change(next_increment, end)):
@@ -224,15 +255,15 @@ class SalaryBand(models.Model):
                 temp_next_sb = next_sb.salary_band_after_increment()
                 
             # update salary cost
-            cost += SalaryBand.salaryCost((temp_next_increment - next_increment).days, next_sb.salary)
+            salary_value.add_staff_cost(salary=next_sb.salary, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
             # update chargeable period date and band
             next_increment = temp_next_increment
             next_sb = temp_next_sb
         
         # Final salary cost for period not spanning a salary change
-        cost += SalaryBand.salaryCost((end - next_increment).days, next_sb.salary)
+        salary_value.add_staff_cost(salary=next_sb.salary, from_date=next_increment, until_date=end, percentage=percentage)
         
-        return cost*percentage/100.0
+        return salary_value
 
     def days_from_budget(self, start: date, budget: float, percent: float) -> int:
         """
@@ -468,7 +499,7 @@ class Project(PolymorphicModel):
             
             
     def value(self) -> Optional[int]:
-        """ Implemented by concrete classes """        
+        """ Implemented by concrete classes."""        
         pass
         
     @property
@@ -580,10 +611,18 @@ class AllocatedProject(Project):
     
     def value(self) -> float:
         """
-        Value is determined by project duration and salary cost of salary band used for costing
+        Value represent staff costs and overhead is determined by project duration and salary cost of salary band used for costing
         """
         
-        return self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+        salary_costs = self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+        salary_costs.set_allocated_overhead(from_date=self.start, until_date=self.end, overhead_rate=self.overheads, percentage=self.percentage)
+
+        return salary_costs.staff_cost + salary_costs.overhead
+
+    def staff_budget(self) -> float:
+        salary_costs = self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
+        
+        return salary_costs.staff_cost
 
     
     @property    
@@ -623,7 +662,7 @@ class ServiceProject(Project):
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are 220 TRAC working days) to a FTE duration
         """
-        return floor(self.days * (360.0/ 220.0))
+        return floor(self.days * (365.0/ 220.0))
         
     def value(self) -> float:
         """
@@ -679,7 +718,7 @@ class RSEAllocation(models.Model):
         """ Returns the percentage of this allocation from project total """
         return self.effort / self.project.project_days *100.0
 
-    def staff_cost(self, start=None, end=None):
+    def staff_cost(self, start=None, end=None) -> SalaryValue:
         """
         Returns the cost of a member of staff over a duration (if provided) or for full allocation if not
         """
@@ -701,7 +740,16 @@ class RSEAllocation(models.Model):
         sb = sgc.salary_band_at_future_date(start)
 
         # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
-        return sb.staff_cost(start, end, self.percentage)
+        salary_cost = sb.staff_cost(start, end, self.percentage)
+
+        # if service then overheads are based on service rate less the staff costs
+        if self.project.is_service:
+            salary_cost.set_service_overhead(from_date=start, until_date=end, rate=float(self.project.rate), percentage=self.percentage)
+        # else project overheads should be caluclated from pro rate overhead rate
+        else:
+            salary_cost.set_allocated_overhead(from_date=start, until_date=end, overhead_rate=self.project.overheads, percentage=self.percentage)
+
+        return salary_cost
         
     @staticmethod
     def min_allocation_start() -> date:
