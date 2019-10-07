@@ -82,6 +82,16 @@
 								{{ rse_form.employed_until }}
 							</div>
 						</div>
+
+						<div class="form-group">
+							{{ rse_form.year.label_tag }}
+							{{ rse_form.year }}
+						</div>
+
+						<div class="form-group">
+							{{ rse_form.salary_band.label_tag }}
+							{{ rse_form.salary_band }}
+						</div>
 							
 				</div>
 				<div class="box-footer">
@@ -153,6 +163,36 @@
 
 
 
+</script>
+
+<script type="text/javascript">	
+	
+	function populate_salary_band(year) {
+      var url = "{% url 'ajax_salary_band_by_year' %}"
+
+      $.ajax({
+        url: url,
+        data: {
+          'year': year       
+        },
+        success: function (data) {
+          $("#id_salary_band").html(data); 
+        }
+      });
+	}
+	
+	// set values in salary band options form based off a responsive ajax query
+	$("#id_year").change(function(){
+		var year = $(this).val();
+		populate_salary_band(year);
+	});
+
+	//set initial values of salary band options
+	$(document).ready(function()
+    {
+		var year = $("#id_year").val();
+        populate_salary_band(year);
+    });
 </script>
 {% endif %}
 {% endblock %}

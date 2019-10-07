@@ -292,7 +292,7 @@ class EditUserForm(UserChangeForm):
     
     # Field to allow user to be an admin user
     is_admin = forms.BooleanField(initial=False, required=False)
- 
+
     def __init__(self, *args, **kwargs):
         """ Override init to customise the UserCreationForm widget class appearance """
         super(EditUserForm, self).__init__(*args, **kwargs)
@@ -322,18 +322,47 @@ class EditUserForm(UserChangeForm):
         if commit:
             user.save()
         return user
-    
-class NewRSEUserForm(forms.ModelForm):    
+
+class EditRSEUserForm(forms.ModelForm):    
     """
-    Class for creation and editing of a client
+    Form to edit an RSE users. This is used alongside the new user form so does not extend it.
     """
     
     employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
-    
+
+
     class Meta:
         model = RSE
         fields = ['employed_from', 'employed_until']
+
+
+class NewRSEUserForm(forms.ModelForm):    
+    """
+    Form for new RSE users. This is used alongside the new user form so does not extend it.
+    Same as EditRSEUserForm but with an initial salary band option which is filtered dynamically within javascript
+    """
+    
+    employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=False, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))           # triggers dynamic filter in JS
+    salary_band = forms.ModelChoiceField(queryset = SalaryBand.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'})) # dynamically filtered (JS)
+ 
+    class Meta:
+        model = RSE
+        fields = ['employed_from', 'employed_until']
+
+    def save(self, commit=True):
+        """ Override save to make user a superuser """
+        rse = super(NewRSEUserForm, self).save(commit=False)
+        # commit
+        if commit:
+            rse.save()
+            # create an initial salary grade change
+            if self.cleaned_data["salary_band"]:
+                sgc = SalaryGradeChange(rse=rse, salary_band=self.cleaned_data["salary_band"])
+                sgc.save()
+        return rse
         
 class NewSalaryBandForm(forms.ModelForm):
     """

@@ -90,8 +90,13 @@ def user_new_rse(request: HttpRequest) -> HttpResponse:
             rse = rse_form.save(commit=False)
             rse.user = user
             rse.save()
+            # create a salary grade change for RSE
+            if rse_form.cleaned_data["salary_band"]:
+                sgc = SalaryGradeChange(rse=rse, salary_band=rse_form.cleaned_data["salary_band"])
+                sgc.save()
             messages.add_message(request, messages.SUCCESS, f'New RSE user {user.username} created.')
-            return HttpResponseRedirect(reverse_lazy('index'))
+            # Go to view of RSE salary grade changes
+            return HttpResponseRedirect(reverse_lazy('rse_salary', kwargs={'rse_username': user.username}))
                 
     else:
         user_form = NewUserForm()
@@ -114,19 +119,19 @@ def user_edit_rse(request: HttpRequest, rse_id) -> HttpResponse:
     # process or create form
     if request.method == 'POST':        
         user_form = EditUserForm(request.POST, instance=rse.user) 
-        rse_form = NewRSEUserForm(request.POST, instance=rse) 
+        rse_form = EditRSEUserForm(request.POST, instance=rse) 
         # process admin user
         if user_form.is_valid() and rse_form.is_valid(): 
             user = user_form.save()
             rse = rse_form.save(commit=False)
             rse.user = user
             rse.save()
-            messages.add_message(request, messages.SUCCESS, f'RSE user {user.username} detais updated.')
+            messages.add_message(request, messages.SUCCESS, f'RSE user {user.username} details updated.')
             return HttpResponseRedirect(reverse_lazy('index'))
                 
     else:
         user_form = EditUserForm(instance=rse.user)
-        rse_form = NewRSEUserForm(instance=rse) 
+        rse_form = EditRSEUserForm(instance=rse) 
         
     view_dict['user_form'] = user_form
     view_dict['rse_form'] = rse_form
