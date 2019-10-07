@@ -43,6 +43,7 @@
 								<td>{{project.name}}</td>
 								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
 								<td>£{{data.overhead|floatformat:2|intcomma}}</td>
+								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>
 							</tr>
 							{% endfor %}
 							

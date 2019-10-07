@@ -26,6 +26,23 @@ class TypedQuerySet(Generic[T]):
         pass
 
 
+class SalaryValue():
+    """
+    Class to represent a salary calculation.
+    Has a salary and overhead. Also has a dictionary for each to log how the salary/overhead was calculated (for each chargable period)
+    """
+    staff_cost = 0
+    overhead = 0
+    cost_breakdown = []
+
+    def add_staff_cost(self, staff_cost: float, overhead: float, from_date: date, until_date: date, estimated=False: bool):
+        self.staff_cost += staff_cost
+        self.overhead += overhead
+        self.cost_breakdown.append((from_date, until_date, staff_cost, overhead, estimated))
+
+
+# Start of the models
+
 class FinancialYear(models.Model):
     """
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
@@ -177,6 +194,9 @@ class SalaryBand(models.Model):
         End (up to not including )can be any date after start and may require increments
         
         Function operates in same way as salary_band_at_future_date
+
+        TODO: Calculate overheads
+        TODO: Log amounts per period
         """
         
         # Check for obvious stupid
