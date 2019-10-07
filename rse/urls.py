@@ -174,7 +174,7 @@ urlpatterns = [
     url(r'^projectincome/summary$', views.projectincome_summary, name='projectincome_summary'),
 
     # AJAX query to get remain time on project for a given RSE (based off salary project)
-    url(r'^project/budget/remainingdays/(?P<project_id>[0-9]+)/(?P<rse_id>[0-9]+)/(?P<start>\d{2}-\d{2}-\d{4})/(?P<percent>[0-9]+)$', views.project_remaining_days, name='project_remaining_days'),
+    url(r'^project/budget/remainingdays/(?P<project_id>[0-9]+)/(?P<rse_id>[0-9]+)/(?P<start>\d{2}-\d{2}-\d{4})/(?P<percent>\d+(?:\.\d+)?)$', views.project_remaining_days, name='project_remaining_days'),  # accepts int or float percent value
     url(r'^project/budget/remainingdays$', views.project_remaining_days, name='project_remaining_days'), # no id version for dynamically constructed urls
 
 ]

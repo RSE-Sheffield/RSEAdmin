@@ -10,8 +10,20 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from polymorphic.models import PolymorphicModel
-from django.db.models import Max, Min
+from django.db.models import Max, Min, QuerySet
+from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
+
+
+# Class for typed query set to be used in type hints
+T = TypeVar("T")
+class TypedQuerySet(Generic[T]):
+    """
+    Django type hints for query sets are not typed (not very usefull).
+    The following class can eb used to provide type information (see: https://stackoverflow.com/a/54797356)
+    """
+    def __iter__(self) -> Iterator[Union[T, QuerySet]]:
+        pass
 
 
 class FinancialYear(models.Model):

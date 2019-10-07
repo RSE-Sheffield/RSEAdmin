@@ -19,6 +19,31 @@ from .models import *
 from .forms import *
 
 
+#########################
+### Helper Functions ####
+#########################
+
+def append_project_and_allocation_costs(project: Project, allocations: TypedQuerySet[RSEAllocation]):
+    
+    # calculate project budget and effort
+    project.value = project.value()
+
+    # calculate staff costs and overheads
+    total_staff_cost = 0
+    for a in allocations:
+        # staff cost
+        a.staff_cost = a.staff_cost()
+        a.overhead = 0
+        a.project_budget_percentage = a.staff_cost / project.value * 100.0
+        total_staff_cost += a.staff_cost
+    project.staff_cost = total_staff_cost
+    project.percent_budget = project.staff_cost / project.value * 100.0
+    project.remaining_budget = project.value - total_staff_cost
+
+
+#######################
+### Authentication ####
+#######################
 
 @login_required
 def index(request: HttpRequest) -> HttpResponse:
@@ -240,6 +265,9 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
         rse = RSE.objects.get(id=a['rse'])
         commitment_data.append((rse, RSEAllocation.commitment_summary(rse_allocations)))
     view_dict['commitment_data'] = commitment_data
+
+    # append salary and costs information for template
+    append_project_and_allocation_costs(proj, allocations)
 	
 
     return render(request, 'project.html', view_dict)
@@ -381,9 +409,6 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
 def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
-
-    # calculate project budget and effort
-    proj.value = proj.value()
     
     # Dict for view
     view_dict = {}
@@ -398,29 +423,23 @@ def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
             a.project = proj
             a.save()
             messages.add_message(request, messages.SUCCESS, f'New allocation created.')
+            # reset the form
+            form = ProjectAllocationForm(project=proj)
     else:
         form = ProjectAllocationForm(project=proj)
     
     # Get allocations for project
     allocations = RSEAllocation.objects.filter(project=proj)
-    # calculate staff costs and overheads
-    total_staff_cost = 0
-    for a in allocations:
-        # staff cost
-        a.staff_cost = a.staff_cost()
-        a.overhead = 0
-        a.project_budget_percentage = a.staff_cost / proj.value * 100.0
-        total_staff_cost += a.staff_cost
     view_dict['allocations'] = allocations
-    proj.staff_cost = total_staff_cost
-    proj.percent_budget = proj.staff_cost / proj.value * 100.0
-    proj.remaining_budget = proj.value - total_staff_cost
+    
+    # append salary and costs information for template
+    append_project_and_allocation_costs(proj, allocations)
 
     view_dict['form'] = form
 
     return render(request, 'project_allocations_edit.html', view_dict)
 
-@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     # Get the project
     proj = get_object_or_404(Project, pk=project_id)
@@ -432,6 +451,9 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     # Get allocations for project
     allocations = RSEAllocation.objects.filter(project=proj)
     view_dict['allocations'] = allocations
+
+    # append salary and costs information for template
+    append_project_and_allocation_costs(proj, allocations)
 
 
     return render(request, 'project_allocations.html', view_dict)

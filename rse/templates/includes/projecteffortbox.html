@@ -5,17 +5,15 @@
 	<ul class="nav nav-tabs">
 	  	<li class="active"><a href="#tab_effort_summary" data-toggle="tab">Effort Summary</a></li>
 	  	{% if request.user.is_superuser %}<li><a href="#tab_budget_summary" data-toggle="tab">Budget Summary</a></li>{% endif %}
-	  	{% if edit_icon %} 
-	  		<li class="pull-right"><a href="{% url 'project_allocations_edit' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></li>
-	  	{% else %} 
-	  		<li class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View project allocations"><i class="fa fa-edit"></i></a></li>
-		{% endif %}
+	  	{% if view_icon %} 
+	  		<li class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View and Modify project allocations"><i class="fa fa-eye"></i></a></li>
+	  	{% endif %}
 	</ul>
 	<div class="tab-content">
 	  	<div class="tab-pane active" id="tab_effort_summary">
 			<div class="progress-group">
                     <span class="progress-text">Full Days Allocated on Project</span>
-                    <span class="progress-number"><b>{{ project.committed_days|dp2 }}</b>/{{ project.project_days|dp2 }}</span>
+                    <span class="progress-number"><b>{{ project.percent_allocated|percent }}%</b></span>
 
                     <div class="progress sm">
                       <div class="progress-bar {{project.percent_allocated|progressbar_colour}}" style="width: {{project.percent_allocated|percent}}%"></div>
@@ -24,16 +22,16 @@
 			<table class="table table-striped">
 				<tbody>
 					<tr><td>
-						<p><strong>Total Project Days: </strong>{{ project.project_days|dp2 }} days</p>
+						<p><strong>Project Duration (Days): </strong>{{ project.project_days|dp2 }}</p>
 						</td></tr>
 					<tr><td>
-						<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }} days</p>
+						<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }}</p>
 					</td></tr> 
 					<tr><td>
-						<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
+						<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }}</p>
 					</td></tr> 
 					<tr><td>
-						<p><strong>Remaining FTE Days (at total_staff_cost{{project.fte}}%): </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
+						<p><strong>Remaining FTE Days (at total_staff_cost{{project.fte}}%): </strong>{{ project.remaining_days_at_fte|dp2 }}</p>
 					</td></tr> 
 				</tbody>
 			</table>
@@ -43,7 +41,7 @@
 			<div class="tab-pane" id="tab_budget_summary">
 				<div class="progress-group">
 						<span class="progress-text">Project Staff Budget Spend</span>
-						<span class="progress-number"><b>£{{ project.staff_cost|floatformat:2|intcomma }}</b>/£{{ project.value|floatformat:2|intcomma }}</span>
+						<span class="progress-number"><b>{{ project.percent_budget|percent }}%</b></span>
 
 						<div class="progress sm">
 						<div class="progress-bar {{project.percent_budget|progressbar_colour}}" style="width: {{project.percent_budget|percent}}%"></div>
@@ -58,7 +56,7 @@
 							<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
 						</td></tr> 
 						<tr><td>
-							<p><strong>Remaining Staff Budget: </strong>£{{ project.remaining_budget|floatformat:2|intcomma }}</p>
+							<p><strong>Remaining Project Budget: </strong>£{{ project.remaining_budget|floatformat:2|intcomma }}</p>
 						</td></tr> 
 					</tbody>
 				</table>

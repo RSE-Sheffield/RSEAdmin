@@ -1,0 +1,157 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+{% load humanize %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - View Project Allocations{% endblock %}
+{% block page_name %}View Project Allocations for {{project.name}}(Project Internal ID: {{project.id}}){% endblock %}
+{% block content %}
+
+<div class ="row">
+	<div class="col-md-8">
+		<div class="row">
+			<div class="col-md-12">
+				
+				<div class="nav-tabs-custom">
+					<ul class="nav nav-tabs">
+					<li class="active"><a href="#tab_effort" data-toggle="tab">Effort View</a></li>
+					<li><a href="#tab_budget" data-toggle="tab">Budget View</a></li>
+					<li class="pull-right"><a href="{% url 'project_allocations_edit' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit project allocations"><i class="fa fa-edit"></i></a></li>
+					</ul>
+					<div class="tab-content">
+						<div class="tab-pane active" id="tab_effort">
+							<table id="allocations_effort" class="table table-hover">
+								<thead>
+									<tr>
+										<th>RSE</th>
+										<th id="type">Start Date</th>
+										<th id="internal">End Date</th>
+										<th id="title">FTE</th>
+										<th id="duration">Duration (Days)</th>
+										<th id="duration">FTE Days</th>
+										<th id="progress">Allocation of Days</th>
+										<th id="progress_label"></th>
+										<th id="delete"></th>
+									</tr>
+								</thead>
+								<tbody>
+										{% for a in allocations %}
+									<tr>
+										<td>{{ a.rse }}</td>
+										<td>{{ a.start }}</td>
+										<td>{{ a.end }}</td>
+										<td>{{ a.percentage }}</td>
+										<td>{{ a.duration }}</td>
+										<td>{{ a.effort }}</td>
+										<td>
+											<div class="progress progress-xs">
+												<div class="progress-bar progress-bar-primary " style="width: {{ a.project_allocation_percentage }}%"></div>
+											</div>
+										</td>
+										<td>
+											<span class="badge bg-light-blue">{{a.project_allocation_percentage|percent}}%</span>
+										</td>
+										<td>
+											
+										</td>
+									</tr>
+										{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						<div class="tab-pane" id="tab_budget">
+							<table id="allocations_budget" class="table table-hover">
+								<thead>
+									<tr>
+										<th>RSE</th>
+										<th id="type">Start Date</th>
+										<th id="internal">End Date</th>
+										<th id="title">FTE</th>
+										<th id="duration">Duration (Days)</th>
+										<th id="staff_cost">Staff Cost</th>
+										<th id="overheads">Overheads</th>
+										<th id="allocaton">Allocation of Budget</th>
+										<th id="allocation_label"></th>
+										<th id="delete"></th>
+									</tr>
+								</thead>
+								<tbody>
+										{% for a in allocations %}
+									<tr>
+										<td>{{ a.rse }}</td>
+										<td>{{ a.start }}</td>
+										<td>{{ a.end }}</td>
+										<td>{{ a.percentage }}</td>
+										<td>{{ a.duration }}</td>
+										<td>£{{ a.staff_cost|floatformat:2|intcomma }}</td>
+										<td>£{{ a.overhead|floatformat:2|intcomma }}</td>
+										<td>
+											<div class="progress progress-xs">
+												<div class="progress-bar progress-bar-primary " style="width: {{a.project_budget_percentage}}%"></div>
+											</div>
+										</td>
+										<td>
+											<span class="badge bg-light-blue">{{a.project_budget_percentage|dp2}} %</span>
+										</td>
+										<td>
+										
+										</td>
+									</tr>
+										{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+
+						
+					
+			</div>
+		</div>
+
+	</div>
+
+	<div class="col-md-4">
+		{% include 'includes/projectdetailsbox.html' with project=project summary_icon=True%}
+
+		{% include 'includes/projecteffortbox.html' with project=project %}
+		
+
+	</div>
+</div>
+
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('#allocations_effort').DataTable({
+			pageLength: 25,
+			searching: false,
+			scrollX: false,
+		} );
+	} );
+
+	$(document).ready(function() {
+		$('#allocations_budget').DataTable({
+			pageLength: 25,
+			searching: false,
+			scrollX: false,
+		} );
+	} );
+	
+</script>
+
+{% endblock %}

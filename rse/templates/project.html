@@ -34,9 +34,9 @@
         {% include 'includes/projectdetailsbox.html' with project=project %}
 
         {% if user.is_superuser %}
-          {% include 'includes/projecteffortbox.html' with project=project edit_icon=True%}
+          {% include 'includes/projecteffortbox.html' with project=project view_icon=True%}
         {% else %}
-          {% include 'includes/projecteffortbox.html' with project=project edit_icon=False%}
+          {% include 'includes/projecteffortbox.html' with project=project view_icon=False%}
         {% endif %}
 		  
        

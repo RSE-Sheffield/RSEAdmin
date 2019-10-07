@@ -117,7 +117,10 @@ class ProjectAllocationForm(forms.ModelForm):
         self.fields['percentage'].initial = project.fte
         self.fields['start'].initial = datetime.strftime(project.start, "%d/%m/%Y")
         # remaining days must be rounded to whole days
-        self.fields['end'].initial = datetime.strftime(project.start + timedelta(days=round(project.remaining_days_at_fte)), "%d/%m/%Y")
+        if (project.remaining_days_at_fte > 0):
+            self.fields['end'].initial = datetime.strftime(project.start + timedelta(days=round(project.remaining_days_at_fte)), "%d/%m/%Y")
+        else:
+            self.fields['end'].initial = datetime.strftime(project.start, "%d/%m/%Y")
 
     
     class Meta:

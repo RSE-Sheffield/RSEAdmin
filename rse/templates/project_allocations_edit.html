@@ -9,8 +9,8 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool - Project View {% endblock %}
-{% block page_name %}View Project Allocations  for {{project.name}}(Project Internal ID: {{project.id}}){% endblock %}
+{% block title %}RSE Group Administration Tool - Edit Project Allocations {% endblock %}
+{% block page_name %}Edit Project Allocations  for {{project.name}}(Project Internal ID: {{project.id}}){% endblock %}
 {% block content %}
 
 <div class ="row">
@@ -22,6 +22,7 @@
 					<ul class="nav nav-tabs">
 					<li class="active"><a href="#tab_effort" data-toggle="tab">Effort View</a></li>
 					<li><a href="#tab_budget" data-toggle="tab">Budget View</a></li>
+					<li class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View project allocations"><i class="fa fa-eye"></i></a></li>
 					</ul>
 					<div class="tab-content">
 						<div class="tab-pane active" id="tab_effort">
@@ -92,7 +93,7 @@
 										<td>£{{ a.overhead|floatformat:2|intcomma }}</td>
 										<td>
 											<div class="progress progress-xs">
-												<div class="progress-bar progress-bar-primary " style="width: {{a.project_budget_percentage}} %"></div>
+												<div class="progress-bar progress-bar-primary " style="width: {{a.project_budget_percentage}}%"></div>
 											</div>
 										</td>
 										<td>
@@ -144,9 +145,11 @@
 									<div class="input-group-addon">
 										<a href="" id="id_end_effort_autocomplete" class="fa fa-clock-o" data-toggle="tooltip" title="Auto complete end date based on remaining FTE days of project"></a>
 									</div>
-									<div class="input-group-addon">
-										<a href="" id="id_end_budget_autocomplete" class="fa fa-calculator" data-toggle="tooltip" title="Auto complete end date based on remaining project budget"></a>
-									</div>
+									{% if not project.is_service %}
+										<div class="input-group-addon">
+											<a href="" id="id_end_budget_autocomplete" class="fa fa-calculator" data-toggle="tooltip" title="Auto complete end date based on remaining project budget"></a>
+										</div>
+									{% endif%}
 								</div>
 								<br>
 
@@ -338,6 +341,7 @@
 		allocation_info_update();
 	});
 
+	{% if not project.is_service %}
 	//calculate end date click for BUDGET distribution
 	$('#id_end_budget_autocomplete').click(function(e){
 		//stop postback
@@ -359,17 +363,16 @@
 			$('#id_end').val(until.format('DD/MM/YYYY'));
 			//update information text
 			allocation_info_update();
-			}
+		}
 
 		});
 	});
+	{% endif %}
 	
 	//document ready set the initial commitment view url and tooltips
 	$( document ).ready(function() {
 		commitment_view_update_url();
 		allocation_info_update();
-		$('#id_end_effort_autocomplete').tooltip();
-		$('#id_rse_summary').tooltip();
 	});
 
 	//update the delete url for modal dialogue on load
