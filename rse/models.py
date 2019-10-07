@@ -35,7 +35,7 @@ class SalaryValue():
     overhead = 0
     cost_breakdown = []
 
-    def add_staff_cost(self, staff_cost: float, overhead: float, from_date: date, until_date: date, estimated=False: bool):
+    def add_staff_cost(self, staff_cost: float, overhead: float, from_date: date, until_date: date, estimated: bool = False):
         self.staff_cost += staff_cost
         self.overhead += overhead
         self.cost_breakdown.append((from_date, until_date, staff_cost, overhead, estimated))
