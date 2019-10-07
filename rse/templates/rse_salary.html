@@ -1,6 +1,7 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 {% load labels %}
+{% load humanize %}
 
 {% block stylesheets %}
 {{ block.super}}
@@ -34,7 +35,7 @@
 						<tr>
 						    <td>{{sgc.salary_band.year}}</td>
 							<td>G{{ sgc.salary_band.grade }}.{{ sgc.salary_band.grade_point }}</td>
-							<td>{{ sgc.salary_band.salary }}</td>
+							<td>£{{ sgc.salary_band.salary|intcomma }}</td>
 							<td align="right">  
 								<button type="button" class="btn btn-danger btn-xs" data-val="{{sgc.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
 							</td>

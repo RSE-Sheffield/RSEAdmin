@@ -1,6 +1,7 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 {% load labels %}
+{% load humanize %}
 
 {% block stylesheets %}
 {{ block.super}}
@@ -36,7 +37,7 @@
 						{% for sb in salary_bands %}
 						<tr>
 							<td>G{{ sb.grade }}.{{ sb.grade_point }}</td>
-							<td>{{ sb.salary }}</td>
+							<td>£{{ sb.salary|intcomma }}</td>
 							<td>
 								{% if sb.increments %}
 								<span class="badge bg-green">Increments</span>
