@@ -115,7 +115,7 @@ def setup_project_and_allocation_data():
     # Create an allocated project
     p = AllocatedProject(
         percentage=50,
-        overheads='U',
+        overheads=250.00,
         salary_band=sb15_2017,
         # base class values
         creator=user,

@@ -139,7 +139,7 @@ def random_project_and_allocation_data():
             percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
             p_temp = AllocatedProject(
                 percentage=percentage,
-                overheads='U',
+                overheads=250.00,
                 salary_band=sb15_2017,
                 # base class values
                 creator=user,

@@ -560,12 +560,7 @@ class AllocatedProject(Project):
     Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
-    OVERHEAD_CHOICES = (
-        ('N', 'None'),
-        ('U', 'UKRI'),
-        ('E', 'EU'),
-    )
-    overheads = models.CharField(max_length=1, choices=OVERHEAD_CHOICES, default='N')  # Overhead type
+    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rata amount per year
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
 
     @property

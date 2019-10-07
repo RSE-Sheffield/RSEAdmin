@@ -166,7 +166,7 @@ class AllocatedProjectForm(forms.ModelForm):
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices = Project.STATUS_CHOICES, attrs={'class' : 'form-control pull-right'}),
             'percentage': forms.NumberInput(attrs={'class' : 'form-control'}),
-            'overheads': forms.Select(choices = AllocatedProject.OVERHEAD_CHOICES, attrs={'class' : 'form-control pull-right'}),
+            'overheads':  forms.NumberInput(attrs={'class' : 'form-control'}),
             'salary_band': forms.Select(attrs={'class' : 'form-control'}),
             'creator': forms.HiddenInput(),
             'created': forms.HiddenInput(),

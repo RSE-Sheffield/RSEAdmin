@@ -1,3 +1,5 @@
+{% load labels %}
+{% load humanize %}
 
 <div class="nav-tabs-custom">
 	<ul class="nav nav-tabs">
@@ -71,7 +73,7 @@
 							<p><strong>Allocated Percentage:</strong> {{project.percentage}}%</p>
 					</td></tr>
 					<tr><td>
-							<p><strong>Overheads:</strong> {{project.get_overheads_display}} </p>
+							<p><strong>Overheads:</strong> £{{project.overheads|dp2}} </p>
 					</td></tr>
 					<tr><td>
 							<p><strong>Initial Salary Band:</strong> G{{project.salary_band.grade}}.{{project.salary_band.grade_point}} ({{project.salary_band.year.year}}) </p>
