@@ -33,7 +33,7 @@
 						<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
 					</td></tr> 
 					<tr><td>
-						<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
+						<p><strong>Remaining FTE Days (at total_staff_cost{{project.fte}}%): </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
 					</td></tr> 
 				</tbody>
 			</table>
@@ -56,6 +56,9 @@
 							</td></tr>
 						<tr><td>
 							<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
+						</td></tr> 
+						<tr><td>
+							<p><strong>Remaining Staff Budget: </strong>£{{ project.remaining_budget|floatformat:2|intcomma }}</p>
 						</td></tr> 
 					</tbody>
 				</table>

@@ -414,6 +414,7 @@ def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['allocations'] = allocations
     proj.staff_cost = total_staff_cost
     proj.percent_budget = proj.staff_cost / proj.value * 100.0
+    proj.remaining_budget = proj.value - total_staff_cost
 
     view_dict['form'] = form
 

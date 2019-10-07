@@ -205,31 +205,43 @@ class SalaryBand(models.Model):
     def days_from_budget(self, start: date, budget: float, percent: float) -> int:
         """
         Get the number of days which this salary band can be charged given a budget and FTE
-        TODO: This works but it is slow.
         """
-        # estimate off current salary
-        days = budget / (float(self.salary) / 365.0)
-        # adjust based of FTE percent
-        days *= 100.0/percent
 
-        # estimated end date
-        end = start + timedelta(days=days)
+        total_days = 0
+        temp_budget = budget
+        temp_start = start
+        temp_salary_band = self
 
-        # increment down (salary never decreases!)
-        temp_end_date = end
-        temp_staff_cost = float(self.staff_cost(start, temp_end_date, percent))
-        while temp_staff_cost > budget:
-            # estimate days of reduction based of starting salary
-            reduce_days = 1#(temp_staff_cost - budget) / (salary_at_end_date) / 365.0)
-            # reduce end date
-            temp_end_date -= timedelta(days=reduce_days)
-            # recalculate the cost
-            temp_staff_cost = self.staff_cost(start, temp_end_date, percent)
+        # Loop through salary periods to calculate how many days the budget can afford
+        # Apply increments and financial year changes
+        while temp_budget > 0:
+            # calculate date of next possible salary change (either by financial or calendar  year)
+            if temp_start.month < 8:
+                span_end = date(temp_start.year, 8, 1)
+                next_sb = temp_salary_band.salary_band_next_financial_year()
+            else:
+                span_end = date(temp_start.year+1, 1, 1)
+                next_sb = temp_salary_band.salary_band_after_increment()
 
-        # calculate days
-        days = (temp_end_date - start).days
+            # daily salary rate in span
+            span_dr = float(temp_salary_band.salary) / 365.0
+            span_days = (span_end - temp_start).days
+            span_spend = span_dr * span_days * (percent / 100.0)
 
-        return int(days)
+            # can budget be spent within this period
+            if span_spend >= temp_budget:
+                # calculate exactly how many days can be afforded within this period and end loop
+                total_days += int(temp_budget / (span_dr * (percent / 100.0)))
+                temp_budget = 0     # end loop
+                break
+            else:
+                # accumulate days and deduct cost for this period and move to next
+                total_days += span_days
+                temp_budget -= span_spend
+                temp_start = span_end
+                temp_salary_band = next_sb
+
+        return total_days
 
 
 
