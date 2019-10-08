@@ -1264,7 +1264,7 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
     view_dict['form'] = form
 
     # Only get non internal allocated projects
-    q &= Q(project__allocatedproject__percentage__gte=0)
+    q &= Q(project__allocatedproject__internal=False)
     # Get allocations based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
     allocation_unique_project_ids = allocations.values('project').distinct()
@@ -1280,28 +1280,13 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
     for p in allocation_unique_projects:
         # get associated allocations
         p_a = allocations.filter(project=p)
-        p_data = {}
-        if not p.internal:
-            staff_cost = 0
-            overhead = 0
-            cost_breakdown = []
-            # loop over allocations and calculate staff cost, overheads and the cost breakdown
-            for a in p_a:
-                salary_value = a.staff_cost(from_date, until_date)
-                staff_cost += salary_value.staff_cost
-                cost_breakdown += salary_value.cost_breakdown
-            # sum value, staff cost and calculate remainder (income)
-            p_data['staff_cost'] = staff_cost
-            p_data['overhead'] = p.overhead_value(from_date=from_date, until_date=until_date)
-            p_data['cost_breakdown'] = cost_breakdown
-        else:
-            p_data['staff_cost'] = 0
-            p_data['overhead'] = 0
-            p_data['cost_breakdown'] = 0
+        p_costs = p.staff_cost(from_date=from_date, until_date=until_date, allocations=p_a)
+        staff_cost = p_costs.staff_cost
+        overhead = p.overhead_value(from_date=from_date, until_date=until_date)
         # add project and project costs to dictionary and calculate sums
-        project_costs[p] = p_data
-        total_staff_cost += p_data['staff_cost']
-        total_overhead +=  p_data['overhead']
+        project_costs[p] = {'staff_cost': staff_cost, 'overhead': overhead}
+        total_staff_cost += staff_cost
+        total_overhead +=  overhead
 
     # Add project data and sums to view dict
     view_dict['project_costs'] = project_costs

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import date, datetime, timedelta
 from django.utils import timezone
 from math import floor
@@ -13,6 +14,7 @@ from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
+
 
 
 # Class for typed query set to be used in type hints
@@ -33,12 +35,17 @@ class SalaryValue():
     """
     staff_cost = 0
     cost_breakdown = []
+    allocation_breakdown = {}
 
     def add_staff_cost(self, salary: float, from_date: date, until_date: date, percentage: float = 100.0, estimated: bool = False):
         cost_in_period = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=salary, percentage=percentage)
         self.staff_cost += cost_in_period
         self.cost_breakdown.append({'from_date': from_date, 'until_date': until_date, 'staff_cost': cost_in_period, 'estimated': estimated})
 
+    def add_salary_value_with_allocation(self, allocation: RSEAllocation, salary_value: SalaryValue):
+        self.staff_cost += salary_value.staff_cost
+        self.cost_breakdown.append(salary_value.cost_breakdown)
+        self.allocation_breakdown[allocation] = ({'allocation': allocation, 'cost_breakdown': salary_value.cost_breakdown})
 
     @property
     def value(self) -> float:
@@ -562,6 +569,47 @@ class Project(PolymorphicModel):
             return Project.objects.aggregate(Max('end'))['end__max']
         except OperationalError:
             return timezone.now().date()
+
+    def staff_cost(self, from_date:date = None, until_date:date = None, allocations: TypedQuerySet[RSEAllocation] = None, consider_internal: bool =False) -> SalaryValue:
+        """
+        Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
+        """
+
+        # if it is a non chargable service project then cost is 0
+        if isinstance(self, ServiceProject):
+            if self.project.charged == False:
+                return 0
+        
+        # don't consider internal projects
+        if not consider_internal and self.internal:
+            return 0
+
+        # If no time period then use defaults for project
+        # then limit specified time period to allocation
+        if from_date is None or from_date < self.start:
+            from_date = self.start
+        if until_date is None or until_date > self.end:
+            until_date = self.end
+
+        # If allocations provided then use these otherwise get any allocations for this project
+        if allocations is None:
+            allocations = RSEAllocation.objects.filter(project=self)
+
+        # Iterate allocations and calculate staff costs
+        salary_cost = SalaryValue()
+        for a in allocations:
+            # Get the last salary grade charge for the RSE at the start of the cost query
+            sgc = a.rse.lastSalaryGradeChange(from_date)
+            # Get the salary band at the start date of the cost query
+            sb = sgc.salary_band_at_future_date(from_date)
+
+            # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
+            sc = sb.staff_cost(from_date, until_date, self.percentage)
+
+            # append the salary costs logging costs by allocations
+            salary_cost.add_salary_value_with_allocation(allocation=a, salary_value=sc)
+
+        return salary_cost
             
 
 class AllocatedProject(Project):
@@ -607,12 +655,17 @@ class AllocatedProject(Project):
         
         return salary_costs.staff_cost
 
-    def overhead_value(self, from_date : date = None, until_date: date = None, percentage: float = None):
+    def overhead_value(self, from_date : date = None, until_date: date = None, percentage: float = None) -> float:
         """
         Function calculates the value of any overheads generated.
         For allocated projects this is based on duration and a fixed overhead rate.
         Cap the from and end dates according to the project as certain queries may have dates based on financial years rather than project dates
         """
+
+        # internal projects have no overheads
+        if self.internal:
+            return 0
+
         if from_date is None or from_date < self.start:
             from_date = self.start
         if until_date is None or until_date > self.end:
