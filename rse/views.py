@@ -1252,35 +1252,28 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
             # apply status type query
             status = form.cleaned_data["status"]
             if status in 'PRFX':
-                q &= Q(project__status=status)
+                q &= Q(status=status)
             elif status == 'L':
-                q &= Q(project__status='F')|Q(project__status='R')
+                q &= Q(status='F')|Q(status='R')
             elif status == 'U':
-                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+                q &= Q(status='F')|Q(status='R')|Q(status='P')
     else:
         form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
 
-    # Only get non internal allocated projects
-    q &= Q(project__allocatedproject__internal=False)
-    # Get allocations based off Q filter and save the form
-    allocations = RSEAllocation.objects.filter(q)
-    allocation_unique_project_ids = allocations.values('project').distinct()
-
-    # construct a query which filters for projects with allocations within time period (based off the unique ids)
-    qp = Q(id__in=allocation_unique_project_ids)
-    allocation_unique_projects = AllocatedProject.objects.filter(qp)
+    # only non internal allocated projects
+    q &= Q(internal=False)
+    q &= Q(instance_of=AllocatedProject)
+    projects = Project.objects.filter(q)
 
     # Get costs associated with each allocated project
     project_costs = {}
     total_staff_cost = 0
     total_overhead = 0
-    for p in allocation_unique_projects:
-        # get associated allocations
-        p_a = allocations.filter(project=p)
-        p_costs = p.staff_cost(from_date=from_date, until_date=until_date, allocations=p_a)
+    for p in projects:
+        p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
         staff_cost = p_costs.staff_cost
         overhead = p.overhead_value(from_date=from_date, until_date=until_date)
         # add project and project costs to dictionary and calculate sums

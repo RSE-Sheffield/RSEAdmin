@@ -570,7 +570,7 @@ class Project(PolymorphicModel):
         except OperationalError:
             return timezone.now().date()
 
-    def staff_cost(self, from_date:date = None, until_date:date = None, allocations: TypedQuerySet[RSEAllocation] = None, consider_internal: bool =False) -> SalaryValue:
+    def staff_cost(self, from_date:date = None, until_date:date = None, consider_internal: bool =False) -> SalaryValue:
         """
         Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
         """
@@ -592,19 +592,14 @@ class Project(PolymorphicModel):
             until_date = self.end
 
         # If allocations provided then use these otherwise get any allocations for this project
-        if allocations is None:
-            allocations = RSEAllocation.objects.filter(project=self)
+        allocations = RSEAllocation.objects.filter(project=self)
 
         # Iterate allocations and calculate staff costs
         salary_cost = SalaryValue()
         for a in allocations:
-            # Get the last salary grade charge for the RSE at the start of the cost query
-            sgc = a.rse.lastSalaryGradeChange(from_date)
-            # Get the salary band at the start date of the cost query
-            sb = sgc.salary_band_at_future_date(from_date)
-
+           
             # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
-            sc = sb.staff_cost(from_date, until_date, self.percentage)
+            sc = a.staff_cost(from_date, until_date)
 
             # append the salary costs logging costs by allocations
             salary_cost.add_salary_value_with_allocation(allocation=a, salary_value=sc)
