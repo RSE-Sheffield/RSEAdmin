@@ -29,11 +29,9 @@ class TypedQuerySet(Generic[T]):
 class SalaryValue():
     """
     Class to represent a salary calculation.
-    Has a salary and overhead. Also has a dictionary for each to log how the salary/overhead was calculated (for each chargable period)
-    Overhead only makes sense for allocated projects as service budgets have a budget surplus rather than overhead
+    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargable period)
     """
     staff_cost = 0
-    overhead = 0
     cost_breakdown = []
 
     def add_staff_cost(self, salary: float, from_date: date, until_date: date, percentage: float = 100.0, estimated: bool = False):
@@ -41,25 +39,10 @@ class SalaryValue():
         self.staff_cost += cost_in_period
         self.cost_breakdown.append({'from_date': from_date, 'until_date': until_date, 'staff_cost': cost_in_period, 'estimated': estimated})
 
-    def set_allocated_overhead(self, from_date: date, until_date: date, overhead_rate: float, percentage: float = 100.0):
-        """
-        Overhead is calculated pro rata
-        """
-        self.overhead = SalaryValue.calculate_allocated_overhead(from_date=from_date, until_date=until_date, overhead_rate=overhead_rate, percentage=percentage)
-        return self.overhead
-
-    @staticmethod
-    def calculate_allocated_overhead(from_date: date, until_date: date, overhead_rate: float, percentage: float = 100.0):
-        """
-        Overhead is calculated pro rata
-        """
-        overhead = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=overhead_rate)
-        return overhead
-
 
     @property
     def value(self) -> float:
-        return self.staff_cost + self.overhead
+        return self.staff_cost
 
 
 
@@ -489,6 +472,14 @@ class Project(PolymorphicModel):
     def value(self) -> Optional[int]:
         """ Implemented by concrete classes."""        
         pass
+
+    def staff_budget(self) -> float:
+        """ Implemented by concrete classes."""        
+        pass
+
+    def overhead_value(self, from_date : date=None, until_date: date=None, percentage: float=None) -> float:
+        """ Implemented by concrete classes. """
+        pass    
         
     @property
     def type_str(self) -> str:
@@ -603,14 +594,34 @@ class AllocatedProject(Project):
         """
         
         salary_costs = self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
-        salary_costs.set_allocated_overhead(from_date=self.start, until_date=self.end, overhead_rate=self.overheads, percentage=self.percentage)
+        overheads = self.overhead_value()
 
-        return salary_costs.staff_cost + salary_costs.overhead
+        return salary_costs.staff_cost + overheads
 
     def staff_budget(self) -> float:
+        """
+        Function to calculate staff budget for an allocation project.
+        Represents total of salary costs for duration of project
+        """
         salary_costs = self.salary_band.staff_cost(self.start, self.end, percentage=self.percentage)
         
         return salary_costs.staff_cost
+
+    def overhead_value(self, from_date : date = None, until_date: date = None, percentage: float = None):
+        """
+        Function calculates the value of any overheads generated.
+        For allocated projects this is based on duration and a fixed overhead rate.
+        Cap the from and end dates according to the project as certain queries may have dates based on financial years rather than project dates
+        """
+        if from_date is None or from_date < self.start:
+            from_date = self.start
+        if until_date is None or until_date > self.end:
+            until_date = self.end
+        if percentage is None or percentage > 100.0:
+            percentage = self.percentage
+
+        # Use the static salary band function to convert days and rate into a value
+        return SalaryBand.salaryCost(days=(until_date-from_date).days, salary=self.overheads, percentage=percentage)
 
     
     @property    
@@ -657,7 +668,23 @@ class ServiceProject(Project):
         Value is determined by service days multiplied by rate
         """
         return self.days*float(self.rate)
-      
+    
+    def staff_budget(self) -> float:
+        """ 
+        Service projects don't have a staff budget as they have a number of service days.
+        Returns the project value (which includes overheads) which could in theory be entirely used to fund staff time. 
+        """        
+        return self.value()
+
+    def overhead_value(self, from_date : date, until_date: date, percentage: float):
+        """
+        Function calculates the value of any overheads generated.
+        For service projects there is no overhead just a surplus depending on staff costs and invoice date. As such this function should not be used for service projects.
+        """
+        # Use the static salary band function to convert days and rate into a value
+        return 0
+
+
     @property
     def type_str(self) -> str:
         """
@@ -730,12 +757,8 @@ class RSEAllocation(models.Model):
         # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
         salary_cost = sb.staff_cost(start, end, self.percentage)
 
-        # allocated project overheads should be calculated from pro-rata overhead rate
-        if not self.project.is_service:
-            salary_cost.set_allocated_overhead(from_date=start, until_date=end, overhead_rate=self.project.overheads, percentage=self.percentage)
-
         return salary_cost
-        
+ 
     @staticmethod
     def min_allocation_start() -> date:
         """ 

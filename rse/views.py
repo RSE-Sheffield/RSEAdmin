@@ -56,7 +56,7 @@ def append_project_and_allocation_costs(project: Project, allocations: TypedQuer
     else:   
         project.total_value = total_value
         project.staff_budget = staff_budget
-        project.overhead = SalaryValue.calculate_allocated_overhead(from_date=project.start, until_date=project.end, overhead_rate=project.overheads, percentage=project.percentage)
+        project.overhead = project.overhead_value()
         project.staff_cost = total_staff_cost
         project.percent_staff_budget = project.staff_cost / staff_budget * 100.0
         project.remaining_staff_budget = staff_budget - total_staff_cost
@@ -1289,11 +1289,10 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
             for a in p_a:
                 salary_value = a.staff_cost(from_date, until_date)
                 staff_cost += salary_value.staff_cost
-                overhead += salary_value.overhead
                 cost_breakdown += salary_value.cost_breakdown
             # sum value, staff cost and calculate remainder (income)
             p_data['staff_cost'] = staff_cost
-            p_data['overhead'] = overhead
+            p_data['overhead'] = p.overhead_value(from_date=from_date, until_date=until_date)
             p_data['cost_breakdown'] = cost_breakdown
         else:
             p_data['staff_cost'] = 0
