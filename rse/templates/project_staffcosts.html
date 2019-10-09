@@ -10,9 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool - Service Income{% endblock %}
+{% block title %}RSE Group Administration Tool - Project Staff Costs Breakdown{% endblock %}
 
-{% block page_name %}Service Income{% endblock %}
+{% block page_name %}Project Staff Costs Breakdown{% endblock %}
 {% block content %}
 
 
@@ -23,38 +23,62 @@
         <div class="col-md-9">
 			<div class="box box-default">
 				<div class="box-header with-border">
-					<h3 class="box-title">Service Income Summary</h3>
-					<p><i>Note: This does not include any internal projects.</i></p>
+					<h3 class="box-title">Project Staff Costs Breakdown</h3>
+					<p><i>Note: This only includes staff costs within the accounting period selected and not the <a href="{% url 'project' project.id %}">full project costs</a>.</i></p>
 				</div>
 				<div class="box-body">
 					<table id="projects" class="table table-hover">
 						<thead>
 							<tr>
-								<th id="project">Project</th>
-								<th id="value">Income Received</th>
-								<th id="staff_cost">Staff Cost</th>
-								<th id="margin">Surplus (Overheads)</th>
+								<th id="rse">RSE</th>
+								<th id="from">From Date</th>
+								<th id="until">Until Date</th>
+								<th id="percent">Percentage FTE</th>
+								<th id="salary_band">Salary Band (salary)</th>
+								<th id="staff_cost">Calculated Staff Cost</th>
+								<th id="estimated">Estimated</th>
 								<th id="more"></th>
 								
 							</tr>
 						</thead>
 						<tbody>
-							{% for project, data in project_costs.items %}
-							<tr>
-								<td>{{project.name}}</td>
-								<td>£{{data.value|floatformat:2|intcomma}}</td>
-								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
-								<td>£{{data.surplus|floatformat:2|intcomma}}</td>
-								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>
-							</tr>
+							{% for allocation, cost_breakdown in costs.allocation_breakdown.items %}
+								<tr>
+									<td>{{allocation.rse}}</td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+								</tr>
+								{% for item in cost_breakdown %}
+									<tr>
+										<td></td>
+										<td>{{item.from_date}}</td>
+										<td>{{item.until_date}}</td>
+										<td>{{item.percentage}}</td>
+										<td>{{item.salary_band}} {% if item.salary_band.estimated %}<i>(estimated)</i>{% endif %}</td>
+										<td>£{{item.staff_cost|floatformat:2|intcomma}}</td>
+										<td></td>
+										<td></td>
+									</tr>
+								{% endfor %}
 							{% endfor %}
+							
 						</tbody>
 						<tfooter>
 							<tr>
+								
 								<td><strong>Total</strong></td>
-								<td><strong>£{{total_value|floatformat:2|intcomma}}</strong></td>
-								<td><strong>£{{total_staff_cost|floatformat:2|intcomma}}</strong></td>
-								<td><strong>£{{total_surplus|floatformat:2|intcomma}}</strong></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td><strong>£{{costs.staff_cost|floatformat:2|intcomma}}</strong></td>
+								<td></td>
+								<td></td>
 							</tr>
 						</tfooter>
 					</table>
@@ -83,12 +107,6 @@
 					  </div>
 					  {{ form.filter_range }}
 					</div>
-					</br>
-					
-						
-					<label>Funding Status</label>
-					<p><i>Filter projects based current funding status</i></p>
-					{{ form.status }}
 					</br>
 					
 				  </div>

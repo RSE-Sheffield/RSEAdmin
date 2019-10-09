@@ -165,13 +165,16 @@ urlpatterns = [
     url(r'^costdistribution/(?P<rse_username>[\w]+)$', views.costdistribution, name='costdistribution'),
 
     # View service projects and invoice status
-    url(r'^serviceincome/outstanding$', views.serviceoutstanding, name='serviceoutstanding'),
+    url(r'^service/income/outstanding$', views.serviceoutstanding, name='serviceoutstanding'),
 
     # View service income
-    url(r'^serviceincome/summary$', views.serviceincome, name='serviceincome'),
+    url(r'^service/income/summary$', views.serviceincome, name='serviceincome'),
 
     # View allocated project income summary
-    url(r'^projectincome/summary$', views.projectincome_summary, name='projectincome_summary'),
+    url(r'^projects/income/summary$', views.projects_income_summary, name='projects_income_summary'),
+
+    # View for breakdown of staff cost calculations
+    url(r'^project/(?P<project_id>[0-9]+)/staffcosts$', views.project_staffcosts, name='project_staffcosts'),
 
     # AJAX query to get remain time on project for a given RSE (based off salary project)
     url(r'^project/budget/remainingdays/(?P<project_id>[0-9]+)/(?P<rse_id>[0-9]+)/(?P<start>\d{2}-\d{2}-\d{4})/(?P<percent>\d+(?:\.\d+)?)$', views.project_remaining_days, name='project_remaining_days'),  # accepts int or float percent value

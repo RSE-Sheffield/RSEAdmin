@@ -10,9 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool - Project Staff Costs{% endblock %}
+{% block title %}RSE Group Administration Tool - Projects Staff Cost and Overhead{% endblock %}
 
-{% block page_name %}Project Staff Costs and Overheads{% endblock %}
+{% block page_name %}Projects Staff Cost and Overheads{% endblock %}
 {% block content %}
 
 
@@ -23,7 +23,7 @@
         <div class="col-md-9">
 			<div class="box box-default">
 				<div class="box-header with-border">
-					<h3 class="box-title">Project Staff Costs and Overheads</h3>
+					<h3 class="box-title">Projects Staff Cost and Overheads</h3>
 					<p><i>Note: Internal projects incur no staff cost. Charged service projects are included in this report.</i></p>
 				</div>
 				<div class="box-body">
@@ -32,6 +32,7 @@
 							<tr>
 								<th id="project">Project</th>
 								<th id="staff_cost">Staff Cost</th>
+								<th id="staff_cost"></th>
 								<th id="overhead">Overheads</th>
 								<th id="more"></th>
 								
@@ -40,7 +41,7 @@
 						<tbody>
 							{% for project, data in project_costs.items %}
 							<tr>
-								<td>{{project.name}}</td>
+								<td>{{project.name}}  <span class="pull-right"><a href="{% url 'project_staffcosts' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span></td>
 								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
 								<td>£{{data.overhead|floatformat:2|intcomma}}</td>
 								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>

@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from django.utils import timezone
 from math import floor
 from typing import Optional
-
+from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import OperationalError
@@ -14,8 +14,7 @@ from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
-
-
+from copy import deepcopy
 
 # Class for typed query set to be used in type hints
 T = TypeVar("T")
@@ -33,19 +32,21 @@ class SalaryValue():
     Class to represent a salary calculation.
     Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargable period)
     """
-    staff_cost = 0
-    cost_breakdown = []
-    allocation_breakdown = {}
+    def __init__(self):
+        self.staff_cost = 0
+        self.cost_breakdown = []
+        self.allocation_breakdown = {}
 
-    def add_staff_cost(self, salary: float, from_date: date, until_date: date, percentage: float = 100.0, estimated: bool = False):
-        cost_in_period = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=salary, percentage=percentage)
+    def add_staff_cost(self, salary_band: SalaryBand, from_date: date, until_date: date, percentage: float = 100.0):
+        cost_in_period = SalaryBand.salaryCost(days=(until_date-from_date).days, salary=salary_band.salary, percentage=percentage)
         self.staff_cost += cost_in_period
-        self.cost_breakdown.append({'from_date': from_date, 'until_date': until_date, 'staff_cost': cost_in_period, 'estimated': estimated})
+        self.cost_breakdown.append({'from_date': from_date, 'until_date': until_date, 'percentage': percentage, 'salary_band': deepcopy(salary_band), 'staff_cost': cost_in_period})
 
     def add_salary_value_with_allocation(self, allocation: RSEAllocation, salary_value: SalaryValue):
         self.staff_cost += salary_value.staff_cost
-        self.cost_breakdown.append(salary_value.cost_breakdown)
-        self.allocation_breakdown[allocation] = ({'allocation': allocation, 'cost_breakdown': salary_value.cost_breakdown})
+        self.allocation_breakdown[allocation] = salary_value.cost_breakdown
+        self.cost_breakdown.extend(salary_value.cost_breakdown)
+
 
     @property
     def value(self) -> float:
@@ -143,9 +144,9 @@ class SalaryBand(models.Model):
         # There is no more salary band data (probably not released yet)
         else:  
             # Return current salary band
-            # TODO: Assume 3% inflation (modify salary but DO NOT SAVE)
-            # TODO: thread local variable to get the request and save warning
-            # self.salary *= 1.03
+            # Assume 3% inflation (modify salary but DO NOT SAVE)
+            self.salary = round(Decimal(float(self.salary)*1.03), 2)
+            self.estimated = True
             return self
             
 
@@ -220,26 +221,28 @@ class SalaryBand(models.Model):
         
         # If the salary can change between the date range then advance increment or year
         while ( SalaryBand.spans_salary_change(next_increment, end)):
-            # If date is before financial year then date range spans financial year
-            if next_increment.month < 8 :
-                # calculate next increment date and salary band
-                temp_next_increment = date(next_increment.year, 8, 1)
-                temp_next_sb = next_sb.salary_band_next_financial_year()
-
-            # Doesn't span financial year so must span calendar year
-            else:
-                # increment cost between period
+            
+            # Calculate next increment date
+            if next_increment.month < 8 :   # If date is before financial year then date range spans financial year  
+                temp_next_increment = date(next_increment.year, 8, 1) # calculate next increment date and salary band
+            else: # Doesn't span financial year so must span calendar year
                 temp_next_increment = date(next_increment.year + 1, 1, 1)
-                temp_next_sb = next_sb.salary_band_after_increment()
                 
-            # update salary cost
-            salary_value.add_staff_cost(salary=next_sb.salary, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
+            # Update salary cost
+            salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
+
+            # Calculate the next salary band 
+            # This cant be done before cost calculation salary_band_next_financial_year may modify the next_sb object 
+            if next_increment.month < 8 :   # If date is before financial year then date range spans financial year
+                next_sb = next_sb.salary_band_next_financial_year()
+            else:    # Doesn't span financial year so must span calendar year
+                next_sb = next_sb.salary_band_after_increment()
+
             # update chargeable period date and band
             next_increment = temp_next_increment
-            next_sb = temp_next_sb
         
         # Final salary cost for period not spanning a salary change
-        salary_value.add_staff_cost(salary=next_sb.salary, from_date=next_increment, until_date=end, percentage=percentage)
+        salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=end, percentage=percentage)
         
         return salary_value
 
@@ -574,12 +577,6 @@ class Project(PolymorphicModel):
         """
         Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
         """
-
-        # if it is a non chargable service project then cost is 0
-        # TODO: Not true 
-        #if isinstance(self, ServiceProject):
-        #    if self.charged == False:
-        #        return 0
         
         # don't consider internal projects
         if not consider_internal and self.internal:
@@ -592,8 +589,8 @@ class Project(PolymorphicModel):
         if until_date is None or until_date > self.end:
             until_date = self.end
 
-        # If allocations provided then use these otherwise get any allocations for this project
-        allocations = RSEAllocation.objects.filter(project=self)
+        # Filter allocations by start and end date
+        allocations = RSEAllocation.objects.filter(project=self, end__gte=from_date, start__lt=until_date)
 
         # Iterate allocations and calculate staff costs
         salary_cost = SalaryValue()
@@ -602,7 +599,7 @@ class Project(PolymorphicModel):
             # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
             sc = a.staff_cost(from_date, until_date)
 
-            # append the salary costs logging costs by allocations
+            # append the salary costs logging costs by allocations5
             salary_cost.add_salary_value_with_allocation(allocation=a, salary_value=sc)
 
         return salary_cost
@@ -792,12 +789,6 @@ class RSEAllocation(models.Model):
             start = self.start
         if end is None or end > self.end:
             end = self.end
-
-        # if it is a non chargable service project then cost is 0
-        # TODO: Not true
-        #if isinstance(self.project, ServiceProject):
-        #    if self.project.charged == False:
-        #        return 0
 
         # Get the last salary grade charge for the RSE at the start of the cost query
         sgc = self.rse.lastSalaryGradeChange(start)

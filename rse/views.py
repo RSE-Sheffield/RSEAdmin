@@ -1207,7 +1207,7 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
 
 
 @user_passes_test(lambda u: u.is_superuser)
-def projectincome_summary(request: HttpRequest) -> HttpResponse:
+def projects_income_summary(request: HttpRequest) -> HttpResponse:
     """
     View reports on allocated project income and staff expenditure.
     Internal projects are not considered.
@@ -1266,7 +1266,43 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
     view_dict['total_staff_cost'] = total_staff_cost
     view_dict['total_overhead'] = total_overhead
 	
-    return render(request, 'projectincome_summary.html', view_dict)
+    return render(request, 'projects_income_summary.html', view_dict)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def project_staffcosts(request: HttpRequest, project_id: int) -> HttpResponse:
+    """
+    View reports on breakdown of staff costs between a particular period
+    """
+
+    # Get the project
+    project = get_object_or_404(Project, pk=project_id)
+    
+    # Dict for view
+    view_dict = {}
+    view_dict['project'] = project
+
+    # Get the date range from the filter form
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterDateRangeForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            until_date = filter_range[1]
+    else:
+        form = FilterDateRangeForm()
+
+    # save the form
+    view_dict['form'] = form
+
+    # Get the project costs
+    costs = project.staff_cost(from_date=from_date, until_date=until_date)
+    view_dict['costs'] = costs
+	
+    return render(request, 'project_staffcosts.html', view_dict)
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, start: str, percent: int) -> HttpResponse:
