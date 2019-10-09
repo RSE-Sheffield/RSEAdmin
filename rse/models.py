@@ -576,9 +576,10 @@ class Project(PolymorphicModel):
         """
 
         # if it is a non chargable service project then cost is 0
-        if isinstance(self, ServiceProject):
-            if self.project.charged == False:
-                return 0
+        # TODO: Not true 
+        #if isinstance(self, ServiceProject):
+        #    if self.charged == False:
+        #        return 0
         
         # don't consider internal projects
         if not consider_internal and self.internal:
@@ -724,7 +725,7 @@ class ServiceProject(Project):
         """        
         return self.value()
 
-    def overhead_value(self, from_date : date, until_date: date, percentage: float):
+    def overhead_value(self, from_date : date= None, until_date: date=None, percentage: float=None):
         """
         Function calculates the value of any overheads generated.
         For service projects there is no overhead just a surplus depending on staff costs and invoice date. As such this function should not be used for service projects.
@@ -793,9 +794,10 @@ class RSEAllocation(models.Model):
             end = self.end
 
         # if it is a non chargable service project then cost is 0
-        if isinstance(self.project, ServiceProject):
-            if self.project.charged == False:
-                return 0
+        # TODO: Not true
+        #if isinstance(self.project, ServiceProject):
+        #    if self.project.charged == False:
+        #        return 0
 
         # Get the last salary grade charge for the RSE at the start of the cost query
         sgc = self.rse.lastSalaryGradeChange(start)

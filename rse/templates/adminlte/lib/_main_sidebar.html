@@ -48,9 +48,9 @@
 		</a>
 		<ul class="treeview-menu" style="">
 			<li {% if request.resolver_match.url_name == "costdistributions"%} class="active" {% endif %} ><a href="{% url 'costdistributions' %}"><i class="fa fa-circle-o"></i>Cost Distributions</a></li>
-			<li {% if request.resolver_match.url_name == "serviceoutstanding"%} class="active" {% endif %} ><a href="{% url 'serviceoutstanding' %}"><i class="fa fa-circle-o"></i>Service Invoicing Status</a></li>
+			<li {% if request.resolver_match.url_name == "serviceoutstanding"%} class="active" {% endif %} ><a href="{% url 'serviceoutstanding' %}"><i class="fa fa-circle-o"></i>Service Invoicing</a></li>
 			<li {% if request.resolver_match.url_name == "serviceincome"%} class="active" {% endif %} ><a href="{% url 'serviceincome' %}"><i class="fa fa-circle-o"></i>Service Income</a></li>
-			<li {% if request.resolver_match.url_name == "projectincome_summary"%} class="active" {% endif %} ><a href="{% url 'projectincome_summary' %}"><i class="fa fa-circle-o"></i>Allocated Project Income</a></li>
+			<li {% if request.resolver_match.url_name == "projectincome_summary"%} class="active" {% endif %} ><a href="{% url 'projectincome_summary' %}"><i class="fa fa-circle-o"></i>Staff Costs &amp; Overheads</a></li>
 			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Internal Project Costs</a></li>
 		</ul>
 	</li>

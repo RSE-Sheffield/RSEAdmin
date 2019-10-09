@@ -43,7 +43,7 @@
 								<td>{{project.name}}</td>
 								<td>£{{data.value|floatformat:2|intcomma}}</td>
 								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
-								<td>£{{data.margin|floatformat:2|intcomma}}</td>
+								<td>£{{data.surplus|floatformat:2|intcomma}}</td>
 							</tr>
 							{% endfor %}
 						</tbody>
@@ -52,7 +52,7 @@
 								<td><strong>Total</strong></td>
 								<td><strong>£{{total_value|floatformat:2|intcomma}}</strong></td>
 								<td><strong>£{{total_staff_cost|floatformat:2|intcomma}}</strong></td>
-								<td><strong>£{{total_margin|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_surplus|floatformat:2|intcomma}}</strong></td>
 							</tr>
 						</tfooter>
 					</table>

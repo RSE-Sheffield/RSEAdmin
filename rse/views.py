@@ -1158,68 +1158,48 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
             # apply status type query
             status = form.cleaned_data["status"]
             if status in 'PRFX':
-                q &= Q(project__status=status)
+                q &= Q(status=status)
             elif status == 'L':
-                q &= Q(project__status='F')|Q(project__status='R')
+                q &= Q(status='F')|Q(status='R')
             elif status == 'U':
-                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+                q &= Q(status='F')|Q(status='R')|Q(status='P')
     else:
         form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
 
-    # Only get non internal service projects
-    q &= Q(project__serviceproject__internal=False)
-    # Get allocations based off Q filter and save the form
-    allocations = RSEAllocation.objects.filter(q)
-    allocation_unique_project_ids = allocations.values('project').distinct()
-
-    # construct a query which filters for projects with allocations within time period (based off the unique ids)
-    # OR where invoice is received within time period (no from or until date assume that it is received)
-    qp = Q()
-    qp &= Q(id__in=allocation_unique_project_ids) | (Q(invoice_received__gte=from_date) & Q(invoice_received__lt=until_date))
-    allocation_unique_projects = ServiceProject.objects.filter(qp)
+    # only non internal service projects
+    q &= Q(internal=False)
+    projects = ServiceProject.objects.filter(q)
 
     # Get costs associated with each project
     project_costs = {}
-    total_staff_cost = 0
     total_value = 0
-    total_margin = 0
-    for p in allocation_unique_projects:
-        # get associated allocations
-        p_a = allocations.filter(project=p)
-        p_data = {}
+    total_staff_cost = 0
+    total_surplus = 0
+    for p in projects:
+        # project has a value if invoice received in accounting period
+        value = 0 
+        if p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
+            value = p.value()
+        # project has a staff cost if it has been charged
         staff_cost = 0
-        overhead = 0
-        cost_breakdown = []
-        # loop over allocations and calculate staff cost, overheads and the cost breakdown
-        for a in p_a:
-            salary_value = a.staff_cost(from_date, until_date)
-            staff_cost += salary_value.staff_cost
-            cost_breakdown += salary_value.cost_breakdown
-        # calculate income value
-        value = 0
-        if p.invoice_received: # test that value is not null
-            if  p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
-                value = p.value()
-        # margin (overheads)
-        margin = value - staff_cost
-        # sum value, staff cost and calculate remainder (income)
-        p_data['staff_cost'] = staff_cost 
-        p_data['value'] = value
-        p_data['margin'] = value - staff_cost
-        p_data['cost_breakdown'] = cost_breakdown
+        if p.charged == True:
+            p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
+            staff_cost = p_costs.staff_cost
+        # surplus is the balance in the accounting period
+        surplus = value - staff_cost
         # add project and project costs to dictionary and calculate sums
-        project_costs[p] = p_data
+        project_costs[p] = {'value': value, 'staff_cost': staff_cost, 'surplus': surplus}
+        total_value += value
         total_staff_cost += staff_cost
-        total_value +=  value
-        total_margin += margin
+        total_surplus +=  surplus
     # Add project data and sums to view dict
     view_dict['project_costs'] = project_costs
-    view_dict['total_staff_cost'] = total_staff_cost
     view_dict['total_value'] = total_value
-    view_dict['total_margin'] = total_margin
+    view_dict['total_staff_cost'] = total_staff_cost
+    view_dict['total_surplus'] = total_surplus
 	
 
     return render(request, 'serviceincome.html', view_dict)
@@ -1263,9 +1243,9 @@ def projectincome_summary(request: HttpRequest) -> HttpResponse:
     # save the form
     view_dict['form'] = form
 
-    # only non internal allocated projects
+    # only non internal allocated projects or charged service projects
     q &= Q(internal=False)
-    q &= Q(instance_of=AllocatedProject)
+    q &= Q(instance_of=AllocatedProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
     projects = Project.objects.filter(q)
 
     # Get costs associated with each allocated project
