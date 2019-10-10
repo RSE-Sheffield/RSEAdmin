@@ -590,7 +590,7 @@ class Project(PolymorphicModel):
             until_date = self.end
 
         # Filter allocations by start and end date
-        allocations = RSEAllocation.objects.filter(project=self, end__gte=from_date, start__lt=until_date)
+        allocations = RSEAllocation.objects.filter(project=self, end__gt=from_date, start__lt=until_date)
 
         # Iterate allocations and calculate staff costs
         salary_cost = SalaryValue()

@@ -153,7 +153,8 @@ def random_project_and_allocation_data():
                 status=status)
         else:
             # service
-            days = random.randint(1,220) #between 1 day and 220 TRAC days
+            max_trac_days = int((end-start).days * (220.0/360.0))   # trac days are 220 of the year
+            days = random.randint(1, max_trac_days) #between 1 day and max_trac_days
             p_temp = ServiceProject(
                     days=days,
                     rate=275,
@@ -227,9 +228,10 @@ class ProjectAllocationTests(TestCase):
                 # start must be before end
                 self.assertLess(p.start, p.end)
             elif isinstance(p, ServiceProject):
-                # service days should be greater than 1 and less than 220
+                # service days should be greater than 1 and less than trac days
                 self.assertGreaterEqual(p.days, 1)
-                self.assertLessEqual(p.days, 220)
+                max_trac_days = int((p.end-p.start).days*(220.0/360.0))  # trac days are 220 per year so convert project duration to trac days
+                self.assertLessEqual(p.days, max_trac_days)
 
             
     def test_random_allocations(self):   
@@ -240,4 +242,28 @@ class ProjectAllocationTests(TestCase):
             self.assertAlmostEqual(p.percent_allocated, 100.0, places=2)
             
             
-   
+class ProjectAllocationsInProject(TestCase):
+    """
+    Test case to ensure allocations fall within the project period
+    """
+    
+    def setUp(self):
+        random_project_and_allocation_data()
+        
+            
+    def test_allocation_dates(self):
+        """
+        Tests the randomly generated projects to ensure that they are valid projects
+        """
+        
+        # Test allocated projects (randomly generated fields)
+        for p in Project.objects.all():
+        
+            for a in RSEAllocation.objects.filter(project=p):
+                # start date of allocation should be within project period
+                self.assertLess(a.start, p.end)
+                self.assertGreaterEqual(a.start, p.start)
+                # end date of allocation should be within project period
+                self.assertLessEqual(a.end, p.end)
+                self.assertGreater(a.end, p.start)
+    

@@ -87,7 +87,7 @@
 							</td></tr>
 
 							<tr><td>
-								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }}</p>
+								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }} <a class="pull-right" href="{% url 'project_staffcosts' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></p>
 							</td></tr>
 
 							<tr><td>
