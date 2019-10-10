@@ -15,13 +15,12 @@ class DateRangeField(forms.Field):
     def __init__(self, *args,**kwargs):
         if not 'min_date' in kwargs:
             raise TypeError("DateRangeField missing required argument: 'min_date'")
-        if not 'min_date' in kwargs:
-            raise TypeError("DateRangeField missing required argument: 'min_date'")
+        if not 'max_date' in kwargs:
+            raise TypeError("DateRangeField missing required argument: 'max_date'")
         self.min_date = kwargs.pop('min_date')
         self.max_date = kwargs.pop('max_date')
         super(DateRangeField, self).__init__(*args,**kwargs)
 
-    
     def to_python(self, value):
         # if not value then get min and max date
         if not value:
@@ -54,10 +53,10 @@ class FilterDateRangeForm(forms.Form):
     min_date = Project.min_start_date()
     max_date = Project.max_end_date()
     
-    
     # Use custom date range field
     filter_range = DateRangeField(label='Date Range', widget=forms.TextInput(attrs={'class' : 'form-control pull-right'}) , min_date=min_date, max_date=max_date)
- 
+
+
     @property
     def from_date(self):
         return self.cleaned_data["filter_range"][0]
