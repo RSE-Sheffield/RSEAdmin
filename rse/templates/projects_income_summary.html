@@ -32,7 +32,6 @@
 							<tr>
 								<th id="project">Project</th>
 								<th id="staff_cost">Staff Cost</th>
-								<th id="staff_cost"></th>
 								<th id="overhead">Overheads</th>
 								<th id="more"></th>
 								
@@ -41,7 +40,7 @@
 						<tbody>
 							{% for project, data in project_costs.items %}
 							<tr>
-								<td>{{project.name}}  <span class="pull-right"><a href="{% url 'project_staffcosts' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span></td>
+								<td>{{project.name}}  <span class="pull-right"><a href="{% url 'project_staffcosts' project.id %}{% if request.GET.filter_range %}?filter_range={{request.GET.filter_range}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span></td>
 								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
 								<td>£{{data.overhead|floatformat:2|intcomma}}</td>
 								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>

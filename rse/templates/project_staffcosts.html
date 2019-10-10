@@ -82,6 +82,11 @@
 							</tr>
 						</tfooter>
 					</table>
+					{% if project.is_service %}
+						{% if not project.charged %}
+							<i>Note: This is a service project which is not charged and as such staff costs will not be deducted from the service account.</i>
+						{% endif %}
+					{% endif %}
 				</div>
 			</div>
         </div>

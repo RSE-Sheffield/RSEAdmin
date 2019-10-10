@@ -42,7 +42,9 @@
 							{% for project, data in project_costs.items %}
 							<tr>
 								<td>{{project.name}}</td>
-								<td>£{{data.value|floatformat:2|intcomma}}</td>
+								<td>£{{data.value|floatformat:2|intcomma}}
+									<span class="pull-right"><a href="{% url 'project_staffcosts' project.id %}{% if request.GET.filter_range %}?filter_range={{request.GET.filter_range}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span>
+								</td>
 								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
 								<td>£{{data.surplus|floatformat:2|intcomma}}</td>
 								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>
@@ -111,7 +113,5 @@
 
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
 
-
-    
     
 {% endblock %}
