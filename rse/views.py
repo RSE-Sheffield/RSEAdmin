@@ -1091,8 +1091,6 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
-    else:
-        form = FilterProjectForm()
 
     # filter to exclude internal projects (these dont have a cost distribution)
     # filter to only include chargable service projects (or allocated projects)
@@ -1146,8 +1144,6 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
-    else:
-        form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
@@ -1226,8 +1222,6 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
                 q &= Q(status='F')|Q(status='R')
             elif status == 'U':
                 q &= Q(status='F')|Q(status='R')|Q(status='P')
-    else:
-        form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
@@ -1310,8 +1304,6 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
                 q &= Q(status='F')|Q(status='R')
             elif status == 'U':
                 q &= Q(status='F')|Q(status='R')|Q(status='P')
-    else:
-        form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
@@ -1384,8 +1376,6 @@ def projects_income_summary(request: HttpRequest) -> HttpResponse:
                 q &= Q(status='F')|Q(status='R')
             elif status == 'U':
                 q &= Q(status='F')|Q(status='R')|Q(status='P')
-    else:
-        form = FilterProjectForm()
 
     # save the form
     view_dict['form'] = form
@@ -1438,14 +1428,12 @@ def project_staffcosts(request: HttpRequest, project_id: int) -> HttpResponse:
             filter_range = form.cleaned_data["filter_range"]
             from_date = filter_range[0]
             until_date = filter_range[1]
-    else:
-        form = FilterDateRangeForm()
 
     # save the form
     view_dict['form'] = form
 
     # Get the project costs
-    costs = project.staff_cost(from_date=from_date, until_date=until_date)
+    costs = project.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
     view_dict['costs'] = costs
 	
     return render(request, 'project_staffcosts.html', view_dict)
@@ -1488,3 +1476,58 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
         return JsonResponse({'days': 0})
 
     return JsonResponse({'days': days})
+
+@user_passes_test(lambda u: u.is_superuser)
+def projects_internal_summary(request: HttpRequest) -> HttpResponse:
+    """
+    View reports on allocated project income and staff expenditure.
+    Internal projects are not considered.
+    """
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lt=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(status=status)
+            elif status == 'L':
+                q &= Q(status='F')|Q(status='R')
+            elif status == 'U':
+                q &= Q(status='F')|Q(status='R')|Q(status='P')
+
+    # save the form
+    view_dict['form'] = form
+
+    # only internal projects
+    q &= Q(internal=True)
+    projects = Project.objects.filter(q)
+
+    # Get costs associated with each internal project
+    project_costs = {}
+    total_staff_cost = 0
+    for p in projects:
+        p_costs = p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
+        staff_cost = p_costs.staff_cost
+        # add project and project costs to dictionary and calculate sums
+        project_costs[p] = {'staff_cost': staff_cost}
+        total_staff_cost += staff_cost
+
+    # Add project data and sums to view dict
+    view_dict['project_costs'] = project_costs
+    view_dict['total_staff_cost'] = total_staff_cost
+	
+    return render(request, 'projects_internal_summary.html', view_dict)

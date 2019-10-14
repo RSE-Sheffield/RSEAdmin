@@ -186,4 +186,7 @@ urlpatterns = [
     url(r'^project/budget/remainingdays/(?P<project_id>[0-9]+)/(?P<rse_id>[0-9]+)/(?P<start>\d{2}-\d{2}-\d{4})/(?P<percent>\d+(?:\.\d+)?)$', views.project_remaining_days, name='project_remaining_days'),  # accepts int or float percent value
     url(r'^project/budget/remainingdays$', views.project_remaining_days, name='project_remaining_days'), # no id version for dynamically constructed urls
 
+    # View allocated project income summary
+    url(r'^projects/internal/summary$', views.projects_internal_summary, name='projects_internal_summary'),
+
 ]
