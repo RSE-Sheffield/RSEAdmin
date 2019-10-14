@@ -53,7 +53,7 @@
 			<li {% if request.resolver_match.url_name == "serviceincome"%} class="active" {% endif %} ><a href="{% url 'serviceincome' %}"><i class="fa fa-circle-o"></i>Service Income</a></li>
 			<li {% if request.resolver_match.url_name == "projects_income_summary"%} class="active" {% endif %} ><a href="{% url 'projects_income_summary' %}"><i class="fa fa-circle-o"></i>Project Costs &amp; Overheads</a></li>
 			<li {% if request.resolver_match.url_name == "projects_internal_summary"%} class="active" {% endif %} ><a href="{% url 'projects_internal_summary' %}"><i class="fa fa-circle-o"></i>Internal Project Costs</a></li>
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Financial Summary</a></li>
+			<li {% if request.resolver_match.url_name == "financial_summary"%} class="active" {% endif %} ><a href="{% url 'financial_summary' %}"><i class="fa fa-circle-o"></i>Financial Summary</a></li>
 		</ul>
 	</li>
 	{% endif %}

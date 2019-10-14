@@ -19,6 +19,12 @@ from .models import *
 from .forms import *
 
 
+# import the logging library for debugging
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 #########################
 ### Helper Functions ####
 #########################
@@ -1159,12 +1165,11 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
         for a in allocations:
             # staff cost
             value = a.staff_cost(start=from_date, end=until_date).staff_cost
-            if isinstance(a.project, AllocatedProject) or (isinstance(a.project, ServiceProject) and a.project.charged == True): # allocated or charged service
-                # sum staff cost from allocation
-                if (a.project.internal):    # internal
-                    internal_project_staff_cost += value
-                else:
-                    recovered_staff_cost += value
+            # sum staff cost from allocation
+            if (a.project.internal):    # internal
+                internal_project_staff_cost += value
+            elif isinstance(a.project, AllocatedProject) or (isinstance(a.project, ServiceProject) and a.project.charged == True): # allocated or chargable service
+                recovered_staff_cost += value
         non_recovered_cost =  staff_salary - recovered_staff_cost
         staff_liability =  staff_salary - recovered_staff_cost - internal_project_staff_cost
         rses_costs[rse] = {'staff_salary': staff_salary, 'recovered_staff_cost': recovered_staff_cost, 'internal_project_staff_cost': internal_project_staff_cost, 'non_recovered_cost': non_recovered_cost, 'staff_liability': staff_liability}
@@ -1531,3 +1536,79 @@ def projects_internal_summary(request: HttpRequest) -> HttpResponse:
     view_dict['total_staff_cost'] = total_staff_cost
 	
     return render(request, 'projects_internal_summary.html', view_dict)
+
+@user_passes_test(lambda u: u.is_superuser)
+def financial_summary(request: HttpRequest) -> HttpResponse:
+    """
+    Profit loss summary of the group as a whole
+    """
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lt=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(status=status)
+            elif status == 'L':
+                q &= Q(status='F')|Q(status='R')
+            elif status == 'U':
+                q &= Q(status='F')|Q(status='R')|Q(status='P')
+
+    # save the form
+    view_dict['form'] = form
+
+    # all projects
+    projects = Project.objects.filter(q)
+
+    salary_costs = 0
+    recovered_staff_costs = 0
+    internal_project_staff_costs = 0
+    service_income = 0
+    
+    # Salary Costs (all RSEs)
+    for rse in (rse for rse in RSE.objects.all() if rse.current_employment): # for all currently employed RSEs
+        salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+
+    # Project Costs and Service Income (all project in date range)
+    for p in projects:
+        project_recovered_costs = 0
+        # Internal Project Costs
+        if (p.internal):
+            internal_project_staff_costs += p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True).staff_cost
+        # Recovered Staff Costs (allocated or charged service projects)
+        elif isinstance(p, AllocatedProject) or (isinstance(p, ServiceProject) and p.charged == True):  
+            project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+            recovered_staff_costs += project_recovered_costs
+            logger.warning(f"{p}: {project_recovered_costs}")
+        # Service income
+        if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
+            # income from service project less any recovered staff cost
+            service_income += p.value() - project_recovered_costs
+    
+    # Liability
+    non_recovered_cost = salary_costs - recovered_staff_costs
+    income_total = internal_project_staff_costs + service_income
+
+    view_dict['salary_costs'] = salary_costs
+    view_dict['recovered_staff_costs'] = recovered_staff_costs
+    view_dict['non_recovered_cost'] = non_recovered_cost
+    view_dict['internal_project_staff_costs'] = internal_project_staff_costs
+    view_dict['service_income'] = service_income
+    view_dict['income_total'] = income_total
+    view_dict['balance'] =  income_total - non_recovered_cost
+
+    return render(request, 'financial_summary.html', view_dict)

@@ -157,7 +157,7 @@ def random_project_and_allocation_data():
                 status=status)
         else:
             # service
-            max_trac_days = int((end-start).days * (220.0/360.0))   # trac days are 220 of the year
+            max_trac_days = int((end-start).days * (220.0/365.0))   # trac days are 220 of the year
             days = random.randint(1, max_trac_days) #between 1 day and max_trac_days
             p_temp = ServiceProject(
                     days=days,

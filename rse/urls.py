@@ -189,4 +189,7 @@ urlpatterns = [
     # View allocated project income summary
     url(r'^projects/internal/summary$', views.projects_internal_summary, name='projects_internal_summary'),
 
+    # View allocated project income summary
+    url(r'^financialsummary$', views.financial_summary, name='financial_summary'),
+
 ]
