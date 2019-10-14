@@ -10,9 +10,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool - Project Staff Costs Breakdown{% endblock %}
+{% block title %}RSE Group Administration Tool - RSE Staff Costs and Liability{% endblock %}
 
-{% block page_name %}Project {{project.id}} Staff Costs Breakdown{% endblock %}
+{% block page_name %}RSE Staff Costs and Liability{% endblock %}
 {% block content %}
 
 
@@ -23,70 +23,48 @@
         <div class="col-md-9">
 			<div class="box box-default">
 				<div class="box-header with-border">
-					<h3 class="box-title">Project {{project.id}} Staff Costs Breakdown</h3>
-					<p><i>Note: This only includes staff costs within the accounting period selected and not the <a href="{% url 'project' project.id %}">full project costs</a>.</i></p>
+					<h3 class="box-title">RSE Staff Costs and Liability</h3>
 				</div>
 				<div class="box-body">
 					<table id="projects" class="table table-hover">
 						<thead>
 							<tr>
 								<th id="rse">RSE</th>
-								<th id="from">From Date</th>
-								<th id="until">Until Date</th>
-								<th id="percent">Percentage FTE</th>
-								<th id="salary_band">Salary Band (salary)</th>
-								<th id="staff_cost">Calculated Staff Cost</th>
-								<th id="estimated">Estimated</th>
-								<th id="more"></th>
+								<th id="salary">Staff Salary</th>
+								<th id="recovered">Reovered Salary</th>
+								<th id="internal">Internal Project Salary</th>
+								<th id="non_recovered">Non-Recovered Staff Costs</th>
+								<th id="liability">Liability</th>
 								
 							</tr>
 						</thead>
 						<tbody>
-							{% for allocation, cost_breakdown in costs.allocation_breakdown.items %}
-								<tr>
-									<td>{{allocation.rse}}</td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-								</tr>
-								{% for item in cost_breakdown %}
-									<tr>
-										<td></td>
-										<td>{{item.from_date}}</td>
-										<td>{{item.until_date}}</td>
-										<td>{{item.percentage}}%</td>
-										<td>{{item.salary_band}} {% if item.salary_band.estimated %}<i>(estimated)</i>{% endif %}</td>
-										<td>£{{item.staff_cost|floatformat:2|intcomma}}</td>
-										<td></td>
-										<td></td>
-									</tr>
-								{% endfor %}
+							{% for rse, data in rse_costs.items %}
+							<tr>
+								<td>{{rse}}
+									<span class="pull-right"><a href="{% url 'rse_staffcost' rse.user.username %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span>
+								</td>
+								<td>£{{data.staff_salary|floatformat:2|intcomma}}</td>
+								<td>£{{data.recovered_staff_cost|floatformat:2|intcomma}}</td>
+								<td>£{{data.internal_project_staff_cost|floatformat:2|intcomma}}</td>
+								<td>£{{data.non_recovered_cost|floatformat:2|intcomma}}</td>
+								<td>£{{data.staff_liability|floatformat:2|intcomma}}</td>
+								
+							</tr>
 							{% endfor %}
 							
 						</tbody>
 						<tfooter>
 							<tr>
-								
 								<td><strong>Total</strong></td>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td></td>
-								<td><strong>£{{costs.staff_cost|floatformat:2|intcomma}}</strong></td>
-								<td></td>
-								<td></td>
+								<td><strong>£{{total_staff_salary|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_recovered_staff_cost|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_internal_project_staff_cost|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_non_recovered_cost|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_staff_liability|floatformat:2|intcomma}}</strong></td>
 							</tr>
 						</tfooter>
 					</table>
-					{% if project.is_service %}
-						{% if not project.charged %}
-							<i>Note: This is a service project which is not charged and as such staff costs will not be deducted from the service account.</i>
-						{% endif %}
-					{% endif %}
 				</div>
 			</div>
         </div>
@@ -112,6 +90,12 @@
 					  </div>
 					  {{ form.filter_range }}
 					</div>
+					</br>
+					
+						
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{ form.status }}
 					</br>
 					
 				  </div>

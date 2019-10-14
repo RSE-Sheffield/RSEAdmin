@@ -1113,9 +1113,156 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
     commitments = RSEAllocation.commitment_summary(allocations, from_date, until_date)
     view_dict['commitments'] = commitments # (tuple of date, total FTE effort, [allocations])
 
-	
-
     return render(request, 'costdistribution.html', view_dict)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def rses_staffcosts(request: HttpRequest) -> HttpResponse:
+    """
+    View reports on staff costs
+    """
+
+    # Dict for view
+    view_dict = {}
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lt=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(project__status=status)
+            elif status == 'L':
+                q &= Q(project__status='F')|Q(project__status='R')
+            elif status == 'U':
+                q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+    else:
+        form = FilterProjectForm()
+
+    # save the form
+    view_dict['form'] = form
+
+    rses_costs = {}
+    total_staff_salary = total_recovered_staff_cost = total_internal_project_staff_cost = total_non_recovered_cost = total_staff_liability = 0
+    for rse in (rse for rse in RSE.objects.all() if rse.current_employment):
+        # get any allocations for rse
+        allocations = RSEAllocation.objects.filter(rse=rse).filter(q)
+        staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+        recovered_staff_cost = 0
+        internal_project_staff_cost = 0
+        for a in allocations:
+            # staff cost
+            value = a.staff_cost(start=from_date, end=until_date).staff_cost
+            if isinstance(a.project, AllocatedProject) or (isinstance(a.project, ServiceProject) and a.project.charged == True): # allocated or charged service
+                # sum staff cost from allocation
+                if (a.project.internal):    # internal
+                    internal_project_staff_cost += value
+                else:
+                    recovered_staff_cost += value
+        non_recovered_cost =  staff_salary - recovered_staff_cost
+        staff_liability =  staff_salary - recovered_staff_cost - internal_project_staff_cost
+        rses_costs[rse] = {'staff_salary': staff_salary, 'recovered_staff_cost': recovered_staff_cost, 'internal_project_staff_cost': internal_project_staff_cost, 'non_recovered_cost': non_recovered_cost, 'staff_liability': staff_liability}
+        # sum totals
+        total_staff_salary += staff_salary
+        total_recovered_staff_cost += recovered_staff_cost
+        total_internal_project_staff_cost += internal_project_staff_cost
+        total_non_recovered_cost += non_recovered_cost
+        total_staff_liability += staff_liability
+
+    view_dict['rse_costs'] = rses_costs
+
+    view_dict['total_staff_salary'] = total_staff_salary
+    view_dict['total_recovered_staff_cost'] = total_recovered_staff_cost
+    view_dict['total_internal_project_staff_cost'] = total_internal_project_staff_cost
+    view_dict['total_non_recovered_cost'] = total_non_recovered_cost
+    view_dict['total_staff_liability'] = total_staff_liability
+    
+    return render(request, 'rses_staffcosts.html', view_dict)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
+    """
+    View reports on a single rse staff cost (all projects and allocations)
+    """
+    # Get the user
+    user = get_object_or_404(User, username=rse_username)
+
+    # Dict for view
+    view_dict = {}
+
+    # Get RSE if exists
+    rse = get_object_or_404(RSE, user=user)
+    view_dict['rse'] = rse
+
+    # Construct q query and check the project filter form
+    q = Q()
+    from_date = Project.min_start_date()
+    until_date = Project.max_end_date()
+    if request.method == 'GET':
+        form = FilterProjectForm(request.GET)
+        if form.is_valid():
+            filter_range = form.cleaned_data["filter_range"]
+            from_date = filter_range[0]
+            q &= Q(end__gte=from_date)
+            until_date = filter_range[1]
+            q &= Q(start__lt=until_date)
+
+            # apply status type query
+            status = form.cleaned_data["status"]
+            if status in 'PRFX':
+                q &= Q(status=status)
+            elif status == 'L':
+                q &= Q(status='F')|Q(status='R')
+            elif status == 'U':
+                q &= Q(status='F')|Q(status='R')|Q(status='P')
+    else:
+        form = FilterProjectForm()
+
+    # save the form
+    view_dict['form'] = form
+
+    # Get only non internal, allocated or charged service projects
+    q &= Q(instance_of=AllocatedProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
+    projects = Project.objects.filter(q)
+
+    # actual staff salary costs
+    staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+
+    project_costs = {}
+    recovered_staff_cost = 0
+    internal_project_staff_cost = 0
+    # group costs by project
+    for p in projects:
+        # Get all staff costs for the project and rse
+        staff_cost = p.staff_cost(from_date=from_date, until_date=until_date, rse=rse, consider_internal=True)
+        # only include projects with staff effort
+        if staff_cost.staff_cost > 0:
+            if (p.internal):    # internal or recovered staff costs
+                internal_project_staff_cost += staff_cost.staff_cost
+            else:
+                recovered_staff_cost += staff_cost.staff_cost
+            project_costs[p] = staff_cost
+
+    view_dict['project_costs'] = project_costs
+    view_dict['total_staff_salary'] = staff_salary
+    view_dict['total_recovered_staff_cost'] = recovered_staff_cost
+    view_dict['total_internal_project_staff_cost'] = internal_project_staff_cost
+    view_dict['total_non_recovered_cost'] = staff_salary - recovered_staff_cost - internal_project_staff_cost
+    view_dict['total_staff_liability'] = staff_salary - recovered_staff_cost
+    
+    return render(request, 'rse_staffcost.html', view_dict)
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def serviceoutstanding(request: HttpRequest) -> HttpResponse:

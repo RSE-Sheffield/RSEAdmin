@@ -364,7 +364,16 @@ class RSE(models.Model):
         This may be based on real grade changes in the future or estimated from current financial year increments (see `salary_band_after_increment` notes in `SalaryBand`)
         """
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
-        
+    
+    def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+        # Get the last salary grade charge for the RSE at the start of the cost query
+        sgc = self.lastSalaryGradeChange(from_date)
+        # Get the salary band at the start date of the cost query
+        sb = sgc.salary_band_at_future_date(from_date)
+
+        # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
+        return sb.staff_cost(start=from_date, end=until_date, percentage=percentage)
+
     @property
     def colour_rbg(self) -> str:
         r = hash(self.user.first_name) % 255
@@ -573,14 +582,14 @@ class Project(PolymorphicModel):
         except OperationalError:
             return timezone.now().date()
 
-    def staff_cost(self, from_date:date = None, until_date:date = None, consider_internal: bool =False) -> SalaryValue:
+    def staff_cost(self, from_date:date = None, until_date:date = None, rse: RSE = None, consider_internal: bool =False) -> SalaryValue:
         """
         Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
         """
         
         # don't consider internal projects
         if not consider_internal and self.internal:
-            return 0
+            return SalaryValue()
 
         # If no time period then use defaults for project
         # then limit specified time period to allocation
@@ -590,7 +599,10 @@ class Project(PolymorphicModel):
             until_date = self.end
 
         # Filter allocations by start and end date
-        allocations = RSEAllocation.objects.filter(project=self, end__gt=from_date, start__lt=until_date)
+        if rse:
+            allocations = RSEAllocation.objects.filter(project=self, end__gt=from_date, start__lt=until_date, rse=rse)
+        else:
+            allocations = RSEAllocation.objects.filter(project=self, end__gt=from_date, start__lt=until_date)
 
         # Iterate allocations and calculate staff costs
         salary_cost = SalaryValue()

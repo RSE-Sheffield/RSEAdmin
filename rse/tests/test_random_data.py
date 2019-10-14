@@ -132,7 +132,10 @@ def random_project_and_allocation_data():
             end_month = random.randint(1, 12)
         end=date(end_year, end_month, 1)
         status = random.choice(Project.status_choice_keys())
-        
+
+        #internal project
+        internal = True if random.random()>0.5 else False
+
         #random choice between allocated or service project
         if random.random()>0.5:
             # allocated
@@ -148,6 +151,7 @@ def random_project_and_allocation_data():
                 name=f"test_project_{x}",
                 description="none",
                 client=c,
+                internal=internal,
                 start=start,
                 end=end,
                 status=status)
@@ -165,6 +169,7 @@ def random_project_and_allocation_data():
                     name=f"test_project_{x}",
                     description="none",
                     client=c,
+                    internal=internal,
                     start=start,
                     end=end,
                     status=status)
@@ -241,16 +246,7 @@ class ProjectAllocationTests(TestCase):
             # Ensure projects are 100 committed
             self.assertAlmostEqual(p.percent_allocated, 100.0, places=2)
             
-            
-class ProjectAllocationsInProject(TestCase):
-    """
-    Test case to ensure allocations fall within the project period
-    """
-    
-    def setUp(self):
-        random_project_and_allocation_data()
-        
-            
+      
     def test_allocation_dates(self):
         """
         Tests the randomly generated projects to ensure that they are valid projects
@@ -266,4 +262,24 @@ class ProjectAllocationsInProject(TestCase):
                 # end date of allocation should be within project period
                 self.assertLessEqual(a.end, p.end)
                 self.assertGreater(a.end, p.start)
-    
+      
+            
+    def test_accumulated_project_costs(self):
+        """
+        Tests the project costs to ensure this matches the allocation costs
+        Can fail if allocations exist outside of project or if staff cost functions have discrepancies
+        """
+        
+        # Test allocated projects (randomly generated fields)
+        for p in Project.objects.all():
+
+            project_cost = p.staff_cost(consider_internal=True).staff_cost
+        
+            accumulated_allocation_cost = 0
+            for a in RSEAllocation.objects.filter(project=p):
+                accumulated_allocation_cost += a.staff_cost().staff_cost
+                
+            # check project cost verses accumulated allocation cost
+            self.assertEqual(project_cost, accumulated_allocation_cost)
+
+            
