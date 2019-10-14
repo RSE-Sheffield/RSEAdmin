@@ -187,12 +187,44 @@ class AllocatedProjectForm(forms.ModelForm):
         errors = {}
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
-        if cleaned_data['start'] and cleaned_data['end']:
+        if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Project end date can not be before start date')
         
         if errors:
             raise ValidationError(errors)
+
+
+    def clean_start(self):
+        """
+        Cant change the start date if there are dependant allocations which start before the proposed date
+        """
+        cleaned_start=self.cleaned_data['start']
+
+        # Cant change start and end date if there are existing allocations outside of the period
+        if self.instance:
+            # check for allocations on project which end after the proposed start date
+            should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
+            if should_be_empty:
+                raise ValidationError('There are current allocations on this project which start before the proposed start date')
+
+        return cleaned_start
+
+    def clean_end(self):
+        """
+        Cant change the end date if there are dependant allocations which end after the proposed date
+        """
+        cleaned_end=self.cleaned_data['end']
+
+        # Cant change start and end date if there are existing allocations outside of the period
+        if self.instance:
+            # check for allocations on project which end after the proposed start date
+            should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
+            if should_be_empty:
+                raise ValidationError('There are current allocations on this project which end after the proposed end date')
+
+        return cleaned_end
+        
 
 class ServiceProjectForm(forms.ModelForm):    
     """
@@ -226,12 +258,43 @@ class ServiceProjectForm(forms.ModelForm):
         errors = {}
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
-        if cleaned_data['start'] and cleaned_data['end']:
+        if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Project end date can not be before start date')
         
         if errors:
             raise ValidationError(errors)
+
+    def clean_start(self):
+        """
+        Cant change the start date if there are dependant allocations which start before the proposed date
+        """
+        cleaned_start=self.cleaned_data['start']
+
+        # Cant change start and end date if there are existing allocations outside of the period
+        if self.instance:
+            # check for allocations on project which end after the proposed start date
+            should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
+            if should_be_empty:
+                raise ValidationError('There are current allocations on this project which start before the proposed start date')
+
+        return cleaned_start
+
+    def clean_end(self):
+        """
+        Cant change the end date if there are dependant allocations which end after the proposed date
+        """
+        cleaned_end=self.cleaned_data['end']
+
+        # Cant change start and end date if there are existing allocations outside of the period
+        if self.instance:
+            # check for allocations on project which end after the proposed start date
+            should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
+            if should_be_empty:
+                raise ValidationError('There are current allocations on this project which end after the proposed end date')
+
+        return cleaned_end
+        
                 
             
 class ClientForm(forms.ModelForm):    

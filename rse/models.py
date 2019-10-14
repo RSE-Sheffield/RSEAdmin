@@ -16,6 +16,12 @@ from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
 from copy import deepcopy
 
+# import the logging library for debugging
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 # Class for typed query set to be used in type hints
 T = TypeVar("T")
 class TypedQuerySet(Generic[T]):

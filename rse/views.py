@@ -19,12 +19,6 @@ from .models import *
 from .forms import *
 
 
-# import the logging library for debugging
-import logging
-
-# Get an instance of a logger
-logger = logging.getLogger(__name__)
-
 #########################
 ### Helper Functions ####
 #########################
