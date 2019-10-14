@@ -94,10 +94,10 @@ class FilterProjectForm(FilterDateRangeForm):
     
 class ProjectAllocationForm(forms.ModelForm):
     """
-    Form for adding and editing EFFORT allocations within a project. Uses model form base type.
+    Form for adding and editing allocations within a project. Uses model form base type.
     Sets the start and end day of the allocation as follows
     - Start day is start of project
-    - End day is start day plus remaining commitment to the project (by calculating sum of already committed hours)
+    - End day is start day plus remaining commitment to the project (by calculating sum of already committed hours) - This may be set by budget for allocated projects using responsive AJAX query.
     """
     
     # Fields are created manually to set the date input format
@@ -108,18 +108,18 @@ class ProjectAllocationForm(forms.ModelForm):
         """ Set the initial data """
         if not 'project' in kwargs:
             raise TypeError("ProjectAllocationForm missing required argument: 'project'")
-        project = self.user = kwargs.pop('project', None)
+        self.project = self.user = kwargs.pop('project', None)
         # call super 
         super(ProjectAllocationForm, self).__init__(*args, **kwargs)
         
         # do stuff with project to set the initial data
-        self.fields['percentage'].initial = project.fte
-        self.fields['start'].initial = datetime.strftime(project.start, "%d/%m/%Y")
+        self.fields['percentage'].initial = self.project.fte
+        self.fields['start'].initial = datetime.strftime(self.project.start, "%d/%m/%Y")
         # remaining days must be rounded to whole days
-        if (project.remaining_days_at_fte > 0):
-            self.fields['end'].initial = datetime.strftime(project.start + timedelta(days=round(project.remaining_days_at_fte)), "%d/%m/%Y")
+        if (self.project.remaining_days_at_fte > 0):
+            self.fields['end'].initial = datetime.strftime(self.project.start + timedelta(days=round(self.project.remaining_days_at_fte)), "%d/%m/%Y")
         else:
-            self.fields['end'].initial = datetime.strftime(project.start, "%d/%m/%Y")
+            self.fields['end'].initial = datetime.strftime(self.project.start, "%d/%m/%Y")
 
     
     class Meta:
@@ -141,6 +141,17 @@ class ProjectAllocationForm(forms.ModelForm):
         if cleaned_data['start'] and cleaned_data['end']:
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Allocation end date can not be before start date')
+
+        # Check that the dates are within the current project
+        if cleaned_data['start'] < self.project.start:
+            errors['start'] = ('Allocation start date can not be before the start date of the project')
+        if cleaned_data['start'] > self.project.end:
+            errors['start'] = ('Allocation start date can not be after the end date of the project')
+
+        if cleaned_data['end'] > self.project.end:
+            errors['end'] = ('Allocation end date can not be after the end date of the project')
+        if cleaned_data['end'] < self.project.start:
+            errors['end'] = ('Allocation end date can not be before the start date of the project')
         
         if errors:
             raise ValidationError(errors)
