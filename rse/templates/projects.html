@@ -59,7 +59,7 @@
 							<td>
 								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated|percent}}%</span>
 							</td>
-							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+							<td><a href="{% url 'project' p.id %}" class="pull-right btn btn-primary btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}
 					</tbody></table>
@@ -82,42 +82,23 @@
 				<div class="form-group">
 					<label>Project Type</label>
 					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
-					<select class="form-control" id="type_filter">
-						<option value="">All</option>
-						<option value="Allocated">Allocated Only</option>
-						<option value="Service">Service Only</option>
-					</select>
+					{{form.type_filter}}
 					
 					</br>
 					
 					<label>Funding Status</label>
 					<p><i>Filter projects based current funding status</i></p>
-					<select class="form-control" id="status_filter">
-						<option value="">All</option>
-						<option value="Preparation">Preparation</option>
-						<option value="Review">Review</option>
-						<option value="Funded">Funded</option>
-						<option value="Rejected">Rejected</option>
-					</select>
+					{{form.status_filter}}
 					
 					</br>
 
 					<label>Schedule</label>
 					<p><i>Filter projects based on current schedule</i></p>
-					<select class="form-control" id="schedule_filter">
-						<option value="">All</option>
-						<option value="Active">Active</option>
-						<option value="Scheduled">Scheduled</option>
-						<option value="Completed">Completed</option>
-					</select>
+					{{form.schedule_filter}}
 					
 					</br>
 					
 				</div>
-				
-				
-
-
 			</div>
 		</div>
 	</div>
@@ -142,7 +123,7 @@
 					// Type filter
 					this.api().column("#type").every( function () {
 						var column = this;
-						var select = $('#type_filter')
+						var select = $('#id_type_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -158,7 +139,7 @@
 					this.api().column("#status").every( function () {
 						var column = this;
 
-						var select = $('#status_filter')
+						var select = $('#id_status_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -172,7 +153,7 @@
 					this.api().column("#schedule").every( function () {
 						var column = this;
 
-						var select = $('#schedule_filter')
+						var select = $('#id_schedule_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -184,6 +165,16 @@
 					} );
 				}
 			} );
+
+			// Search by initial values from form
+			initial_type_val = $.fn.dataTable.util.escapeRegex($('#id_type_filter').val());
+			initial_status_val = $.fn.dataTable.util.escapeRegex($('#id_status_filter').val());
+			initial_schedule_val = $.fn.dataTable.util.escapeRegex($('#id_schedule_filter').val());
+			$('#projects').DataTable().column("#type").search(initial_type_val ? '^'+initial_type_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#status").search(initial_status_val ? '^'+initial_status_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#schedule").search(initial_schedule_val ? '^'+initial_schedule_val+'$' : '', true, false).draw();
+
+
 		} );
 		
 	</script>

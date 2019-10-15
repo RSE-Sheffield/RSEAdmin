@@ -1,6 +1,18 @@
 {% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
 
-{% block title %}RSE Group Administration Tool{% endblock %}
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Homepage{% endblock %}
+
+{% block page_name %}RSE Group Administration Homepage{% endblock %}
+
+
 {% block content %}
     Just some example content
 {% endblock %}

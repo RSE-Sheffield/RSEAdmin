@@ -472,11 +472,22 @@ class Project(PolymorphicModel):
         (FUNDED, 'Funded'),
         (REJECTED, 'Rejected'),
     )
+    STATUS_CHOICES_TEXT_KEYS = (
+        ('Preparation', 'Preparation'),
+        ('Review', 'Review'),
+        ('Funded', 'Funded'),
+        ('Rejected', 'Rejected'),
+    )
     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
     SCHEDULE_ACTIVE = "Active"
     SCHEDULE_COMPLETED = "Completed"
     SCHEDULE_SCHEDULED = "Scheduled"
+    SCHEDULE_CHOICES_TEXT_KEYS = (
+        ('Active', 'Active'),
+        ('Completed', 'Completed'),
+        ('Scheduled', 'Scheduled'),
+    )
 
     @property
     def chargable(self):

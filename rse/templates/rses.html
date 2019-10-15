@@ -60,7 +60,7 @@
 							<td>
 								<span class="badge bg-light-blue">{{rse.current_capacity|floatformat:2}}%</span>
 							 </td>
-							<td><a href="{% url 'rse' rse.user.username %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+							<td><a href="{% url 'rse' rse.user.username %}" class="pull-right btn btn-primary btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}
 					</tbody></table>

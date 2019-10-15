@@ -18,6 +18,51 @@ from django.http import JsonResponse
 from .models import *
 from .forms import *
 
+#################
+### Homepage ####
+#################
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def index_admin(request: HttpRequest) -> HttpResponse:
+
+    # Dict for view
+    view_dict = {}
+
+    now = timezone.now().date()
+    view_dict['now'] = now
+
+    # team capacity
+    rses = RSE.objects.filter(employed_from__lte=now, employed_until__gt=now)
+    average_capacity = sum(rse.current_capacity for rse in rses) / rses.count()
+    view_dict['average_capacity'] = average_capacity
+
+    # active projects
+    active_funded_projects = Project.objects.filter(start__lte=now, end__gt=now, status=Project.FUNDED).count()
+    view_dict['active_funded_projects'] = active_funded_projects
+
+    # projects under review
+    review_projects = Project.objects.filter(status=Project.REVIEW).count()
+    view_dict['review_projects'] = review_projects
+
+    # Service projects with outstanding invoices
+    outstanding_invoices = ServiceProject.objects.filter(internal=False, invoice_received=None).count()
+    view_dict['outstanding_invoices'] = outstanding_invoices
+
+    return render(request, 'index_admin.html', view_dict)
+
+@login_required
+def index(request: HttpRequest) -> HttpResponse:
+
+    # catch admin users
+    if request.user.is_superuser:
+        return index_admin(request)
+
+
+
+    return render(request, 'index.html')
+
+
 
 #########################
 ### Helper Functions ####
@@ -68,11 +113,6 @@ def append_project_and_allocation_costs(project: Project, allocations: TypedQuer
 #######################
 ### Authentication ####
 #######################
-
-@login_required
-def index(request: HttpRequest) -> HttpResponse:
-    return render(request, 'index.html')
-
 
 @user_passes_test(lambda u: u.is_superuser)
 def user_new(request: HttpRequest) -> HttpResponse:
@@ -266,10 +306,18 @@ def projects(request: HttpRequest) -> HttpResponse:
     """
     Filters to be handled client side with DataTables
     """
+
+    # view dict
+    view_dict = {}
     
+    if request.method == 'GET':
+        form = ProjectsFilterForm(request.GET)
+    view_dict['form'] = form
+       
     projects = Project.objects.all()
+    view_dict['projects'] = projects
     
-    return render(request, 'projects.html', { "projects": projects })
+    return render(request, 'projects.html', view_dict)
 
 
 

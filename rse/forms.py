@@ -90,7 +90,18 @@ class FilterProjectForm(FilterDateRangeForm):
     status = forms.ChoiceField(choices = (('A', 'All'), ('L', 'Funded and Review'), ('U', 'Funded, Review and in Preperation')) + Project.STATUS_CHOICES, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
     # Type cant be filtered at database level as it is a property
     #type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
-      
+
+class ProjectsFilterForm(forms.Form):
+    """
+    Class represents a filter form for filtering by project type, funding status and schedule
+    For use in the projects view which performs responsive datatable queries.
+    Values for options doe not use database character keys as tables are filtered directly at client side (in the data table)
+    """
+
+    type_filter = forms.ChoiceField(choices = (('', 'All'), ('Allocated', 'Allocated Only'), ('Service', 'Service Only')), widget=forms.Select(attrs={'class' : 'form-control'}))
+    status_filter = forms.ChoiceField(choices =  (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
+    schedule_filter = forms.ChoiceField(choices = (('', 'All'),) + Project.SCHEDULE_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
+
     
 class ProjectAllocationForm(forms.ModelForm):
     """

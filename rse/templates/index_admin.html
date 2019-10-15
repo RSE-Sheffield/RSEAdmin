@@ -1,0 +1,90 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}" />
+<link rel="stylesheet" href="{% static 'Ionicons/css/ionicons.min.css' %}">
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Homepage{% endblock %}
+
+{% block page_name %}RSE Group Administration Homepage{% endblock %}
+
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-aqua">
+                <div class="inner">
+                    <h3>{{average_capacity}}<sup style="font-size: 20px">%</sup></h3>
+
+                    <p>Average Team Capacity Today</p>
+                </div>
+                <div class="icon">
+                    <i class="icon ion-person-stalker"></i>
+                </div>
+                <a href="{% url 'rses' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-green">
+                <div class="inner">
+                    <h3>{{active_funded_projects}}</h3>
+
+                    <p>Active Funded Projects</p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-university"></i>
+                </div>
+                <a href="{% url 'projects' %}?status_filter=Funded&schedule_filter=Active" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-yellow">
+                <div class="inner">
+                    <h3>{{review_projects}}</h3>
+
+                    <p>Projects Under Review</p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-clock"></i>
+                </div>
+                <a href="{% url 'projects' %}?status_filter=Review" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-red">
+                <div class="inner">
+                    <h3>{{outstanding_invoices}}</h3>
+
+                    <p>Oustanding Invoices</p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-card"></i>
+                </div>
+                <a href="{% url 'serviceoutstanding' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+    </div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+
+
+{% endblock %}
