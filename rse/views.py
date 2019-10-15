@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.http import JsonResponse
+from django.conf import settings
 
 
 from .models import *
@@ -30,12 +31,23 @@ def index_admin(request: HttpRequest) -> HttpResponse:
     view_dict = {}
 
     now = timezone.now().date()
+    soon = now + timedelta(days=settings.HOME_PAGE_DAYS_SOON)
     view_dict['now'] = now
 
     # team capacity
     rses = RSE.objects.filter(employed_from__lte=now, employed_until__gt=now)
     average_capacity = sum(rse.current_capacity for rse in rses) / rses.count()
+    view_dict['rses'] = rses
     view_dict['average_capacity'] = average_capacity
+
+    # RSE capacity
+    rses_capacity_low = [rse for rse in rses if rse.current_capacity < settings.HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL]
+    view_dict['rses_capacity_low'] = rses_capacity_low
+
+    # settings
+    view_dict['HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL'] = settings.HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL
+    view_dict['HOME_PAGE_DAYS_SOON'] = settings.HOME_PAGE_DAYS_SOON
+    
 
     # active projects
     active_funded_projects = Project.objects.filter(start__lte=now, end__gt=now, status=Project.FUNDED).count()
@@ -48,6 +60,26 @@ def index_admin(request: HttpRequest) -> HttpResponse:
     # Service projects with outstanding invoices
     outstanding_invoices = ServiceProject.objects.filter(internal=False, invoice_received=None).count()
     view_dict['outstanding_invoices'] = outstanding_invoices
+
+    # Latest projects added 
+    lastest_projects = Project.objects.all().order_by('-created')[0:settings.HOME_PAGE_NUMBER_ITEMS]
+    view_dict['lastest_projects'] = lastest_projects
+
+    # Projects starting 
+    starting_projects = Project.objects.filter(start__gt=now).order_by('start')[0:settings.HOME_PAGE_NUMBER_ITEMS]
+    view_dict['starting_projects'] = starting_projects
+
+    # Warnings
+    warning_starting_not_funded =  Project.objects.filter(Q(status=Project.PREPARATION) | Q(status=Project.REVIEW)).filter(start__gt=now, start__lte=soon).count()
+    view_dict['warning_starting_not_funded'] = warning_starting_not_funded
+    warning_service_started_not_invoiced =  ServiceProject.objects.filter(internal=False, start__lte=now, end__gt=now, invoice_received=None).count()
+    view_dict['warning_service_started_not_invoiced'] = warning_service_started_not_invoiced
+
+    # Danger
+    danger_started_not_funded =  Project.objects.filter(Q(status=Project.PREPARATION) | Q(status=Project.REVIEW)).filter(start__lte=now, end__gte=now).count()
+    view_dict['danger_started_not_funded'] = danger_started_not_funded
+    danger_service_ended_not_invoiced =  ServiceProject.objects.filter(internal=False, end__lt=now, invoice_received=None).count()
+    view_dict['danger_service_ended_not_invoiced'] = danger_service_ended_not_invoiced
 
     return render(request, 'index_admin.html', view_dict)
 
@@ -1313,6 +1345,12 @@ def serviceoutstanding(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
     view_dict = {}
+
+    if request.method == 'GET':
+        form = ServiceOutstandingFilterForm(request.GET)
+    view_dict['form'] = form
+       
+
     # Get Service projects in date range
     projects = ServiceProject.objects.filter(internal=False)
     view_dict['projects'] = projects

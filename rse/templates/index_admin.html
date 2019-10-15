@@ -16,68 +16,227 @@
 
 {% block content %}
 
-    <div class="row">
-        <div class="col-lg-3 col-xs-6">
-            <!-- small box -->
-            <div class="small-box bg-aqua">
-                <div class="inner">
-                    <h3>{{average_capacity}}<sup style="font-size: 20px">%</sup></h3>
+<div class="row">
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-aqua">
+            <div class="inner">
+                <h3>{{average_capacity}}<sup style="font-size: 20px">%</sup></h3>
 
-                    <p>Average Team Capacity Today</p>
-                </div>
-                <div class="icon">
-                    <i class="icon ion-person-stalker"></i>
-                </div>
-                <a href="{% url 'rses' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                <p>Average Team Capacity Today</p>
             </div>
-        </div>
-        <!-- ./col -->
-        <div class="col-lg-3 col-xs-6">
-            <!-- small box -->
-            <div class="small-box bg-green">
-                <div class="inner">
-                    <h3>{{active_funded_projects}}</h3>
-
-                    <p>Active Funded Projects</p>
-                </div>
-                <div class="icon">
-                    <i class="ion ion-university"></i>
-                </div>
-                <a href="{% url 'projects' %}?status_filter=Funded&schedule_filter=Active" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+            <div class="icon">
+                <i class="icon ion-person-stalker"></i>
             </div>
+            <a href="{% url 'rses' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
         </div>
-        <!-- ./col -->
-        <div class="col-lg-3 col-xs-6">
-            <!-- small box -->
-            <div class="small-box bg-yellow">
-                <div class="inner">
-                    <h3>{{review_projects}}</h3>
-
-                    <p>Projects Under Review</p>
-                </div>
-                <div class="icon">
-                    <i class="ion ion-clock"></i>
-                </div>
-                <a href="{% url 'projects' %}?status_filter=Review" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-            </div>
-        </div>
-        <!-- ./col -->
-        <div class="col-lg-3 col-xs-6">
-            <!-- small box -->
-            <div class="small-box bg-red">
-                <div class="inner">
-                    <h3>{{outstanding_invoices}}</h3>
-
-                    <p>Oustanding Invoices</p>
-                </div>
-                <div class="icon">
-                    <i class="ion ion-card"></i>
-                </div>
-                <a href="{% url 'serviceoutstanding' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-            </div>
-        </div>
-        <!-- ./col -->
     </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-green">
+            <div class="inner">
+                <h3>{{active_funded_projects}}</h3>
+
+                <p>Active Funded Projects</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-university"></i>
+            </div>
+            <a href="{% url 'projects' %}?status_filter=Funded&schedule_filter=Active" class="small-box-footer">More
+                info <i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-yellow">
+            <div class="inner">
+                <h3>{{review_projects}}</h3>
+
+                <p>Projects Under Review</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-clock"></i>
+            </div>
+            <a href="{% url 'projects' %}?status_filter=Review" class="small-box-footer">More info <i
+                    class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-red">
+            <div class="inner">
+                <h3>{{outstanding_invoices}}</h3>
+
+                <p>Oustanding Invoices</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-card"></i>
+            </div>
+            <a href="{% url 'serviceoutstanding' %}" class="small-box-footer">More info <i
+                    class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">Latest Projects Created</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table class="table no-margin">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Created by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in lastest_projects %}
+                            <tr>
+                                <td>{{p.id}}</td>
+                                <td><a href="{% url 'project' p.id %}">{{p.name}}</a></td>
+                                <td>{{p.type_str}}</td>
+                                <td><span
+                                        class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span>
+                                </td>
+                                <td>{{p.created}}</td>
+                                <td>{{p.creator.first_name}} {{p.creator.last_name}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="box-footer clearfix">
+                <a href="{% url 'project_new' %}" class="btn btn-sm btn-info btn-flat pull-left">Create New Project</a>
+                <a href="{% url 'projects' %}" class="btn btn-sm btn-default btn-flat pull-right">View All Projects</a>
+            </div>
+        </div>
+
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">Projects Starting Soon</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table class="table no-margin">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Start date</th>
+                                <th>FTE Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in starting_projects %}
+                            <tr>
+                                <td>{{p.id}}</td>
+                                <td><a href="{% url 'project' p.id %}">{{p.name}}</a></td>
+                                <td>{{p.type_str}}</td>
+                                <td><span
+                                        class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span>
+                                </td>
+                                <td>{{p.start}}</td>
+                                <td>{{p.duration}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="box-footer clearfix">
+                <a href="{% url 'projects' %}?schedule_filter=Scheduled"
+                    class="btn btn-sm btn-default btn-flat pull-right">View All Scheduled</a>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="col-md-5">
+
+        {% if danger_started_not_funded %}
+            <div class="callout callout-danger">
+                <h4>Projects Started but not Funded!</h4>
+
+                <p>There are {{danger_started_not_funded}} projects in preperation or under review which have are 'Active' but do not have a status of 'Funded'.</p>
+                <a href="{% url 'projects' %}?schedule_filter=Active" class="small-box-footer">View Projects and Fix <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        {% endif %}
+
+        {% if danger_service_ended_not_invoiced %}
+            <div class="callout callout-danger">
+                <h4>Service Projects Completed but Not Invoiced!</h4>
+
+                <p>There are {{danger_service_ended_not_invoiced}} service projects which have completed but have not had the received invoice date completed.</p>
+                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Completed" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        {% endif %}
+
+        {% if warning_starting_not_funded %}
+            <div class="callout callout-warning">
+                <h4>Projects Starting but not Funded!</h4>
+
+                <p>There are {{warning_starting_not_funded}} projects in preperation or under review which have are due to start in the next {{HOME_PAGE_DAYS_SOON}} days but do not have a status of 'Funded'.</p>
+                <a href="{% url 'projects' %}?schedule_filter=Scheduled" class="small-box-footer">View Projects and Fix <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        {% endif %}
+
+        {% if warning_service_started_not_invoiced %}
+            <div class="callout callout-warning">
+                <h4>Service Projects Started but Not Invoiced!</h4>
+
+                <p>There are {{warning_service_started_not_invoiced}} active service projects which which have not had the received invoice date completed.</p>
+                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Active" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        {% endif %}
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">RSE Staff Capacity Today (% FTE) - Listing RSEs below
+                    {{HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL}}%</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <canvas id="id_rse_capacity_graph" width="100%"></canvas>
+            </div>
+            <div class="box-footer no-padding">
+                <ul class="nav nav-pills nav-stacked">
+                    {% for rse in rses_capacity_low%}
+                    <li>
+                        <a href="{% url 'rse' rse.user.username %}">{{rse.user.first_name}} {{rse.user.last_name}}<span
+                                class="pull-right text-red">{{rse.current_capacity}}%</span></a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
 
 
 {% endblock %}
@@ -85,6 +244,47 @@
 
 {% block javascript %}
 {{ block.super}}
+
+<!-- Commitment graph -->
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/chart.js' %}"></script>
+<script type="text/javascript">
+    var ctx = $('#id_rse_capacity_graph')[0].getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{% for rse in rses %} 
+                        {{rse.current_capacity}},
+                    {% endfor %}
+                ],
+                backgroundColor: [{% for rse in rses %}
+                    'rgba({{ rse.colour_rbg.r }}, {{ rse.colour_rbg.g }}, {{ rse.colour_rbg.b }}, 1.0)',
+                    {% endfor %}
+                ],
+                label: 'Capacity Dataset'
+            }],
+            labels: [{% for rse in rses %}
+                '{{rse.user.first_name}} {{rse.user.last_name}}',
+                {% endfor %}
+            ]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            title: {
+                display: false,
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+</script>
 
 
 {% endblock %}

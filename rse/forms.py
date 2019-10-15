@@ -102,7 +102,19 @@ class ProjectsFilterForm(forms.Form):
     status_filter = forms.ChoiceField(choices =  (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
     schedule_filter = forms.ChoiceField(choices = (('', 'All'),) + Project.SCHEDULE_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
 
-    
+
+class ServiceOutstandingFilterForm(forms.Form):
+    """
+    Class represents a filter form for filtering by invoice status, funding status and schedule
+    For use in the service invoice outstanding view which performs responsive datatable queries.
+    Values for options doe not use database character keys as tables are filtered directly at client side (in the data table)
+    """
+
+    invoice_filter = forms.ChoiceField(choices = (('', 'All'), ('Outstanding', 'Outstanding'), ('Received', 'Received')), widget=forms.Select(attrs={'class' : 'form-control'}))
+    status_filter = forms.ChoiceField(choices =  (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
+    schedule_filter = forms.ChoiceField(choices = (('', 'All'),) + Project.SCHEDULE_CHOICES_TEXT_KEYS, widget=forms.Select(attrs={'class' : 'form-control'}))
+
+
 class ProjectAllocationForm(forms.ModelForm):
     """
     Form for adding and editing allocations within a project. Uses model form base type.

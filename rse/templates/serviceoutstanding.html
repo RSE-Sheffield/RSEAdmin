@@ -51,7 +51,7 @@
 								{% if p.invoice_received %}
 									<span class="label label-success">Received</span>
 								{% else %}
-									<span class="label label-danger">Oustanding</span>
+									<span class="label label-danger">Outstanding</span>
 								{% endif %}
 							</td>
 							<td>{% if p.invoice_received %} {{p.invoice_received}}{% endif %}</td>
@@ -81,45 +81,26 @@
 				
 				
 				<div class="form-group">
+					<label>Invoice Received</label>
+					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
+					{{form.invoice_filter}}
+					
+					</br>
 					
 					<label>Funding Status</label>
 					<p><i>Filter projects based current funding status</i></p>
-					<select class="form-control" id="status_filter">
-						<option value="">All</option>
-						<option value="Preparation">Preparation</option>
-						<option value="Review">Review</option>
-						<option value="Funded">Funded</option>
-						<option value="Rejected">Rejected</option>
-					</select>
+					{{form.status_filter}}
 					
 					</br>
 
 					<label>Schedule</label>
 					<p><i>Filter projects based on current schedule</i></p>
-					<select class="form-control" id="schedule_filter">
-						<option value="">All</option>
-						<option value="Active">Active</option>
-						<option value="Scheduled">Scheduled</option>
-						<option value="Completed">Completed</option>
-					</select>
-					
-					</br>
-
-					<label>Invoice Status</label>
-					<p><i>Filter projects based on receipt of invoice</i></p>
-					<select class="form-control" id="invoice_filter">
-						<option value="">All</option>
-						<option value="Received">Received</option>
-						<option value="Oustanding">Oustanding</option>
-					</select>
+					{{form.schedule_filter}}
 					
 					</br>
 					
 				</div>
 				
-				
-
-
 			</div>
 		</div>
 	</div>
@@ -145,7 +126,7 @@
 					this.api().column("#status").every( function () {
 						var column = this;
 
-						var select = $('#status_filter')
+						var select = $('#id_status_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -159,7 +140,7 @@
 					this.api().column("#schedule").every( function () {
 						var column = this;
 
-						var select = $('#schedule_filter')
+						var select = $('#id_schedule_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -173,7 +154,7 @@
 					this.api().column("#invoice").every( function () {
 						var column = this;
 
-						var select = $('#invoice_filter')
+						var select = $('#id_invoice_filter')
 							.on( 'change', function () {
 								var val = $.fn.dataTable.util.escapeRegex(
 									$(this).val()
@@ -185,6 +166,15 @@
 					} );
 				}
 			} );
+
+			// Search by initial values from form
+			initial_invoice_val = $.fn.dataTable.util.escapeRegex($('#id_invoice_filter').val());
+			initial_status_val = $.fn.dataTable.util.escapeRegex($('#id_status_filter').val());
+			initial_schedule_val = $.fn.dataTable.util.escapeRegex($('#id_schedule_filter').val());
+			$('#projects').DataTable().column("#invoice").search(initial_invoice_val ? '^'+initial_invoice_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#status").search(initial_status_val ? '^'+initial_status_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#schedule").search(initial_schedule_val ? '^'+initial_schedule_val+'$' : '', true, false).draw();
+
 		} );
 		
 	</script>
