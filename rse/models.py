@@ -632,6 +632,13 @@ class Project(PolymorphicModel):
             salary_cost.add_salary_value_with_allocation(allocation=a, salary_value=sc)
 
         return salary_cost
+
+    @property
+    def colour_rbg(self) -> str:
+        r = hash(self.name) % 255
+        g = hash(self.start) % 255
+        b = hash(self.end) %255
+        return {"r": r, "g": g, "b": b}
             
 
 class AllocatedProject(Project):
@@ -807,6 +814,25 @@ class RSEAllocation(models.Model):
     def project_allocation_percentage(self) -> float:
         """ Returns the percentage of this allocation from project total """
         return self.effort / self.project.project_days *100.0
+
+    @property
+    def current_progress(self) -> float:
+        """ Returns the current progress of the allocation as a percentage """
+        now = timezone.now().date()
+        
+        # not started
+        if self.start > now:
+            return 0.0
+        # completed
+        elif self.end < now:
+            return 100.0
+
+        # otherwise active
+        total_days = (self.end - self.start).days
+        current_days = (now - self.start).days
+
+        return float(current_days)/float(total_days)* 100
+
 
     def staff_cost(self, start=None, end=None) -> SalaryValue:
         """
