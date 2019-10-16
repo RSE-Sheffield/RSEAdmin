@@ -28,6 +28,23 @@
 					fill: true,
                 },
 				{% endfor %}
+                {
+                    label: "Current Date Today",  
+                    borderDash: [10,5] , 
+                    data: [
+                        
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"), 
+                                "y": 0,
+                            },
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"), 
+                                "y": 100.0,
+                            },
+                    ],
+					borderColor: 'rgba(255, 0, 0, 1.0)',
+					fill: false,
+                },
                 ]
             },
             options: {
