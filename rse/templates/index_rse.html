@@ -182,39 +182,12 @@
     </div>
     <div class="col-md-5">
 
-        {% if danger_started_not_funded %}
-            <div class="callout callout-danger">
-                <h4>Projects Started but not Funded!</h4>
-
-                <p>There are {{danger_started_not_funded}} projects in preperation or under review which have are 'Active' but do not have a status of 'Funded'.</p>
-                <a href="{% url 'projects' %}?schedule_filter=Active" class="small-box-footer">View Projects and Fix <i class="fa fa-arrow-circle-right"></i></a>
-            </div>
-        {% endif %}
-
-        {% if danger_service_ended_not_invoiced %}
-            <div class="callout callout-danger">
-                <h4>Service Projects Completed but Not Invoiced!</h4>
-
-                <p>There are {{danger_service_ended_not_invoiced}} service projects which have completed but have not had the received invoice date completed.</p>
-                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Completed" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
-            </div>
-        {% endif %}
-
-        {% if warning_starting_not_funded %}
+        {% if highlight_current_capacity < HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL %}
             <div class="callout callout-warning">
-                <h4>Projects Starting but not Funded!</h4>
+                <h4>Work Allocation is Low!</h4>
 
-                <p>There are {{warning_starting_not_funded}} projects in preperation or under review which have are due to start in the next {{HOME_PAGE_DAYS_SOON}} days but do not have a status of 'Funded'.</p>
-                <a href="{% url 'projects' %}?schedule_filter=Scheduled" class="small-box-footer">View Projects and Fix <i class="fa fa-arrow-circle-right"></i></a>
-            </div>
-        {% endif %}
-
-        {% if warning_service_started_not_invoiced %}
-            <div class="callout callout-warning">
-                <h4>Service Projects Started but Not Invoiced!</h4>
-
-                <p>There are {{warning_service_started_not_invoiced}} active service projects which which have not had the received invoice date completed.</p>
-                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Active" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
+                <p>Your Current worload allocation ({{highlight_current_capacity}}%) is less than {{HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL}}%. Please consider scheduled projects and discuss this with your line manager.</p>
+                <a href="{% url 'projects' %}?schedule_filter=Scheduled" class="small-box-footer">View Projects <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         {% endif %}
 

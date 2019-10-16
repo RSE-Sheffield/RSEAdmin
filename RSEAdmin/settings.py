@@ -141,7 +141,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static-root/')
 HOME_PAGE_NUMBER_ITEMS = 7
 
 # Warning level for RSE capacity (in percent)
-HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 20
+HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
 
 # Days to consider as soon
 HOME_PAGE_DAYS_SOON = 365

@@ -123,11 +123,6 @@ def index_rse(request: HttpRequest) -> HttpResponse:
     future_allocations = RSEAllocation.objects.filter(rse=rse, start__gte=now).filter(Q(project__status=Project.REVIEW)|Q(project__status=Project.PREPARATION)|Q(project__status=Project.FUNDED)).order_by('start')[0:settings.HOME_PAGE_NUMBER_ITEMS]
     view_dict['future_allocations'] = future_allocations
 
-    # WARNINGS
-
-    # DANGERS
-
-
     # settings
     view_dict['HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL'] = settings.HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL
     view_dict['HOME_PAGE_DAYS_SOON'] = settings.HOME_PAGE_DAYS_SOON
