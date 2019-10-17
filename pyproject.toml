@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "rseadmin"
 version = "0.1.0"
-description = "RSE Sheffield resource allocation and finance tool"
+description = "RSE Admin Resource Allocation and Finance tool"
 authors = ["Paul Richmond <p.richmond@sheffield.ac.uk>"]
 license = "MIT"
 
@@ -11,6 +11,8 @@ Django = "~2.2"
 django-adminlte2 = "~0.4.1"
 pytest = "^4.5"
 django-polymorphic = "~2.1"
+sphinx = "^2.2"
+sphinx_rtd_theme = "^0.4.3"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^2.7"
