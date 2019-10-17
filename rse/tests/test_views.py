@@ -3,14 +3,17 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.test import TestCase
+from django.test import LiveServerTestCase
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options  
 from selenium.webdriver.common.keys import Keys
+import time
 
 from rse.models import *
-from rse.tests.test_random_data import *
+from rse.tests.test_random_data import random_project_and_allocation_data
 
 
-class TemplateTests(TestCase):
+class TemplateTests(LiveServerTestCase):
     """
     Tests using Selenium to check for HTML and JS errors
     These are not proper view tests as they do not check the view logic but could be extended to do so!
@@ -18,9 +21,14 @@ class TemplateTests(TestCase):
     
     def setUp(self):
         random_project_and_allocation_data()
-        self.selenium = webdriver.Chrome()
+        chrome_options = Options()  
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        self.selenium = webdriver.Chrome(chrome_options=chrome_options)
+        time.sleep(2)
 
     def tearDown(self):
+        self.selenium.refresh()
         self.selenium.quit()
         super(TemplateTests, self).tearDown()
         
@@ -30,7 +38,7 @@ class TemplateTests(TestCase):
         Tests the homepage to check for login redirect
         """
 
-        self.selenium.get(f"http://127.0.0.1:8000{reverse_lazy('index')}")
+        self.selenium.get(f"{self.live_server_url}{reverse_lazy('index')}")
         expected = "RSE Group Administration Tool Login Required"
         self.assertEqual(self.selenium.title, expected)
         
