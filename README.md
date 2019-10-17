@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/RSE-Sheffield/RSEAdmin.svg?branch=master)](https://travis-ci.org/RSE-Sheffield/RSEAdmin)
-[![Coverage Status](https://codecov.io/github/RSE-Sheffield/RSEAdmin.svg?branch=master)](https://codecov.io/gh/RSE-Sheffield/RSEAdmin)
+[![Coverage Status](https://codecov.io/gh/RSE-Sheffield/RSEAdmin/branch/master/graph/badge.svg)](https://codecov.io/gh/RSE-Sheffield/RSEAdmin)
 
 # RSE Administration Tool
 
