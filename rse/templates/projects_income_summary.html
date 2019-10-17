@@ -1,0 +1,115 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - Projects Staff Cost and Overhead{% endblock %}
+
+{% block page_name %}Projects Staff Cost and Overheads{% endblock %}
+{% block content %}
+
+
+
+   
+    <div class ="row">
+        
+        <div class="col-md-9">
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Projects Staff Cost and Overheads</h3>
+					<p><i>Note: Internal projects incur no staff cost. Charged service projects are included in this report.</i></p>
+				</div>
+				<div class="box-body">
+					<table id="projects" class="table table-hover">
+						<thead>
+							<tr>
+								<th id="project">Project</th>
+								<th id="staff_cost">Staff Cost</th>
+								<th id="overhead">Overheads</th>
+								<th id="more"></th>
+								
+							</tr>
+						</thead>
+						<tbody>
+							{% for project, data in project_costs.items %}
+							<tr>
+								<td>{{project.name}}  <span class="pull-right"><a href="{% url 'project_staffcosts' project.id %}{% if request.GET.filter_range %}?filter_range={{request.GET.filter_range}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></span></td>
+								<td>£{{data.staff_cost|floatformat:2|intcomma}}</td>
+								<td>£{{data.overhead|floatformat:2|intcomma}}</td>
+								<td><a href="{% url 'project_allocations' project.id %}" class="btn pull-right btn-primary btn-xs">Info</a></td>
+							</tr>
+							{% endfor %}
+							
+						</tbody>
+						<tfooter>
+							<tr>
+								<td><strong>Total</strong></td>
+								<td><strong>£{{total_staff_cost|floatformat:2|intcomma}}</strong></td>
+								<td><strong>£{{total_overhead|floatformat:2|intcomma}}</strong></td>
+							</tr>
+						</tfooter>
+					</table>
+				</div>
+			</div>
+        </div>
+		
+		<div class="col-md-3">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Filter</h3>
+			  <div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+            </div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+				  <div class="form-group">
+					
+					<label>Date range:</label>
+					<p><i>Will include any projects which have any time within the selected date range</i><p>
+					<div class="input-group">
+					  <div class="input-group-addon">
+						<i class="fa fa-calendar"></i>
+					  </div>
+					  {{ form.filter_range }}
+					</div>
+					</br>
+					
+						
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{ form.status }}
+					</br>
+					
+				  </div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div>
+			</form>
+          </div>
+        </div>
+		
+    </div>
+    
+    
+ 
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
+
+
+    
+    
+{% endblock %}

@@ -115,7 +115,7 @@ def setup_project_and_allocation_data():
     # Create an allocated project
     p = AllocatedProject(
         percentage=50,
-        overheads='U',
+        overheads=250.00,
         salary_band=sb15_2017,
         # base class values
         creator=user,
@@ -406,23 +406,23 @@ class SalaryCalculationTests(TestCase):
         
         # Test cost of 2017 1.1 for period without any increments
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365
-        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1)), 84.93, places=2)
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1)).staff_cost, 84.93, places=2)
         
         # Test cost of 2017 1.1 for period without any increments at 50% FTE
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365 *0.5
-        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1), percentage=50.0), 42.47, places=2)
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2017, 9, 1), percentage=50.0).staff_cost, 42.47, places=2)
         
         # Test cost of 2017 1.1 for period with grade point increment
         # Expected behaviour is value of salary for year duration with increment in January 
         # I.e. 1000 (2017 G1.1) * 153/365 (days in 2017 FY)
         #      2000 (2017 G1.2) * 212/365(days in 2017 FY after January increment)
-        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2018, 8, 1)), 1580.82, places=2)
+        self.assertAlmostEqual(sb.staff_cost(sby.start_date(), date(2018, 8, 1)).staff_cost, 1580.82, places=2)
         
         # Test cost of 2017 1.1 for period with financial year adjustment
         # Expected behaviour is value of salary for 2017 G7.1 July and 2018 G7.1 August 2018
         # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
         #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
-        self.assertAlmostEqual(sb.staff_cost(date(2018, 7, 1), date(2018, 9, 1)), 169.95, places=2)
+        self.assertAlmostEqual(sb.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, 169.95, places=2)
 
 class ProjectAllocationTests(TestCase):
     """
@@ -478,7 +478,8 @@ class ProjectAllocationTests(TestCase):
         #      5000 (2017 G1.5) * 212/365(days in 2017 FY NO January increment) +
         #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
         p = Project.objects.all()[0]
-        self.assertAlmostEqual(p.value(), 3548.15, places=2)
+        self.assertIsInstance(p, AllocatedProject)
+        self.assertAlmostEqual(p.staff_budget(), 3548.15, places=2)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275

@@ -1,33 +1,103 @@
 {% load labels %}
+{% load humanize %}
 
-<div class="box box-default">
-	<div class="box-header with-border">
-		<h3 class="box-title"> Effort Reporting </h3>
-		{% if edit_icon %} <span class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Modify project allocations"><i class="fa fa-edit"></i></a></span>{% endif %}
-	</div>
-	<div class="box-body">
-		<p><span class="badge {% if project.percent_allocated < 50 %}bg-red{% elif project.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{project.percent_allocated|percent}}%</span> of Project Allocated</p>
-		<div class="progress progress {% if project.percent_allocated >= 50 and project.percent_allocated <= 99.5 %} progress-striped active {% endif %}">
-			<div class="progress-bar {% if project.percent_allocated < 50 %}progress-bar-danger{% elif project.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{project.percent_allocated|percent}}%">
+<div class="nav-tabs-custom">
+	<ul class="nav nav-tabs">
+	  	<li class="active"><a href="#tab_effort_summary" data-toggle="tab">Effort Summary</a></li>
+	  	{% if request.user.is_superuser %}<li><a href="#tab_budget_summary" data-toggle="tab">Budget Summary</a></li>{% endif %}
+	  	{% if view_icon %} 
+	  		<li class="pull-right"><a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View and Modify project allocations"><i class="fa fa-eye"></i></a></li>
+	  	{% endif %}
+	</ul>
+	<div class="tab-content">
+	  	<div class="tab-pane active" id="tab_effort_summary">
+			<div class="progress-group">
+                    <span class="progress-text">Full Days Allocated on Project</span>
+                    <span class="progress-number"><b>{{ project.percent_allocated|percent }}%</b></span>
+
+                    <div class="progress sm">
+                      <div class="progress-bar {{project.percent_allocated|progressbar_colour}}" style="width: {{project.percent_allocated|percent}}%"></div>
+                    </div>
 			</div>
-		</div>
+			<table class="table table-striped">
+				<tbody>
+					<tr><td>
+						<p><strong>Project Duration (Days): </strong>{{ project.project_days|dp2 }}</p>
+						</td></tr>
+					<tr><td>
+						<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }}</p>
+					</td></tr> 
+					<tr><td>
+						<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }}</p>
+					</td></tr> 
+					<tr><td>
+						<p><strong>Remaining FTE Days (at total_staff_cost{{project.fte}}%): </strong>{{ project.remaining_days_at_fte|dp2 }}</p>
+					</td></tr> 
+				</tbody>
+			</table>
 
+	  	</div>
+		{% if request.user.is_superuser %}
+			<div class="tab-pane" id="tab_budget_summary">
+				{% if project.is_service %}
+					<div class="progress-group">
+						<span class="progress-text">Total Budget Spend</span>
+						<span class="progress-number"><b>{{ project.percent_total_budget|percent }}%</b></span>
 
-		<table class="table table-striped">
-			<tbody>
-				<tr><td>
-					<p><strong>Total Project Days: </strong>{{ project.project_days|dp2 }} days</p>
-					</td></tr>
-				<tr><td>
-					<p><strong>Total Allocated Days: </strong>{{ project.committed_days|dp2 }} days</p>
-				</td></tr> 
-				<tr><td>
-					<p><strong>Remaining Full Days: </strong>{{ project.remaining_days|dp2 }} days</p>
-				</td></tr> 
-				<tr><td>
-					<p><strong>Remaining FTE Days: </strong>{{ project.remaining_days_at_fte|dp2 }} days</p>
-				</td></tr> 
-			</tbody>
-		</table>
+						<div class="progress sm">
+							<div class="progress-bar {{project.percent_total_budget|progressbar_colour}}" style="width: {{project.percent_total_budget|percent}}%"></div>
+						</div>
+					</div>
+					<table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<p><strong>Project Total Value: </strong>£{{ project.total_value|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }} <a class="pull-right" href="{% url 'project_staffcosts' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Remaining Project Surpless (Overheads): </strong>£{{ project.remaining_surplus|floatformat:2|intcomma }}</p>
+							</td></tr> 
+						</tbody>
+					</table>
+				{% else %}
+					<div class="progress-group">
+						<span class="progress-text">Staff Budget Spend</span>
+						<span class="progress-number"><b>{{ project.percent_staff_budget|percent }}%</b></span>
+
+						<div class="progress sm">
+							<div class="progress-bar {{project.percent_staff_budget|progressbar_colour}}" style="width: {{project.percent_staff_budget|percent}}%"></div>
+						</div>
+					</div>
+					<table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<p><strong>Project Total Value: </strong>£{{ project.total_value|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Project Staff Budget: </strong>£{{ project.staff_budget|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Project Overheads: </strong>£{{ project.overhead|floatformat:2|intcomma }}</p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Total Staff Costs (all allocations): </strong>£{{ project.staff_cost|floatformat:2|intcomma }} <a class="pull-right" href="{% url 'project_staffcosts' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Cost Breakdown"><i class="fa fa-calculator"></i></a></p>
+							</td></tr>
+
+							<tr><td>
+								<p><strong>Remaining Staff Budget: </strong>£{{ project.remaining_staff_budget|floatformat:2|intcomma }}</p>
+							</td></tr> 
+						</tbody>
+					</table>
+				{% endif %}
+			</div>
+		{% endif %}
 	</div>
 </div>
+

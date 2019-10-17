@@ -5,10 +5,10 @@
     var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
     if( g.getDivId() != null ) {
         {% for rse, allocation in rses.items %}
-            g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}, '{{rse}}', '', '', 'ggroupblack', '', 0, '', 0, 1, 0,  1, '', '', '', g));
+            g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}, '{{rse}}', '', '', 'ggroupblack', '{% url 'rse' rse.user.username %}', 0, '', 0, 1, 0,  1, '', '', '', g));
             
             {% for a in allocation %}
-                g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}{{a.id}}, '{{a.project}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '', 0, '', {{ a.percentage }}, 0, {{ rse.id }},  1, '', '', '', g));
+                g.AddTaskItem(new JSGantt.TaskItem({{rse.id}}{{a.id}}, '{{a.project}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '{% url 'project' a.project.id %}', 0, '', {{ a.percentage }}, 0, {{ rse.id }},  1, '', '', '', g));
             {% endfor %}
         {% endfor %}
         
@@ -18,6 +18,7 @@
         g.setShowRes(0);
         g.setShowTaskInfoRes(0);
         g.setShowTaskInfoNotes(0);
+        g.setShowTaskInfoLink(1);
         
         g.Draw();
     }

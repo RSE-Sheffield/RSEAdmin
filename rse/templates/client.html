@@ -35,6 +35,7 @@
 							<th id="fte">FTE</th>
 							<th id="start">Start</th>
 							<th id="end">End</th>
+							<th id="schedule">Schedule</th>
 							<th id="progress">Commitment</th>
 							<th id="progress_label"></th>
 							<th id="more"></th>
@@ -52,13 +53,14 @@
 							<td>{{ p.fte }}</td>
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
+							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
 							<td>
-								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 100%} progress-striped active {% endif %}">
-									<div class="progress-bar {% if p.percent_allocated < 50 %}progress-bar-danger{% elif p.percent_allocated == 100.0 %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated}}%"></div>
+								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
+									<div class="progress-bar {% if p.percent_allocated|percent < 50 %}progress-bar-danger{% elif p.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated|percent}}%"></div>
 								</div>
 							</td>
 							<td>
-								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated == 100.0 %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated}}%</span>
+								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated|percent}}%</span>
 							</td>
 							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
 						</tr>
@@ -127,6 +129,17 @@
 						</select>
 						
 						</br>
+
+						<label>Schedule</label>
+						<p><i>Filter projects based on current schedule</i></p>
+						<select class="form-control" id="schedule_filter">
+							<option value="">All</option>
+							<option value="Active">Active</option>
+							<option value="Scheduled">Scheduled</option>
+							<option value="Completed">Completed</option>
+						</select>
+						
+						</br>
 						
 					</div>
 				</div>
@@ -186,6 +199,20 @@
 								.draw();
 						} );
 				} );
+				// Schedule filter
+					this.api().column("#schedule").every( function () {
+						var column = this;
+
+						var select = $('#schedule_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
 			}
 		} );
 	} );

@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = ')-x8s!s6jxz2(^ni8i&7xv!dcz+ov^q26psdlt89n1%c#k_v6!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -133,3 +133,15 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static-root/')
+
+
+# Home page options
+
+# Number of items to show in lists such as starting soon
+HOME_PAGE_NUMBER_ITEMS = 7
+
+# Warning level for RSE capacity (in percent)
+HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
+
+# Days to consider as soon
+HOME_PAGE_DAYS_SOON = 365

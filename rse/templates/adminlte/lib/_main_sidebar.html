@@ -33,9 +33,8 @@
 			{% if user|isrseuser %} <li {% if request.resolver_match.url_name == "rse"%} class="active" {% endif %} ><a href="{% url 'rse' user.get_username%}"><i class="fa fa-circle-o"></i>My Summary</a></li> {% endif %}
 			<li {% if request.resolver_match.url_name == "clients"%} class="active" {% endif %} ><a href="{% url 'clients' %}"><i class="fa fa-circle-o"></i>Clients</a></li>
 			<li {% if request.resolver_match.url_name == "projects"%} class="active" {% endif %} ><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
-			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>RSE Team Members</a></li>
-			<li {% if request.resolver_match.url_name == "team"%} class="active" {% endif %} ><a href="{% url 'team' %}"><i class="fa fa-circle-o"></i>RSE Team Allocations</a></li>
-			<li {% if request.resolver_match.url_name == "commitment"%} class="active" {% endif %} ><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>RSE Team Overview</a></li>
+			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>RSE Team</a></li>
+			<li {% if request.resolver_match.url_name == "commitment"%} class="active" {% endif %} ><a href="{% url 'commitment' %}"><i class="fa fa-circle-o"></i>Team &amp; Project Overview</a></li>
 		</ul>
 	</li>
 	
@@ -48,8 +47,13 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Project Spends</a></li>
-			<li {% if request.resolver_match.url_name == "TODO"%} class="active" {% endif %} ><a href="#"><i class="fa fa-circle-o"></i>Cost Recovery</a></li>
+			<li {% if request.resolver_match.url_name == "costdistributions"%} class="active" {% endif %} ><a href="{% url 'costdistributions' %}"><i class="fa fa-circle-o"></i>Cost Distributions</a></li>
+			<li {% if request.resolver_match.url_name == "rses_staffcosts"%} class="active" {% endif %} ><a href="{% url 'rses_staffcosts' %}"><i class="fa fa-circle-o"></i>RSE Costs</a></li>
+			<li {% if request.resolver_match.url_name == "serviceoutstanding"%} class="active" {% endif %} ><a href="{% url 'serviceoutstanding' %}"><i class="fa fa-circle-o"></i>Service Invoicing</a></li>
+			<li {% if request.resolver_match.url_name == "serviceincome"%} class="active" {% endif %} ><a href="{% url 'serviceincome' %}"><i class="fa fa-circle-o"></i>Service Income</a></li>
+			<li {% if request.resolver_match.url_name == "projects_income_summary"%} class="active" {% endif %} ><a href="{% url 'projects_income_summary' %}"><i class="fa fa-circle-o"></i>Project Costs &amp; Overheads</a></li>
+			<li {% if request.resolver_match.url_name == "projects_internal_summary"%} class="active" {% endif %} ><a href="{% url 'projects_internal_summary' %}"><i class="fa fa-circle-o"></i>Internal Project Costs</a></li>
+			<li {% if request.resolver_match.url_name == "financial_summary"%} class="active" {% endif %} ><a href="{% url 'financial_summary' %}"><i class="fa fa-circle-o"></i>Financial Summary</a></li>
 		</ul>
 	</li>
 	{% endif %}

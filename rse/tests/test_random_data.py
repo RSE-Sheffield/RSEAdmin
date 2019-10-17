@@ -119,7 +119,7 @@ def random_project_and_allocation_data():
     # Create some random projects for test database
     for x in range(20):
         proj_costing_id = random.randint(1,99999)
-        start=date(random.randint(2017, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
+        start=date(random.randint(2018, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
         # if start month is dec then end year cant start in same year
         if start.month == 12:
             end_year=random.randint(start.year+1, 2022)
@@ -132,14 +132,17 @@ def random_project_and_allocation_data():
             end_month = random.randint(1, 12)
         end=date(end_year, end_month, 1)
         status = random.choice(Project.status_choice_keys())
-        
+
+        #internal project
+        internal = True if random.random()>0.5 else False
+
         #random choice between allocated or service project
         if random.random()>0.5:
             # allocated
             percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
             p_temp = AllocatedProject(
                 percentage=percentage,
-                overheads='U',
+                overheads=250.00,
                 salary_band=sb15_2017,
                 # base class values
                 creator=user,
@@ -148,12 +151,14 @@ def random_project_and_allocation_data():
                 name=f"test_project_{x}",
                 description="none",
                 client=c,
+                internal=internal,
                 start=start,
                 end=end,
                 status=status)
         else:
             # service
-            days = random.randint(1,220) #between 1 day and 220 TRAC days
+            max_trac_days = int((end-start).days * (220.0/365.0))   # trac days are 220 of the year
+            days = random.randint(1, max_trac_days) #between 1 day and max_trac_days
             p_temp = ServiceProject(
                     days=days,
                     rate=275,
@@ -164,6 +169,7 @@ def random_project_and_allocation_data():
                     name=f"test_project_{x}",
                     description="none",
                     client=c,
+                    internal=internal,
                     start=start,
                     end=end,
                     status=status)
@@ -227,9 +233,10 @@ class ProjectAllocationTests(TestCase):
                 # start must be before end
                 self.assertLess(p.start, p.end)
             elif isinstance(p, ServiceProject):
-                # service days should be greater than 1 and less than 220
+                # service days should be greater than 1 and less than trac days
                 self.assertGreaterEqual(p.days, 1)
-                self.assertLessEqual(p.days, 220)
+                max_trac_days = int((p.end-p.start).days*(220.0/360.0))  # trac days are 220 per year so convert project duration to trac days
+                self.assertLessEqual(p.days, max_trac_days)
 
             
     def test_random_allocations(self):   
@@ -239,5 +246,40 @@ class ProjectAllocationTests(TestCase):
             # Ensure projects are 100 committed
             self.assertAlmostEqual(p.percent_allocated, 100.0, places=2)
             
+      
+    def test_allocation_dates(self):
+        """
+        Tests the randomly generated projects to ensure that they are valid projects
+        """
+        
+        # Test allocated projects (randomly generated fields)
+        for p in Project.objects.all():
+        
+            for a in RSEAllocation.objects.filter(project=p):
+                # start date of allocation should be within project period
+                self.assertLess(a.start, p.end)
+                self.assertGreaterEqual(a.start, p.start)
+                # end date of allocation should be within project period
+                self.assertLessEqual(a.end, p.end)
+                self.assertGreater(a.end, p.start)
+      
             
-   
+    def test_accumulated_project_costs(self):
+        """
+        Tests the project costs to ensure this matches the allocation costs
+        Can fail if allocations exist outside of project or if staff cost functions have discrepancies
+        """
+        
+        # Test allocated projects (randomly generated fields)
+        for p in Project.objects.all():
+
+            project_cost = p.staff_cost(consider_internal=True).staff_cost
+        
+            accumulated_allocation_cost = 0
+            for a in RSEAllocation.objects.filter(project=p):
+                accumulated_allocation_cost += a.staff_cost().staff_cost
+                
+            # check project cost verses accumulated allocation cost
+            self.assertEqual(project_cost, accumulated_allocation_cost)
+
+            

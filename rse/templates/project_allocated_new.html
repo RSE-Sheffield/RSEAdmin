@@ -16,7 +16,7 @@
         <div class="col-md-8">
           <div class="box box-default">
             <div class="box-header with-border">
-              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Allocated Project</h3>
+              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Allocated Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
             </div>
             
 			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_allocated' %}{% endif %}">
@@ -88,7 +88,7 @@
 									</td></tr>
 									
 									<tr><td>
-									<strong>Overheads Type:</strong>
+									<strong>Overheads Rate (Pro-Rata):</strong>
 									{{ form.overheads}}
 									</td></tr>
 									
@@ -132,7 +132,7 @@
     </div>
 
 
-    {% if edit and user.is_superuser %}%}
+    {% if edit and user.is_superuser %}
 	<div class="modal modal-danger fade" id="delete_modal" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">

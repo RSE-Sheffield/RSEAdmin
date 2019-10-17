@@ -1,0 +1,266 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}" />
+<link rel="stylesheet" href="{% static 'Ionicons/css/ionicons.min.css' %}">
+{% endblock %}
+
+
+{% block title %}RSE Group Administration {{request.user.first_name}} {{request.user.last_name}} Homepage{% endblock %}
+
+{% block page_name %}{{request.user.first_name}}'s Homepage for the RSE Group Administration{% endblock %}
+
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-aqua">
+            <div class="inner">
+                <h3>{{highlight_current_capacity}}<sup style="font-size: 20px">%</sup></h3>
+
+                <p>Your Current Allocated Capacity Today</p>
+            </div>
+            <div class="icon">
+                <i class="icon ion-person"></i>
+            </div>
+            <a href="{% url 'rses' %}" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-green">
+            <div class="inner">
+                <h3>{{highlight_active_allocations}}</h3>
+
+                <p>Active Allocations on Funded Projects Today</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+            </div>
+            <a href="{% url 'rse' request.user.username %}?status=F" class="small-box-footer">More
+                info <i class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-yellow">
+            <div class="inner">
+                <h3>{{highlight_possible_allocations}}</h3>
+
+                <p>Allocations on Funded and Possible Projects</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-clock"></i>
+            </div>
+            <a href="{% url 'rse' request.user.username %}?status=U" class="small-box-footer">More info <i
+                    class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-xs-6">
+        <div class="small-box bg-red">
+            <div class="inner">
+                <h3>{{highlight_active_funded_projects}}</h3>
+
+                <p>Funded Active Projects for the Team</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-university"></i>
+            </div>
+            <a href="{% url 'projects' %}?schedule_filter=Active&status_filter=Funded" class="small-box-footer">More info <i
+                    class="fa fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">Active Project Allocations</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table class="table no-margin">
+                        <thead>
+                            <tr>
+                                <th>Project ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Start date</th>
+                                <th>FTE</th>
+                                <th>Days at FTE</th>
+                                <th>Progress</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in active_allocations %}
+                            <tr>
+                                <td>{{a.project.id}}</td>
+                                <td><a href="{% url 'project' a.project.id %}">{{a.project.name}}</a></td>
+                                <td>{{a.project.type_str}}</td>
+                                <td>{{a.start}}</td>
+                                <td>{{a.percentage}}</td>
+                                <td>{{a.duration}}</td>
+                                <td>
+                                    <div class="progress progress-xs progress-striped active">
+                                        <div class="progress-bar progress-bar-primary" style="width: {{a.current_progress|percent}}%"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="pull-left badge bg-light-blue">{{a.current_progress|percent}}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="box-footer clearfix">
+                <a href="{% url 'rse' request.user.username %}?filter_range={{now|date:'d/m/Y'}}+-+{{MAX_END_DATE_FILTER_RANGE|date:'d/m/Y'}}&status=F"
+                    class="btn btn-sm btn-default btn-flat pull-right">View All Active Allocations</a>
+            </div>
+        </div>
+
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">Projects Due to Start</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table class="table no-margin">
+                        <thead>
+                            <tr>
+                                <th>Project ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Start date</th>
+                                <th>FTE</th>
+                                <th>Days at FTE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in future_allocations %}
+                            <tr>
+                                <td>{{a.project.id}}</td>
+                                <td><a href="{% url 'project' a.project.id %}">{{a.project.name}}</a></td>
+                                <td>{{a.project.type_str}}</td>
+                                <td>
+                                    <span class="label {{ a.project.status|projectstatuslabel }}">{{ a.project.get_status_display }}</span>
+                                </td>
+                                <td>{{a.start}}</td>
+                                <td>{{a.percentage}}</td>
+                                <td>{{a.duration}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="box-footer clearfix">
+                <a href="{% url 'rse' request.user.username %}?filter_range={{now|date:'d/m/Y'}}+-+{{MAX_END_DATE_FILTER_RANGE|date:'d/m/Y'}}&status=F"
+                    class="btn btn-sm btn-default btn-flat pull-right">View All Active Allocations</a>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="col-md-5">
+
+        {% if highlight_current_capacity < HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL %}
+            <div class="callout callout-warning">
+                <h4>Work Allocation is Low!</h4>
+
+                <p>Your Current worload allocation ({{highlight_current_capacity}}%) is less than {{HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL}}%. Please consider scheduled projects and discuss this with your line manager.</p>
+                <a href="{% url 'projects' %}?schedule_filter=Scheduled" class="small-box-footer">View Projects <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        {% endif %}
+
+        <div class="box box-default">
+            <div class="box-header with-border">
+                <h3 class="box-title">Your Project Allocation Distribution Today (% FTE)</h3>
+
+                <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="box-body">
+                <canvas id="id_rse_capacity_graph" width="100%"></canvas>
+            </div>
+            
+        </div>
+
+    </div>
+</div>
+
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+
+<!-- Commitment graph -->
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/chart.js' %}"></script>
+<script type="text/javascript">
+    var ctx = $('#id_rse_capacity_graph')[0].getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [{% for a in active_allocations %} 
+                        {{a.percentage}},
+                    {% endfor %}
+                        {{available_capacity}}
+                ],
+                backgroundColor: [{% for a in active_allocations %}
+                    'rgba({{ a.project.colour_rbg.r }}, {{ a.project.colour_rbg.g }}, {{ a.project.colour_rbg.b }}, 1.0)',
+                    {% endfor %}
+                    'rgba(128, 128, 128, 0.25)',
+                ],
+                label: 'Workload Dataset'
+            }],
+            labels: [{% for a in active_allocations %}
+                '{{a.project.name}} ({{a.project.id}})',
+                {% endfor %}
+                'Unallocated Time'
+            ]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            title: {
+                display: false,
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool - Service RSE Projects Invoice Status{% endblock %}
+
+{% block page_name %}View Service RSE Projects Invoice Status{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-xs-9">
+		<div class="box">
+			<div class="box-body table-responsive padding">
+				<table id="projects" class="table table-hover">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th id="title">Title</th>
+							<th id="status">Status</th>
+							<th id="duration">Duration (days)</th>
+							<th id="start">Start</th>
+							<th id="end">End</th>
+							<th id="schedule">Schedule</th>
+							<th id="department">Department</th>
+							<th id="value">Value</th>							
+							<th id="invoice">Invoice Received</th>
+							<th id="invoice_recived_date">Invoice Received Date</th>
+							<th id="more"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for p in projects %}
+						<tr>
+							<td>{{ p.id }}</td>
+							<td>{{ p.name }}</td>
+							<td><span class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span></td>
+							<td>{{ p.duration }}</td>
+							<td>{{ p.start|date:'Y-m-d' }}</td>
+							<td>{{ p.end|date:'Y-m-d' }}</td>
+							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
+							<td>{{ p.client.department }}</td>
+							<td>£{{ p.value|floatformat:2|intcomma }}</td>
+							<td>
+								{% if p.invoice_received %}
+									<span class="label label-success">Received</span>
+								{% else %}
+									<span class="label label-danger">Outstanding</span>
+								{% endif %}
+							</td>
+							<td>{% if p.invoice_received %} {{p.invoice_received}}{% endif %}</td>
+							<td>
+								<a href="{% url 'project_edit' p.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit project"><i class="fa fa-edit"></i></a>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody></table>
+			</div>
+			<div class="box-footer with-border">
+              <p><i>Note: Internal service projects are excluded from this report</i></p>
+            </div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="box-body">
+				
+				
+				<div class="form-group">
+					<label>Invoice Received</label>
+					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
+					{{form.invoice_filter}}
+					
+					</br>
+					
+					<label>Funding Status</label>
+					<p><i>Filter projects based current funding status</i></p>
+					{{form.status_filter}}
+					
+					</br>
+
+					<label>Schedule</label>
+					<p><i>Filter projects based on current schedule</i></p>
+					{{form.schedule_filter}}
+					
+					</br>
+					
+				</div>
+				
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+	<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#projects').DataTable({
+				pageLength: 25,
+				scrollX: false,
+				initComplete: function () {
+					// Status filter
+					this.api().column("#status").every( function () {
+						var column = this;
+
+						var select = $('#id_status_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
+					// Schedule filter
+					this.api().column("#schedule").every( function () {
+						var column = this;
+
+						var select = $('#id_schedule_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
+					// Invoice filter
+					this.api().column("#invoice").every( function () {
+						var column = this;
+
+						var select = $('#id_invoice_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
+				}
+			} );
+
+			// Search by initial values from form
+			initial_invoice_val = $.fn.dataTable.util.escapeRegex($('#id_invoice_filter').val());
+			initial_status_val = $.fn.dataTable.util.escapeRegex($('#id_status_filter').val());
+			initial_schedule_val = $.fn.dataTable.util.escapeRegex($('#id_schedule_filter').val());
+			$('#projects').DataTable().column("#invoice").search(initial_invoice_val ? '^'+initial_invoice_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#status").search(initial_status_val ? '^'+initial_status_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#schedule").search(initial_schedule_val ? '^'+initial_schedule_val+'$' : '', true, false).draw();
+
+		} );
+		
+	</script>
+{% endblock %}
+

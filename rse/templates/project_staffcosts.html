@@ -1,0 +1,137 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - Project Staff Costs Breakdown{% endblock %}
+
+{% block page_name %}Project {{project.id}} Staff Costs Breakdown{% endblock %}
+{% block content %}
+
+
+
+   
+    <div class ="row">
+        
+        <div class="col-md-9">
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Project {{project.id}} Staff Costs Breakdown</h3>
+					<p><i>Note: This only includes staff costs within the accounting period selected and not the <a href="{% url 'project' project.id %}">full project costs</a>.</i></p>
+				</div>
+				<div class="box-body">
+					<table id="projects" class="table table-hover">
+						<thead>
+							<tr>
+								<th id="rse">RSE</th>
+								<th id="from">From Date</th>
+								<th id="until">Until Date</th>
+								<th id="percent">Percentage FTE</th>
+								<th id="salary_band">Salary Band (salary)</th>
+								<th id="staff_cost">Calculated Staff Cost</th>
+								<th id="more"></th>
+								
+							</tr>
+						</thead>
+						<tbody>
+							{% for allocation, cost_breakdown in costs.allocation_breakdown.items %}
+								<tr>
+									<td>{{allocation.rse}}</td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+								</tr>
+								{% for item in cost_breakdown %}
+									<tr>
+										<td></td>
+										<td>{{item.from_date}}</td>
+										<td>{{item.until_date}}</td>
+										<td>{{item.percentage}}%</td>
+										<td>{{item.salary_band}} {% if item.salary_band.estimated %}<i>(estimated)</i>{% endif %}</td>
+										<td>£{{item.staff_cost|floatformat:2|intcomma}}</td>
+										<td></td>
+									</tr>
+								{% endfor %}
+							{% endfor %}
+							
+						</tbody>
+						<tfooter>
+							<tr>
+								
+								<td><strong>Total</strong></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td><strong>£{{costs.staff_cost|floatformat:2|intcomma}}</strong></td>
+								<td></td>
+								<td></td>
+							</tr>
+						</tfooter>
+					</table>
+					{% if project.is_service %}
+						{% if not project.charged %}
+							<i>Note: This is a service project which is not charged and as such staff costs will not be deducted from the service account.</i>
+						{% endif %}
+					{% endif %}
+				</div>
+			</div>
+        </div>
+		
+		<div class="col-md-3">
+          <div class="box box-default">
+            <div class="box-header with-border">
+              <h3 class="box-title">Filter</h3>
+			  <div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+            </div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+				  <div class="form-group">
+					
+					<label>Date range:</label>
+					<p><i>Will include any projects which have any time within the selected date range</i><p>
+					<div class="input-group">
+					  <div class="input-group-addon">
+						<i class="fa fa-calendar"></i>
+					  </div>
+					  {{ form.filter_range }}
+					</div>
+					</br>
+					
+				  </div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div>
+			</form>
+          </div>
+        </div>
+		
+    </div>
+    
+    
+ 
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+{% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
+
+
+    
+    
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool - Team Cost Distributions{% endblock %}
+
+{% block page_name %}Current Team Current Cost Distributions{% endblock %}
+{% block content %}
+
+
+
+   
+    <div class ="row">
+        
+        <div class="col-md-9">
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Current Team Cost Distribution Summary</h3>
+					<p><i>Showing project allocations active today for projects with a status of funded. This does not include any internal projects or service projects which are not chargable.</i></p>
+				</div>
+				<div class="box-body">
+					<table id="projects" class="table table-hover">
+						<thead>
+							<tr>
+								<th>Date</th>
+								{% for project in projects %}
+								<th id="project_{{project.id}}"> 
+									<!--<div style="writing-mode: vertical-lr;">-->
+									{{project.name}} <br> 
+									({{project.proj_costing_id}})
+									<a href="{% url 'project_allocations' project.id %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Edit project Allocations"><i class="fa fa-edit"></i></a>
+									<!--</div>-->
+								</th>
+								{% endfor %}
+								<th id="sum">Total</th>
+								<th id="more"></th>
+								
+							</tr>
+						</thead>
+						<tbody>
+							{% for rse, rse_allocs in rse_allocations.items %}
+							<tr>
+								<td><strong>{{rse}}</strong></td>
+								{% for project in projects %}
+								<td>
+									{% sum_project_allocation_percentage project rse_allocs %}
+								</td>
+								{% endfor %}
+								<td>
+									<strong>{% sum_allocation_percentage rse_allocs %}</strong>
+								</td>
+								<td>
+									<a href="{% url 'costdistribution' rse.user.username %}?status=F" class="btn btn-primary btn-xs">More</a>
+								</td>
+							</tr>
+							{% endfor %}
+							
+							
+						</tbody>
+					</table>
+				</div>
+			</div>
+        </div>
+		
+		
+		
+    </div>
+    
+    
+ 
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+    
+{% endblock %}

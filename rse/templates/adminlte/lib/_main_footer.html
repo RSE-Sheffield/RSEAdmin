@@ -1,0 +1,11 @@
+{% extends 'adminlte/lib/_main_footer.html' %}
+
+{% block footer_right %}
+    <b>Version</b> {% block version %}1.0 Beta-Release Candidate{% endblock %}
+    (<a href="https://github.com/RSE-Sheffield/RSEAdmin">Available on GitHub</a>)
+{% endblock %}
+
+{% block legal %}
+    <strong>Copyright &copy; Paul Richmond - University of Sheffield,  {% now "Y" %}
+    </strong>
+{% endblock %}
