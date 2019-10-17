@@ -18,6 +18,17 @@ Simpler than using [conda][conda]  or manually creating a [virtualenv][virtualen
  1. `poetry install` to install project dependencies in an isolated hidden virtualenv 
     Dependencies are determined using info from `pyproject.toml`
 
+## Building the database
+
+For a new clone of the site you must build the database migrations and apply them by running the following command:
+
+```sh
+poetry run python manage.py makemigrations
+poetry run python manage.py migrate
+```
+
+Existing database can be updated by using just the migrate command.
+
 ## Collect any static files
 
 Static files must be collected before running the development server by running the following command:
