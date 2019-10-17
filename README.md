@@ -47,7 +47,7 @@ from rse.tests.test_random_data import *
 random_project_and_allocation_data()
 ```
 
-This will populate your development/production database with test data. To reset the database delete the db.sqlite3 file and remove any files from `rse/migrations` (except `__init__.py`).
+This will populate your development/production database with test data. To reset the database delete the db.sqlite3 file and remove any files from `rse/migrations` (except `__init__.py`). You will then need to rebuild the database using makemigrations and migrate.
 
 ## Creating an Admin user
 
