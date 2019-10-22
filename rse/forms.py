@@ -131,7 +131,7 @@ class ProjectAllocationForm(forms.ModelForm):
         """ Set the initial data """
         if not 'project' in kwargs:
             raise TypeError("ProjectAllocationForm missing required argument: 'project'")
-        self.project = self.user = kwargs.pop('project', None)
+        self.project = kwargs.pop('project', None)
         # call super 
         super(ProjectAllocationForm, self).__init__(*args, **kwargs)
         
