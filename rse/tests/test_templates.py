@@ -50,7 +50,13 @@ class TemplateTests(LiveServerTestCase):
 
         # create an admin user
         user = User.objects.create_superuser(username='paul', email='admin@rseadmin.com', password='test', first_name="Paul", last_name="Richmond")
+
+        # store some usefull user ids
         self.admin_user_id = user.id
+        self.first_rse_id = RSE.objects.all()[0].id
+        self.first_rse_user_id = RSE.objects.all()[0].user.id
+
+        logger.warning(self.first_rse_user_id)
         
 
         
@@ -124,15 +130,15 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Admin Homepage"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: RSE User Homepage"
-        self.assertEqual(self.selenium.title, expected)            
+        self.assertEqual(self.selenium.title, expected)   
+        self.check_for_js_errors()         
 
 
     #######################
@@ -146,9 +152,9 @@ class TemplateTests(LiveServerTestCase):
         url = f"{self.live_server_url}{reverse_lazy('login')}"
         # test page (no authentication)
         self.selenium.get(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
 
     # logout has no template
 
@@ -160,15 +166,15 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Change Password"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Change Password"
         self.assertEqual(self.selenium.title, expected)  
+        self.check_for_js_errors()
 
     def test_user_new(self):
         """ Tests the user_new page """
@@ -178,15 +184,15 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: New User"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)  
+        self.check_for_js_errors()
 
 
     def test_user_new_rse(self):
@@ -197,33 +203,33 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: New RSE User"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
 
     def test_user_edit_rse(self):
         """ Tests the user_edit_rse page """
 
         # test url
-        url = f"{self.live_server_url}{reverse_lazy('user_edit_rse', kwargs={'user_id': 3})}"
+        url = f"{self.live_server_url}{reverse_lazy('user_edit_rse', kwargs={'rse_id': self.first_rse_id})}"
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Edit RSE User"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
 
     def test_user_new_admin(self):
         """ Tests the user_new_admin page """
@@ -233,15 +239,15 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: New Admin User"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
 
     def test_user_edit_admin(self):
         """ Tests the user_edit_admin page """
@@ -251,33 +257,33 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Edit Admin User"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
 
     def test_user_change_password(self):
         """ Tests the user_change_password page """
 
         # test url
-        url = f"{self.live_server_url}{reverse_lazy('user_change_password', kwargs={'user_id': 3})}"
+        url = f"{self.live_server_url}{reverse_lazy('user_change_password', kwargs={'user_id': self.first_rse_user_id})}"
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: Change A Users Password"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
-        self.assertEqual(self.selenium.title, expected)      
+        self.assertEqual(self.selenium.title, expected)   
+        self.check_for_js_errors()  
 
     def test_users(self):
         """ Tests the users page """
@@ -287,12 +293,12 @@ class TemplateTests(LiveServerTestCase):
 
         # test admin view
         self.get_url_as_admin(url)
-        self.check_for_js_errors()
         expected = "RSE Group Administration Tool: View all Users"
         self.assertEqual(self.selenium.title, expected)
+        self.check_for_js_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        self.check_for_js_errors()
         expected = TemplateTests.PAGE_TITLE_LOGIN
-        self.assertEqual(self.selenium.title, expected)     
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_js_errors()   
