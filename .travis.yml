@@ -5,8 +5,12 @@ dist: xenial
 python:
   - "3.7"
 
+env:
+  global:
+    - MOZ_HEADLESS=1
+
 addons: # get google-chrome-stable for selernium testing
-  chrome: stable
+  firefox: latest
 
 cache:
   pip: true
@@ -16,12 +20,12 @@ install:
   - pip install poetry
   - poetry install
   # Install ChromeDriver 
-  - wget -N https://chromedriver.storage.googleapis.com/77.0.3865.40/chromedriver_linux64.zip -P ~/
-  - unzip ~/chromedriver_linux64.zip -d ~/
-  - rm ~/chromedriver_linux64.zip
-  - sudo mv -f ~/chromedriver /usr/local/share/
-  - sudo chmod +x /usr/local/share/chromedriver
-  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
+  - wget -N https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz -P ~/
+  - tar -xzf geckodriver-v0.26.0-linux64.tar.gz -C geckodriver
+  - rm ~/geckodriver-v0.26.0-linux64.tar.gz.zip
+  - sudo mv -f ~/geckodriver /usr/local/share/
+  - sudo chmod +x /usr/local/share/geckodriver
+  - sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
   
 # command to run tests, capture coverage stats and push those stats to codecov.io
 script:
