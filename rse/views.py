@@ -1723,7 +1723,6 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
         elif isinstance(p, AllocatedProject) or (isinstance(p, ServiceProject) and p.charged == True):  
             project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
             recovered_staff_costs += project_recovered_costs
-            logger.warning(f"{p}: {project_recovered_costs}")
         # Service income
         if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
             # income from service project less any recovered staff cost

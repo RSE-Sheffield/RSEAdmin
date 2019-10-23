@@ -808,3 +808,200 @@ class SalaryTemplateTests(SeleniumTemplateTest):
         expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()
+
+##################
+### Reporting ####
+##################
+
+class ReportingTemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(ReportingTemplateTests, self).setUp()
+
+            self.first_project = Project.objects.all()[0]
+            self.first_rse = RSE.objects.all()[0]
+
+    def test_salaryband_edit(self):
+        """ Tests the costdistributions page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('costdistributions')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Team Cost Distributions Today"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_costdistribution(self):
+        """ Tests the costdistribution page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('costdistribution', kwargs={'rse_username': self.first_rse.user.username})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse} Cost Distribution"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rses_staffcosts(self):
+        """ Tests the rses_staffcosts page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rses_staffcosts')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: RSE Team Staff Costs and Liability"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rse_staffcost(self):
+        """ Tests the rse_staffcost page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rse_staffcost', kwargs={'rse_username': self.first_rse.user.username})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse} RSE Staff Cost and Liability"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_serviceoutstanding(self):
+        """ Tests the serviceoutstanding page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('serviceoutstanding')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Service Projects Invoice Status"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_serviceincome(self):
+        """ Tests the serviceincome page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('serviceincome')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Service Income"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_projects_income_summary(self):
+        """ Tests the projects_income_summary page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('projects_income_summary')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Projects Staff Cost and Overhead"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_project_staffcosts(self):
+        """ Tests the project_staffcosts page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_staffcosts', kwargs={'project_id': self.first_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Project {self.first_project.id} Staff Costs Breakdown"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    # no test for AJAX project_remaining_days
+
+    def test_projects_internal_summary(self):
+        """ Tests the projects_internal_summary page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('projects_internal_summary')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Internal Projects Staff Cost"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_financial_summary(self):
+        """ Tests the financial_summary page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('financial_summary')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Financial Summary"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
