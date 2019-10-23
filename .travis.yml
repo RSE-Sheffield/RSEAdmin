@@ -13,7 +13,10 @@ install:
   - pip install poetry
   - poetry install
   
-# command to run tests, capture coverage stats and push those stats to codecov.io
+# Run tests and capture coverage stats
 script:
   - poetry run coverage run manage.py test
+
+# Push those stats to codecov.io
+after_success:
   - codecov
