@@ -24,7 +24,10 @@ install:
   - sudo chmod +x /usr/local/share/geckodriver
   - sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
   
-# command to run tests, capture coverage stats and push those stats to codecov.io
+# Run tests and capture coverage stats
 script:
   - poetry run coverage run manage.py test
-  - codecov
+
+# Push those stats to codecov.io
+after_success: 
+  - bash <(curl -s https://codecov.io/bash)
