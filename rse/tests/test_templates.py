@@ -722,3 +722,89 @@ class RSETemplateTests(SeleniumTemplateTest):
 
     # no test for ajax_salary_band_by_year
 
+#################################
+### Salary and Grade Changes ####
+#################################
+
+class SalaryTemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(SalaryTemplateTests, self).setUp()
+
+            self.first_financial_year = FinancialYear.objects.all()[0]
+            self.first_salary_band = SalaryBand.objects.all()[0]
+
+    def test_financialyears(self):
+        """ Tests the financialyears page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('financialyears')}?year={self.first_financial_year}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: View {self.first_financial_year} Financial Year"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_financialyear_edit(self):
+        """ Tests the financialyear_edit page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('financialyear_edit', kwargs={'year_id': self.first_financial_year.year})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Edit {self.first_financial_year} Financial Year"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_financialyear_new(self):
+        """ Tests the financialyear_new page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('financialyear_new')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: New Financial Year"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_salaryband_edit(self):
+        """ Tests the salaryband_edit page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('salaryband_edit', kwargs={'sb_id': self.first_salary_band.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Edit Salary Band"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
