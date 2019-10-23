@@ -596,3 +596,129 @@ class ClientTemplateTests(SeleniumTemplateTest):
         expected = f"RSE Group Administration Tool: Edit Client"
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()
+
+
+############
+### RSEs ###
+############
+
+class RSETemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(RSETemplateTests, self).setUp()
+
+            self.first_rse = RSE.objects.all()[0]
+
+    def test_rse(self):
+        """ Tests the rse page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rse', kwargs={'rse_username': self.first_rse.user.username})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse}"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse}"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rses(self):
+        """ Tests the rses page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rses')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: View RSEs"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: View RSEs"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rseid(self):
+        """ Tests the rseid page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rseid', kwargs={'rse_id': self.first_rse.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse}"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse}"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_commitment(self):
+        """ Tests the commitment page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('commitment')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Team Commitment"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: Team Commitment"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rse_salary(self):
+        """ Tests the rse_salary page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rse_salary', kwargs={'rse_username': self.first_rse.user.username})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse} Salary"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_rse_salary(self):
+        """ Tests the rse_salary page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('rse_salary', kwargs={'rse_username': self.first_rse.user.username})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: {self.first_rse} Salary"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    # no test for ajax_salary_band_by_year
+
