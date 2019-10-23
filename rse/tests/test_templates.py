@@ -702,23 +702,6 @@ class RSETemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()
 
-    def test_rse_salary(self):
-        """ Tests the rse_salary page """
-
-        # test url
-        url = f"{self.live_server_url}{reverse_lazy('rse_salary', kwargs={'rse_username': self.first_rse.user.username})}"
-
-        # test admin view
-        self.get_url_as_admin(url)
-        expected = f"RSE Group Administration Tool: {self.first_rse} Salary"
-        self.assertEqual(self.selenium.title, expected)
-        self.check_for_log_errors()
-        
-        # test rse view (login should be required)
-        self.get_url_as_rse(url)
-        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
-        self.assertEqual(self.selenium.title, expected)  
-        self.check_for_log_errors()
 
     # no test for ajax_salary_band_by_year
 
