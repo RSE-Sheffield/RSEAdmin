@@ -22,7 +22,7 @@ from django.contrib.auth import (
 
 from django.contrib.sessions.backends.db import SessionStore
 
-class TemplateTests(LiveServerTestCase):
+class SeleniumTemplateTest(LiveServerTestCase):
     """
     Tests using Selenium to check for HTML and Log errors
     These are not proper view tests as they do not check the view logic but could be extended to do so!
@@ -35,7 +35,7 @@ class TemplateTests(LiveServerTestCase):
         """
         Setup the chrome driver for tests
         """
-        super(TemplateTests, self).setUp()
+        super(SeleniumTemplateTest, self).setUp()
         
 
         #generic options
@@ -60,12 +60,8 @@ class TemplateTests(LiveServerTestCase):
         random_project_and_allocation_data()
 
         # create an admin user
-        user = User.objects.create_superuser(username='paul', email='admin@rseadmin.com', password='test', first_name="Paul", last_name="Richmond")
+        self.admin_user = User.objects.create_superuser(username='paul', email='admin@rseadmin.com', password='test', first_name="Paul", last_name="Richmond")
 
-        # store some usefull user ids
-        self.admin_user_id = user.id
-        self.first_rse_id = RSE.objects.all()[0].id
-        self.first_rse_user_id = RSE.objects.all()[0].user.id
 
 
         
@@ -81,7 +77,7 @@ class TemplateTests(LiveServerTestCase):
         #time.sleep(30)
         self.selenium.quit()
         # Errors from the above call seem to only occur on Windows but do not prevent the tests from running!
-        super(TemplateTests, self).tearDown()
+        super(SeleniumTemplateTest, self).tearDown()
         
        
 
@@ -123,16 +119,19 @@ class TemplateTests(LiveServerTestCase):
         self.selenium.refresh()
         self.selenium.get(url)
 
-    ########################
-    ### Index (homepage) ###
-    ########################
+########################
+### Index (homepage) ###
+########################
+
+class IndexTemplateTests(SeleniumTemplateTest):
+
 
     def test_homepage_login(self):
         """
         Tests the homepage to check for login redirect
         """
         self.selenium.get(f"{self.live_server_url}{reverse_lazy('index')}")
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
 
         # check for javascript errors in log
@@ -157,9 +156,21 @@ class TemplateTests(LiveServerTestCase):
         self.check_for_log_errors()         
 
 
-    #######################
-    ### Authentication ####
-    #######################
+#######################
+### Authentication ####
+#######################
+class AuthenticationTemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(AuthenticationTemplateTests, self).setUp()
+
+            # store some usefull user ids
+            self.admin_user_id = self.admin_user.id
+            self.first_rse_id = RSE.objects.all()[0].id
+            self.first_rse_user_id = RSE.objects.all()[0].user.id
 
     def test_login(self):
         """ Tests the login page """
@@ -168,7 +179,7 @@ class TemplateTests(LiveServerTestCase):
         url = f"{self.live_server_url}{reverse_lazy('login')}"
         # test page (no authentication)
         self.selenium.get(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
 
@@ -206,7 +217,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()
 
@@ -225,7 +236,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
 
@@ -243,7 +254,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
 
@@ -261,7 +272,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
 
@@ -279,7 +290,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
 
@@ -297,7 +308,7 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)   
         self.check_for_log_errors()  
 
@@ -315,6 +326,273 @@ class TemplateTests(LiveServerTestCase):
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = TemplateTests.PAGE_TITLE_LOGIN
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()   
+
+
+
+################################
+### Projects and Allocations ###
+################################
+
+class ProjectTemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(ProjectTemplateTests, self).setUp()
+
+            self.first_service_project = ServiceProject.objects.all()[0]
+            self.first_allocated_project = AllocatedProject.objects.all()[0]
+            self.first_project = Project.objects.all()[0]
+
+    def test_projects(self):
+        """ Tests the projects page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('projects')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: View Projects"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: View Projects"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()   
+
+    def test_project_new(self):
+        """ Tests the project_new page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_new')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: New Project"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: New Project"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()  
+
+    def test_project_new_allocated(self):
+        """ Tests the project_new_allocated page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_new_allocated')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: New Allocated Project"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: New Allocated Project"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+
+
+    def test_project_new_service(self):
+        """ Tests the project_new_service page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_new_service')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: New Service Project"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: New Service Project"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+
+    def test_project(self):
+        """ Tests the project page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project', kwargs={'project_id': self.first_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Project {self.first_project.id} Summary"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: Project {self.first_project.id} Summary"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+        
+
+
+    def test_project_edit(self):
+        """ Tests the project_edit page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_service_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: Edit Service Project"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: Edit Service Project"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_allocated_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: Edit Allocated Project"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: Edit Allocated Project"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+
+    def test_project_allocations(self):
+        """ Tests the project_allocations page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_allocations', kwargs={'project_id': self.first_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: View Project {self.first_project.id} Allocations"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors() 
+
+    def test_project_allocations_edit(self):
+        """ Tests the project_allocations_edit page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('project_allocations_edit', kwargs={'project_id': self.first_project.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Edit Project {self.first_project.id} Allocations"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+
+###############
+### Clients ###
+###############
+
+class ClientTemplateTests(SeleniumTemplateTest):
+    
+    def setUp(self):
+            """
+            Add a few usefull database objects for easy access
+            """
+            super(ClientTemplateTests, self).setUp()
+
+            self.first_client = Client.objects.all()[0]
+
+    def test_clients(self):
+        """ Tests the clients page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('clients')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = "RSE Group Administration Tool: View Clients"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = "RSE Group Administration Tool: View Clients"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_client(self):
+        """ Tests the client page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('client', kwargs={'client_id': self.first_client.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: View Client {self.first_client.id} Summary"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: View Client {self.first_client.id} Summary"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_client_new(self):
+        """ Tests the client_new page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('client_new')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: New Client"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: New Client"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+
+    def test_client_edit(self):
+        """ Tests the client_edit page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('client_edit', kwargs={'client_id': self.first_client.id})}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: Edit Client"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = f"RSE Group Administration Tool: Edit Client"
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
