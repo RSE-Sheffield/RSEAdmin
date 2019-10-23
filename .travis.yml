@@ -21,7 +21,6 @@ install:
   - poetry install
   # Install ChromeDriver 
   - curl -sSL https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz | sudo tar -zx -C /usr/local/share/geckodriver
-  - sudo mv -f ~/geckodriver /usr/local/share/
   - sudo chmod +x /usr/local/share/geckodriver
   - sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
   
