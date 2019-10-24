@@ -8,10 +8,14 @@ python:
 cache:
   pip: true
 
-# command to install dependencies
+# Ensure pre-requisite of psycopg2 Python package is installed
+before_install:
+  - sudo apt-get install -y libpq-dev
+
+# Install dependencies
 install:
   - pip install poetry
-  - poetry install
+  - poetry install -E pgsql -E gunicorn
   
 # Run tests and capture coverage stats
 script:
