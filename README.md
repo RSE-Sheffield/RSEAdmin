@@ -13,6 +13,7 @@ The tool is a web app written using the [Django][django] web framework (Python) 
 
 Simpler than using [conda][conda]  or manually creating a [virtualenv][virtualenv].
 
+ 1. Ensure you have Python >= 3.6 installed
  1. Install [Poetry][poetry], a tool for Python project management 
  1. Clone this repo
  1. `poetry install` to install project dependencies in an isolated hidden virtualenv 
