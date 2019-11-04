@@ -5,6 +5,13 @@ dist: xenial
 python:
   - "3.7"
 
+env:
+  global:
+    - MOZ_HEADLESS=1
+
+addons: # get google-chrome-stable for selernium testing
+  firefox: latest
+
 cache:
   pip: true
 
@@ -12,6 +19,10 @@ cache:
 install:
   - pip install poetry
   - poetry install
+  # Install GeckoDriver (for firefox)
+  - curl -sSL https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz | sudo tar -zx -C /usr/local/share
+  - sudo chmod +x /usr/local/share/geckodriver
+  - sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
   
 # Run tests and capture coverage stats
 script:

@@ -13,7 +13,7 @@
 		<ul class="treeview-menu" style="">
 			<li {% if request.resolver_match.url_name == "project_new"%} class="active" {% endif %} ><a href="{% url 'project_new' %}"><i class="fa fa-circle-o"></i>Add Project</a></li>
 			<li {% if request.resolver_match.url_name == "client_new"%} class="active" {% endif %} ><a href="{% url 'client_new' %}"><i class="fa fa-circle-o"></i>Add Client</a></li>
-			{% if user.is_superuser %}
+			{% if request.user.is_superuser %}
 			<li {% if request.resolver_match.url_name == "users"%} class="active" {% endif %} ><a href="{% url 'users' %}"><i class="fa fa-circle-o"></i>All Users</a></li>
 			<li {% if request.resolver_match.url_name == "user_new"%} class="active" {% endif %} ><a href="{% url 'user_new' %}"><i class="fa fa-circle-o"></i>Add New User</a></li>
 			<li {% if request.resolver_match.url_name == "financialyears"%} class="active" {% endif %} ><a href="{% url 'financialyears' %}"><i class="fa fa-circle-o"></i>Financial Years</a></li>
@@ -30,7 +30,7 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
-			{% if user|isrseuser %} <li {% if request.resolver_match.url_name == "rse"%} class="active" {% endif %} ><a href="{% url 'rse' user.get_username%}"><i class="fa fa-circle-o"></i>My Summary</a></li> {% endif %}
+			{% if request.user|isrseuser %} <li {% if request.resolver_match.url_name == "rse"%} class="active" {% endif %} ><a href="{% url 'rse' request.user.get_username%}"><i class="fa fa-circle-o"></i>My Summary</a></li> {% endif %}
 			<li {% if request.resolver_match.url_name == "clients"%} class="active" {% endif %} ><a href="{% url 'clients' %}"><i class="fa fa-circle-o"></i>Clients</a></li>
 			<li {% if request.resolver_match.url_name == "projects"%} class="active" {% endif %} ><a href="{% url 'projects' %}"><i class="fa fa-circle-o"></i>Projects</a></li>
 			<li {% if request.resolver_match.url_name == "rses"%} class="active" {% endif %} ><a href="{% url 'rses' %}"><i class="fa fa-circle-o"></i>RSE Team</a></li>
@@ -38,7 +38,7 @@
 		</ul>
 	</li>
 	
-	{% if user.is_superuser %}
+	{% if request.user.is_superuser %}
 	<li class="treeview"">
 		<a href="#">
 			<i class="fa fa-dashboard"></i> <span>Reports</span>
