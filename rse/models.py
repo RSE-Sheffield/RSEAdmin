@@ -584,7 +584,10 @@ class Project(PolymorphicModel):
         It is possible that the database does not exist when this function is called in which case function returns todays date.
         """
         try:
-            return Project.objects.aggregate(Min('start'))['start__min']
+            min_date =  Project.objects.aggregate(Min('start'))['start__min']
+            if min_date is None: # i.e. table exists but no dates
+                min_date = timezone.now().date()
+            return min_date
         except OperationalError:
             return timezone.now().date()
     
@@ -595,7 +598,10 @@ class Project(PolymorphicModel):
         It is possible that the database does not exist when this function is called in which case function returns todays date.
         """
         try:
-            return Project.objects.aggregate(Max('end'))['end__max']
+            max_date = Project.objects.aggregate(Max('end'))['end__max']
+            if max_date is None: # i.e. table exists but no dates
+                max_date = timezone.now().date()
+            return max_date
         except OperationalError:
             return timezone.now().date()
 

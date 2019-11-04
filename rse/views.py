@@ -36,7 +36,11 @@ def index_admin(request: HttpRequest) -> HttpResponse:
 
     # HIGHTLIGHT: team capacity
     rses = RSE.objects.filter(employed_from__lte=now, employed_until__gt=now)
-    average_capacity = sum(rse.current_capacity for rse in rses) / rses.count()
+    try:
+        average_capacity = sum(rse.current_capacity for rse in rses) / rses.count()
+    except ZeroDivisionError:
+        average_capacity = 0
+
     view_dict['rses'] = rses
     view_dict['average_capacity'] = average_capacity
 
@@ -964,7 +968,7 @@ def financialyears(request: HttpRequest) -> HttpResponse:
     
     # Get all financial years
     years = FinancialYear.objects.all()
-    if years is None:
+    if not years:
         return HttpResponseServerError("No financial years in database")
     view_dict['years'] = years
     
@@ -980,7 +984,7 @@ def financialyears(request: HttpRequest) -> HttpResponse:
     try:
         year = FinancialYear.objects.get(year=y)
     except FinancialYear.DoesNotExist:
-        messages.add_message(request, messages.DANGER, f'The {y} financial year does not exist in the database.')
+        messages.add_message(request, messages.ERROR, f'The {y} financial year does not exist in the database.')
         year = years[0]
     view_dict['year'] = year
     
@@ -1283,7 +1287,11 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
     for rse in (rse for rse in RSE.objects.all() if rse.current_employment):
         # get any allocations for rse
         allocations = RSEAllocation.objects.filter(rse=rse).filter(q)
-        staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+        try:
+            staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+        except ValueError:
+            staff_salary = 0
+            messages.add_message(request, messages.ERROR, f'RSE user {rse} does not have salary data within the specified range so will incur no cost.')
         recovered_staff_cost = 0
         internal_project_staff_cost = 0
         for a in allocations:
@@ -1360,7 +1368,11 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
     projects = Project.objects.filter(q)
 
     # actual staff salary costs
-    staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+    try:
+        staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+    except ValueError:
+        staff_salary = 0
+        messages.add_message(request, messages.ERROR, f'RSE user {rse.user.username} does not have salary data within the specified range so will incur no cost.')
 
     project_costs = {}
     recovered_staff_cost = 0
@@ -1711,7 +1723,10 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     
     # Salary Costs (all RSEs)
     for rse in (rse for rse in RSE.objects.all() if rse.current_employment): # for all currently employed RSEs
-        salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+        try:
+            salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+        except ValueError:
+            messages.add_message(request, messages.ERROR, f'RSE user {rse} does not have salary data within the specified range so will incur no cost.')
 
     # Project Costs and Service Income (all project in date range)
     for p in projects:

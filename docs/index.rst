@@ -1,8 +1,3 @@
-.. RSEAdmin documentation master file, created by
-   sphinx-quickstart on Thu Oct 17 14:12:13 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to RSEAdmin's documentation!
 ====================================
 
@@ -10,6 +5,10 @@ Welcome to RSEAdmin's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+
+This is a tool for tracking grant applications, managing RSE commitment and reporting on staff expenses and cost recovery. The site has two users types (Admin and RSE) which have different levels of permissions. RSE users can view, edit and create projects as well as see allocations to projects based on effort (i.e. days). Admin users are able to create allocations on projects (allocated by effort or budget) and view reports on group finance and staffing. There is a distinction between Allocated Projects (i.e. Directly incurred projects) where staff generate overheads for the university and Service Projects which are effort based and generate overheads for the group or facility.
+
+The tool is a web app written using the Django web framework (Python) and the AdminLTE theme.
 
 
 Indices and tables
