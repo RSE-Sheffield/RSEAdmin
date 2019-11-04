@@ -7,3 +7,6 @@ static-root
 db.sqlite3
 .coverage
 rse/migrations/
+docs/_build/
+geckodriver.log
+debug.log

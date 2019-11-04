@@ -34,6 +34,7 @@ def random_user_and_rse_data():
         rse.employed_from = date(2017, 1, 1)
         rse.employed_until = date(2025, 1, 1)
         rse.save()
+
     
 def random_salary_and_banding_data():
     """
