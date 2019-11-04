@@ -14,10 +14,14 @@ addons: # get google-chrome-stable for selernium testing
 cache:
   pip: true
 
-# command to install dependencies
+# Ensure pre-requisite of psycopg2 Python package is installed
+before_install:
+  - sudo apt-get install -y libpq-dev
+
+# Install dependencies
 install:
   - pip install poetry
-  - poetry install
+  - poetry install -E pgsql -E gunicorn
   # Install GeckoDriver (for firefox)
   - curl -sSL https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz | sudo tar -zx -C /usr/local/share
   - sudo chmod +x /usr/local/share/geckodriver
