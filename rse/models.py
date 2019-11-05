@@ -5,7 +5,7 @@ from typing import Optional, Dict
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError, ProgrammingError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -569,7 +569,7 @@ class Project(PolymorphicModel):
             if min_date is None: # i.e. table exists but no dates
                 min_date = timezone.now().date()
             return min_date
-        except OperationalError:
+        except (OperationalError, ProgrammingError):
             return timezone.now().date()
 
     @staticmethod
@@ -583,7 +583,7 @@ class Project(PolymorphicModel):
             if max_date is None: # i.e. table exists but no dates
                 max_date = timezone.now().date()
             return max_date
-        except OperationalError:
+        except (OperationalError, ProgrammingError):
             return timezone.now().date()
 
     def staff_cost(self, from_date: date = None, until_date: date = None, rse: RSE = None, consider_internal: bool = False) -> SalaryValue:
