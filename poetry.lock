@@ -209,10 +209,10 @@ version = "7.2.0"
 [[package]]
 category = "main"
 description = "Python interface to MySQL"
-name = "mysql-python"
+name = "mysqlclient"
 optional = true
 python-versions = "*"
-version = "1.2.5"
+version = "1.4.4"
 
 [[package]]
 category = "dev"
@@ -525,11 +525,11 @@ testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [extras]
 gunicorn = ["gunicorn"]
-mysql = ["mysql-python"]
+mysql = ["mysqlclient"]
 pgsql = ["psycopg2"]
 
 [metadata]
-content-hash = "103a6259fbdcb5d3c4b4df337ede41618caebb8e73942c53db8ed2c13742ce1c"
+content-hash = "f585919df34c1292fae6e781cffb7f198d7978ad9bdd6c89e95610df17c2fab4"
 python-versions = ">=3.6"
 
 [metadata.files]
@@ -678,9 +678,10 @@ more-itertools = [
     {file = "more-itertools-7.2.0.tar.gz", hash = "sha256:409cd48d4db7052af495b09dec721011634af3753ae1ef92d2b32f73a745f832"},
     {file = "more_itertools-7.2.0-py3-none-any.whl", hash = "sha256:92b8c4b06dac4f0611c0729b2f2ede52b2e1bac1ab48f089c7ddc12e26bb60c4"},
 ]
-mysql-python = [
-    {file = "MySQL-python-1.2.5.win32-py2.7.exe", hash = "sha256:ab22d1322099098730a57fd59d610f60738f95a1cb68dacca2d1c47cb0cbe8ee"},
-    {file = "MySQL-python-1.2.5.zip", hash = "sha256:811040b647e5d5686f84db415efd697e6250008b112b6909ba77ac059e140c74"},
+mysqlclient = [
+    {file = "mysqlclient-1.4.4-cp36-cp36m-win_amd64.whl", hash = "sha256:8c3b61d89f7daaeab6aad6bf4c4bc3ef30bec1a8169f94dc59aea87ba2fabf80"},
+    {file = "mysqlclient-1.4.4-cp37-cp37m-win_amd64.whl", hash = "sha256:79a498ddda955e488f80c82a6392bf6e07c323d48db236033f33825665d8ba5c"},
+    {file = "mysqlclient-1.4.4.tar.gz", hash = "sha256:9c737cc55a5dc8dd3583a942d5a9b21be58d16f00f5fefca4e575e7d9682e98c"},
 ]
 packaging = [
     {file = "packaging-19.2-py2.py3-none-any.whl", hash = "sha256:d9551545c6d761f3def1677baf08ab2a3ca17c56879e70fecba2fc4dde4ed108"},
