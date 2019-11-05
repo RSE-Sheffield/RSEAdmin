@@ -29,7 +29,7 @@ SECRET_KEY = get_secret('SECRET_KEY')
 #DEBUG = True
 
 # This should not be *
-ALLOWED_HOSTS = ['www.instancehub.com']
+ALLOWED_HOSTS = ['rsesheffield.pythonanywhere.com']
 
 
 # Database
