@@ -12,6 +12,7 @@ django-adminlte2 = "~0.4.1"
 django-polymorphic = "~2.1"
 gunicorn = {version = "^19.9", optional = true}
 psycopg2 = {version = "^2.8", optional = true}
+mysql-python = {version = "^1.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^2.7"
@@ -24,6 +25,7 @@ selenium = "^3.141"
 [tool.poetry.extras]
 pgsql = ["psycopg2"]
 gunicorn = ["gunicorn"]
+mysql = ["mysql-python"]
 
 [build-system]
 requires = ["poetry>=0.12"]
