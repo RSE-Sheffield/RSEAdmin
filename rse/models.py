@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from django.utils import timezone
 from math import floor
-from typing import Optional
+from typing import Optional, Dict
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -370,7 +370,7 @@ class RSE(models.Model):
         return sb.staff_cost(start=from_date, end=until_date, percentage=percentage)
 
     @property
-    def colour_rbg(self) -> str:
+    def colour_rbg(self) -> Dict[str, int]:
         r = hash(self.user.first_name) % 255
         g = hash(self.user.last_name) % 255
         b = hash(self.user.first_name + self.user.last_name) % 255
@@ -621,7 +621,7 @@ class Project(PolymorphicModel):
         return salary_cost
 
     @property
-    def colour_rbg(self) -> str:
+    def colour_rbg(self) -> Dict[str, int]:
         r = hash(self.name) % 255
         g = hash(self.start) % 255
         b = hash(self.end) % 255
@@ -643,7 +643,7 @@ class AllocatedProject(Project):
         return not self.internal
 
     @property
-    def duration(self) -> int:
+    def duration(self) -> Optional[int]:
         """
         Duration is determined by start and end dates
         """

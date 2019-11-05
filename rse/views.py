@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from typing import Dict
+
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import DeleteView
@@ -28,7 +30,7 @@ from .forms import *
 def index_admin(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     now = timezone.now().date()
     soon = now + timedelta(days=settings.HOME_PAGE_DAYS_SOON)
@@ -92,7 +94,7 @@ def index_admin(request: HttpRequest) -> HttpResponse:
 def index_rse(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # get the RSE
     rse = get_object_or_404(RSE, user=request.user)
@@ -204,7 +206,7 @@ def append_project_and_allocation_costs(project: Project, allocations: TypedQuer
 def user_new(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':
@@ -228,7 +230,7 @@ def user_new(request: HttpRequest) -> HttpResponse:
 def user_new_rse(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':        
@@ -264,7 +266,7 @@ def user_edit_rse(request: HttpRequest, rse_id) -> HttpResponse:
     rse = get_object_or_404(RSE, pk=rse_id)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':        
@@ -294,7 +296,7 @@ def user_edit_rse(request: HttpRequest, rse_id) -> HttpResponse:
 def user_new_admin(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':        
@@ -327,7 +329,7 @@ def user_edit_admin(request: HttpRequest, user_id) -> HttpResponse:
 
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':        
@@ -352,7 +354,7 @@ def user_change_password(request: HttpRequest, user_id) -> HttpResponse:
     user = get_object_or_404(User, pk=user_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':        
@@ -394,7 +396,7 @@ def projects(request: HttpRequest) -> HttpResponse:
     """
 
     # view dict
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     if request.method == 'GET':
         form = ProjectsFilterForm(request.GET)
@@ -413,7 +415,7 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
     proj = get_object_or_404(Project, pk=project_id)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     view_dict['project'] = proj
         
     # Get allocations for project
@@ -440,7 +442,7 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
 def project_new(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':
@@ -463,7 +465,7 @@ def project_new(request: HttpRequest) -> HttpResponse:
 def project_new_allocated(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
@@ -499,7 +501,7 @@ def project_new_allocated(request: HttpRequest) -> HttpResponse:
 def project_new_service(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
@@ -539,7 +541,7 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
     proj = get_object_or_404(Project, pk=project_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # depending on project type change the form and template
     if isinstance(proj, AllocatedProject):
@@ -574,7 +576,7 @@ def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
     proj = get_object_or_404(Project, pk=project_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     view_dict['project'] = proj
     
     # Create new allocation form for effort
@@ -608,7 +610,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     proj = get_object_or_404(Project, pk=project_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     view_dict['project'] = proj
     
     # Get allocations for project
@@ -685,7 +687,7 @@ def client(request: HttpRequest, client_id) -> HttpResponse:
     client = get_object_or_404(Client, pk=client_id)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     view_dict['client'] = client
 
     # Get allocations for project
@@ -698,7 +700,7 @@ def client(request: HttpRequest, client_id) -> HttpResponse:
 def client_new(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST':
@@ -726,7 +728,7 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
     client = get_object_or_404(Client, pk=client_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     if request.method == 'POST':
         form = ClientForm(request.POST, instance=client)
@@ -776,7 +778,7 @@ def rse(request: HttpRequest, rse_username: str) -> HttpResponse:
     user = get_object_or_404(User, username=rse_username)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Get RSE if exists
     rse = get_object_or_404(RSE, user=user)
@@ -863,7 +865,7 @@ def rse_salary(request: HttpRequest, rse_username: str) -> HttpResponse:
     user = get_object_or_404(User, username=rse_username)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Get RSE if exists
     rse = get_object_or_404(RSE, user=user)
@@ -911,7 +913,7 @@ class rse_salarygradechange_delete(UserPassesTestMixin, DeleteView):
 def commitment(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -964,7 +966,7 @@ def commitment(request: HttpRequest) -> HttpResponse:
 def financialyears(request: HttpRequest) -> HttpResponse:
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     
     # Get all financial years
     years = FinancialYear.objects.all()
@@ -1001,7 +1003,7 @@ def financialyears(request: HttpRequest) -> HttpResponse:
 def financialyear_edit(request: HttpRequest, year_id: int) -> HttpResponse:
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Set year from get or use current financial year
     year = get_object_or_404(FinancialYear, pk=year_id)
@@ -1026,7 +1028,7 @@ def financialyear_edit(request: HttpRequest, year_id: int) -> HttpResponse:
 def financialyear_new(request: HttpRequest) -> HttpResponse:
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     if request.method == 'POST':
         form = NewFinancialYearForm(request.POST)
@@ -1083,7 +1085,7 @@ def salaryband_edit(request: HttpRequest, sb_id: int) -> HttpResponse:
     salary_band = get_object_or_404(SalaryBand, id=sb_id)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     if request.method == 'POST':
         sb_form = NewSalaryBandForm(request.POST, instance=salary_band)
@@ -1151,7 +1153,7 @@ class financialyear_salaryband_delete(UserPassesTestMixin, DeleteView):
 def costdistributions(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query for allocation query
     q = Q()
@@ -1197,7 +1199,7 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
     user = get_object_or_404(User, username=rse_username)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Get RSE if exists
     rse = get_object_or_404(RSE, user=user)
@@ -1255,7 +1257,7 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -1332,7 +1334,7 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
     user = get_object_or_404(User, username=rse_username)
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Get RSE if exists
     rse = get_object_or_404(RSE, user=user)
@@ -1406,7 +1408,7 @@ def serviceoutstanding(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     if request.method == 'GET':
         form = ServiceOutstandingFilterForm(request.GET)
@@ -1428,7 +1430,7 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -1500,7 +1502,7 @@ def projects_income_summary(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -1563,7 +1565,7 @@ def project_staffcosts(request: HttpRequest, project_id: int) -> HttpResponse:
     project = get_object_or_404(Project, pk=project_id)
     
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
     view_dict['project'] = project
 
     # Get the date range from the filter form
@@ -1632,7 +1634,7 @@ def projects_internal_summary(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -1686,7 +1688,7 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     """
 
     # Dict for view
-    view_dict = {}
+    view_dict = {}  # type: Dict[str, object]
 
     # Construct q query and check the project filter form
     q = Q()
@@ -1741,7 +1743,7 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
         # Service income
         if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
             # income from service project less any recovered staff cost
-            service_income += p.value() - project_recovered_costs
+            service_income += float(p.value() - project_recovered_costs)
     
     # Liability
     non_recovered_cost = salary_costs - recovered_staff_costs
@@ -1753,6 +1755,6 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     view_dict['internal_project_staff_costs'] = internal_project_staff_costs
     view_dict['service_income'] = service_income
     view_dict['income_total'] = income_total
-    view_dict['balance'] =  income_total - non_recovered_cost
+    view_dict['balance'] = income_total - non_recovered_cost
 
     return render(request, 'financial_summary.html', view_dict)
