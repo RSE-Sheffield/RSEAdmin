@@ -22,32 +22,34 @@ def get_secret(setting, secrets=secrets):
 
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# Sectret things from untracked sectrets file
+PA_USER = get_secret('PA_USER')
 SECRET_KEY = get_secret('SECRET_KEY')
+DB_USER = get_secret('DB_USER')
+DB_PASSWORD = get_secret('DB_PASSWORD')
+DB_NAME = get_secret('DB_NAME')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 #DEBUG = True
 
 # This should not be *
-ALLOWED_HOSTS = ['rsesheffield.pythonanywhere.com']
+ALLOWED_HOSTS = [f'{PA_USER}.pythonanywhere.com']
 
 
 # Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'rsesheffield$default',
-        'USER': get_secret('DB_USER'),
-        'PASSWORD': get_secret('DB_PASSWORD'),
-        'HOST': 'rsesheffield.mysql.pythonanywhere-services.com',
+        'NAME': f'{PA_USER}${DB_NAME}',
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': f'{PA_USER}}.mysql.pythonanywhere-services.com',
     }
 }
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
 STATIC_ROOT = os.path.join(BASE_DIR, 'static-root')
+# Must match the Static files URL in PA Web tab
 STATIC_URL = '/static/'
 
 #Enable SSL redirects
