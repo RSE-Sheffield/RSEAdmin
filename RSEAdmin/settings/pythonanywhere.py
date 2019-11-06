@@ -43,7 +43,7 @@ DATABASES = {
         'NAME': f'{PA_USER}${DB_NAME}',
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
-        'HOST': f'{PA_USER}}.mysql.pythonanywhere-services.com',
+        'HOST': f'{PA_USER}.mysql.pythonanywhere-services.com',
     }
 }
 
