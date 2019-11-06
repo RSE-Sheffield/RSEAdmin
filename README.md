@@ -16,7 +16,7 @@ The tool is a web app written using the [Django][django] web framework (Python) 
 To develop or test the site locally Poetry is used for dependency management. The ideal is that Poetry is simpler than using [conda][conda] and avoids manually creating a [virtualenv][virtualenv]. To configure Poetry;
 
  1. Ensure you have Python >= 3.6 installed
- 1. Install [Poetry][poetry], a tool for Python project management 
+ 1. Install [Poetry][poetry], a tool for Python project management (this currently requires preview edition 1.0.0 beta) - see [notes on how to install](https://pypi.org/project/poetry/)
  1. Clone this repo
  1. From the repo directory call `poetry install` to install project dependencies in an isolated hidden virtualenv 
     Dependencies are determined using info from `pyproject.toml`
@@ -161,6 +161,16 @@ Set the `Virtualenv` location to the location of your virtual environment i.e. (
 Ensure that your static files directory `URL` is set to `/static/` and that it points to `/home/pa_username/RSEAdmin/static-root` (replacing `pa_username` with your username).
 
 Turn on `Force HTTPS` and then restart the app from the top of the page. Your site should now be live and you can log in with the super user account your created.
+
+### Updating the site
+
+If you want to update the site to include new features from master then simply call the following commands from your install directory on your web host
+
+```sh
+git pull
+python manage.py collectstatic --settings=RSEAdmin.settings.pythonanywhere
+python manage.py migrate --settings=RSEAdmin.settings.pythonanywhere
+```
 
 ## Deployment to your own VM(s) using Vagrant and Ansible
 
