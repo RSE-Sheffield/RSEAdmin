@@ -20,7 +20,7 @@ before_install:
 
 # Install dependencies
 install:
-  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+  - wget -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
   - python get-poetry.py --preview
   - poetry install -E pgsql -E gunicorn
   # Install GeckoDriver (for firefox)
