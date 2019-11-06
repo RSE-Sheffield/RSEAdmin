@@ -20,8 +20,8 @@ before_install:
 
 # Install dependencies
 install:
-  - pip install poetry
-  - poetry self:update --preview
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+  - python get-poetry.py --preview
   - poetry install -E pgsql -E gunicorn
   # Install GeckoDriver (for firefox)
   - curl -sSL https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz | sudo tar -zx -C /usr/local/share
