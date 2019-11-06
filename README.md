@@ -100,7 +100,7 @@ poetry run python manage.py test rse.tests.test_models.SalaryCalculationTests
 
 ## Deployment to PythonAnywhere
 
-By default the RSEAdmin tool will use the development settings (located in `RSEAdmin/settings/dev.py`). For production there are various development settings which are not ideal (i.e. a public secret key, debug mode, choice of database). A settings file (`RSEAdmin/settings/pythonanywhere.py`) is provided for the (Python Anywhere)[www.pythonanaywhere.com] who provide a free tier of hosting for Django sites.
+By default the RSEAdmin tool will use the development settings (located in [`RSEAdmin/settings/dev.py`](RSEAdmin/settings/dev.py)). For production there are various development settings which are not ideal (i.e. a public secret key, debug mode, choice of database). A settings file [`RSEAdmin/settings/pythonanywhere.py`](RSEAdmin/settings/pythonanywhere.py) is provided for the [Python Anywhere](http://www.pythonanaywhere.com) who provide a free tier of hosting for Django sites.
 
 To deploy on Python Anywhere create a new web app (from the Web tab) using a manual configuration. 
 
@@ -174,7 +174,7 @@ python manage.py migrate --settings=RSEAdmin.settings.pythonanywhere
 
 ## Deployment to your own VM(s) using Vagrant and Ansible
 
-A (separate repo is available)[https://github.com/RSE-Sheffield/rseadmin-ansible] to provide instructions for deploying on your own virtual machines.
+A [separate repo is available](https://github.com/RSE-Sheffield/rseadmin-ansible) to provide instructions for deploying on your own virtual machines.
 
 
 
