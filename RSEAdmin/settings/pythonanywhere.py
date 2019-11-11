@@ -35,6 +35,8 @@ DB_NAME = get_secret('DB_NAME')
 # This should not be *
 ALLOWED_HOSTS = [f'{PA_USER}.pythonanywhere.com']
 
+# Disable admin site
+ADMIN_ENABLED = False
 
 # Database
 DATABASES = {
