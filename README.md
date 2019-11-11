@@ -11,6 +11,16 @@ There is a distinction between Allocated Projects (i.e. Directly incurred projec
 
 The tool is a web app written using the [Django][django] web framework (Python) and the [AdminLTE][adminlte2] theme.
 
+# Demo site
+
+A live version of the tool is available online at:
+
+[https://rsesheffield.pythonanywhere.com](https://rsesheffield.pythonanywhere.com)
+
+You can log in as either an RSE user (username of `user[0-9]` with password `12345`) or as an admin (username of `rseadmin` with password `demosite`).
+
+The site is populated with random demo data which is reset at midnight every night.
+
 ## Development install using Poetry
 
 To develop or test the site locally Poetry is used for dependency management. The ideal is that Poetry is simpler than using [conda][conda] and avoids manually creating a [virtualenv][virtualenv]. To configure Poetry;
