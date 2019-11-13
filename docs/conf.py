@@ -57,3 +57,9 @@ html_static_path = ['_static']
 
 # Set the master doc to index (default on read the docs is contents)
 master_doc = 'index'
+
+# define a custom raw html role
+rst_prolog = """
+.. role:: raw-html(raw)
+    :format: html
+"""
