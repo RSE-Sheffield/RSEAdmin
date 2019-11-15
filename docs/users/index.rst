@@ -26,7 +26,7 @@ When you initially configured the site for deployment you will have created an A
 Creating an RSE User
 ~~~~~~~~~~~~~~~~~~~~
 
-A fresh installation of the site will contain no RSE users. Before creating one you will need to :ref:`create a number of financial years<Financial Years and Salary Data>` and salary information for them. This is required to set the starting salary of an RSE user. 
+A fresh installation of the site will contain no RSE users. Before creating one you will need to :ref:`create a number of financial years <Financial Years and Salary Grade Points>` and salary information for them. This is required to set the starting salary of an RSE user. 
 
 RSE users can be created by selecting **Admin->Add New User** from the menu and choosing the *RSE* option from the user type. The RSE can be ranted the same permissions as an *Admin* by selecting the *User has administration permission* check box. Once an RSE user is created they will have the option to change their password after logging in from the user menu in the top right corner of the site.
 

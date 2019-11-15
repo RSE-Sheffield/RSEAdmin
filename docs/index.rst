@@ -12,3 +12,5 @@ The tool is a web app written using the Django web framework (Python) and the Ad
    financialyears/index
    users/index
    team/index
+   projects/index
+   reporting/index
