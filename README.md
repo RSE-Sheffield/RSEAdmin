@@ -6,12 +6,13 @@
 # RSE Administration Tool
 
 This is a tool for tracking grant applications, managing RSE commitment and reporting on staff expenses and cost recovery.
-The site has two users types (Admin and RSE) which have different levels of permissions. RSE users can view, edit and create projects as well as see allocations to projects based on effort (i.e. days). Admin users are able to create allocations on projects (allocated by effort or budget) and view reports on group finance and staffing.
-There is a distinction between Allocated Projects (i.e. Directly incurred projects) where staff generate overheads for the university and Service Projects which are effort based and generate overheads for the group or facility.
 
 The tool is a web app written using the [Django][django] web framework (Python) and the [AdminLTE][adminlte2] theme.
 
+This readme covers installation, getting started and access to the demo site. Please refer to the [User Guide][userguide] documentation for a description of features.
+
 ## Development install using Poetry
+
 
 To develop or test the site locally Poetry is used for dependency management. The ideal is that Poetry is simpler than using [conda][conda] and avoids manually creating a [virtualenv][virtualenv]. To configure Poetry;
 
@@ -183,3 +184,4 @@ A [separate repo is available](https://github.com/RSE-Sheffield/rseadmin-ansible
 [django]: https://www.djangoproject.com/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/
 [poetry]: https://poetry.eustace.io/
+[userguide]: https://rseadmin.readthedocs.io/en/latest/
