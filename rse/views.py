@@ -737,7 +737,7 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
             client = form.save()
             messages.add_message(request, messages.SUCCESS, f'Client {client.name} details successfully updated.')
             # Go to the project view
-            return HttpResponseRedirect(reverse_lazy('project', kwargs={'client_id': client_id}))
+            return HttpResponseRedirect(reverse_lazy('client', kwargs={'client_id': client_id}))
     else:
         form = ClientForm(instance=client)
     view_dict['form'] = form
