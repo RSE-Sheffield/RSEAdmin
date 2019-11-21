@@ -1,6 +1,7 @@
 from django import forms
 from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.core.validators import RegexValidator
 
 from .models import *
 
@@ -362,15 +363,19 @@ class NewUserForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         """ Override init to customise the UserCreationForm widget class appearance """
         super(NewUserForm, self).__init__(*args, **kwargs)
-        
+
         # set html attributes of fields in parent form
         self.fields['username'].widget.attrs['class'] = 'form-control'
         self.fields['password1'].widget.attrs['class'] = 'form-control'
         self.fields['password2'].widget.attrs['class'] = 'form-control'
         for fieldname in ['username', 'password1', 'password2']:
             self.fields[fieldname].help_text = None
+
+                
+        # set regex validator on username (to comply with URL restriction using username)
+        self.fields['username'].validators = [RegexValidator(r'[\w]+', 'Only alphanumeric characters are allowed.')]
     
- 
+
     def save(self, commit=True):
         """ Override save to make user a superuser """
         user = super(NewUserForm, self).save(commit=False)
