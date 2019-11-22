@@ -14,9 +14,8 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-xs-9">
+	<div class="col-md-9">
 		<div class="box">
-			
 			<div class="box-body table-responsive padding">
 				<table id="projects" class="table table-hover">
 					<thead>
@@ -62,7 +61,8 @@
 							<td><a href="{% url 'project' p.id %}" class="pull-right btn btn-primary btn-xs">Info</a></td>
 						</tr>
 						{% endfor %}
-					</tbody></table>
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>
