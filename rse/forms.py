@@ -362,6 +362,10 @@ class NewUserForm(UserCreationForm):
  
     def __init__(self, *args, **kwargs):
         """ Override init to customise the UserCreationForm widget class appearance """
+
+        # see if the user form should be admin
+        self.force_admin = kwargs.pop('force_admin', None)
+
         super(NewUserForm, self).__init__(*args, **kwargs)
 
         # set html attributes of fields in parent form
@@ -370,6 +374,10 @@ class NewUserForm(UserCreationForm):
         self.fields['password2'].widget.attrs['class'] = 'form-control'
         for fieldname in ['username', 'password1', 'password2']:
             self.fields[fieldname].help_text = None
+
+        # if forced admin
+        if self.force_admin:
+             self.fields['is_admin'].widget = forms.HiddenInput()
 
                 
         # set regex validator on username (to comply with URL restriction using username)
@@ -382,7 +390,7 @@ class NewUserForm(UserCreationForm):
         user = super(NewUserForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
         # make an admin if checked
-        if self.cleaned_data["is_admin"]:
+        if self.cleaned_data["is_admin"] or self.force_admin:
             user.is_superuser = True
         # commit
         if commit:

@@ -300,7 +300,7 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
     
     # process or create form
     if request.method == 'POST':        
-        user_form = NewUserForm(request.POST) 
+        user_form = NewUserForm(request.POST, force_admin=True) 
         # process admin user
         if user_form.is_valid(): 
             user = user_form.save()
@@ -308,7 +308,7 @@ def user_new_admin(request: HttpRequest) -> HttpResponse:
             return HttpResponseRedirect(reverse_lazy('index'))
                 
     else:
-        user_form = NewUserForm()
+        user_form = NewUserForm(force_admin=True)
         
     view_dict['user_form'] = user_form
 
