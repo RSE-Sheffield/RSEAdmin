@@ -37,18 +37,18 @@
 							<tr>
 								<td></td>
 								<td>Salary Costs for RSE team</td>
-								<td>£{{salary_costs|floatformat:2|intcomma}}</td>
+								<td>(£{{salary_costs|floatformat:2|intcomma}})</td>
 								<td><span class="pull-right"><a href="{% url 'rses_staffcosts' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Staff Salary Costs Summary"><i class="fa fa-calculator"></i></a></span></td>
 							</tr>
 							<tr>
 								<td></td>
 								<td>Costs Recovered</td>
-								<td>(£{{recovered_staff_costs|floatformat:2|intcomma}})</td>
+								<td>£{{recovered_staff_costs|floatformat:2|intcomma}}</td>
 								<td><span class="pull-right"><a href="{% url 'projects_income_summary' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Project Cost Recovery Summary"><i class="fa fa-calculator"></i></a></span></td>
 							</tr>
 							<tr>
 								<td colspan="2">Total Staffing and Salary Expense</td>
-								<td><strong>£{{non_recovered_cost|floatformat:2|intcomma}}</strong></td>
+								<td><strong>(£{{non_recovered_cost|floatformat:2|intcomma}})</strong></td>
 								<td></td>
 							</tr>
 
@@ -68,8 +68,14 @@
 							<tr>
 								<td></td>
 								<td>Internal Project Staff Commitments</td>
-								<td>(£{{internal_project_staff_costs|floatformat:2|intcomma}})</td>
+								<td>£{{internal_project_staff_costs|floatformat:2|intcomma}}</td>
 								<td><span class="pull-right"><a href="{% url 'projects_internal_summary' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Internal Project Costs Summary"><i class="fa fa-calculator"></i></a></span></td>
+							</tr>
+							<tr>
+							<td></td>
+								<td>Overheads Generated</td>
+								<td>£{{overheads|floatformat:2|intcomma}}</td>
+								<td><span class="pull-right"><a href="{% url 'projects_income_summary' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Overheads Generated from Projects"><i class="fa fa-calculator"></i></a></span></td>
 							</tr>
 							<tr>
 								<td colspan="2">Total Income and Commitements</td>

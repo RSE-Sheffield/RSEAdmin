@@ -1721,6 +1721,7 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     salary_costs = 0
     recovered_staff_costs = 0
     internal_project_staff_costs = 0
+    overheads = 0
     service_income = 0
     
     # Salary Costs (all RSEs)
@@ -1740,6 +1741,8 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
         elif isinstance(p, AllocatedProject) or (isinstance(p, ServiceProject) and p.charged == True):  
             project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
             recovered_staff_costs += project_recovered_costs
+            # acculate overheads
+            overheads += p.overhead_value(from_date=from_date, until_date=until_date)
         # Service income
         if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
             # income from service project less any recovered staff cost
@@ -1747,13 +1750,14 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     
     # Liability
     non_recovered_cost = salary_costs - recovered_staff_costs
-    income_total = internal_project_staff_costs + service_income
+    income_total = internal_project_staff_costs + service_income + overheads
 
     view_dict['salary_costs'] = salary_costs
     view_dict['recovered_staff_costs'] = recovered_staff_costs
     view_dict['non_recovered_cost'] = non_recovered_cost
     view_dict['internal_project_staff_costs'] = internal_project_staff_costs
     view_dict['service_income'] = service_income
+    view_dict['overheads'] = overheads
     view_dict['income_total'] = income_total
     view_dict['balance'] = income_total - non_recovered_cost
 
