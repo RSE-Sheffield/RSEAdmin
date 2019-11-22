@@ -315,6 +315,10 @@ class Client(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    class Meta:
+        """ Order clients by name """
+        ordering = ["name"]
+
 
 class RSE(models.Model):
     """
