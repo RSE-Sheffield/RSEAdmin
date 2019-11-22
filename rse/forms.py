@@ -373,7 +373,8 @@ class NewUserForm(UserCreationForm):
 
                 
         # set regex validator on username (to comply with URL restriction using username)
-        self.fields['username'].validators = [RegexValidator(r'[\w]+', 'Only alphanumeric characters are allowed.')]
+        # Why the following does not work is a complete mystery. URL regex has instead been updated to recognise @/./+/-/_ characters
+        #self.fields['username'].validators = [RegexValidator(r'[\w]+', 'Only alphanumeric characters are allowed.')]
     
 
     def save(self, commit=True):

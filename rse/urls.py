@@ -107,7 +107,7 @@ urlpatterns = [
     ############
 
     # View a single RSE
-    url(r'^rse/(?P<rse_username>[\w]+)$', views.rse, name='rse'),
+    url(r'^rse/(?P<rse_username>[\w.@+-]+)$', views.rse, name='rse'),
     
     # RSE view list
     url(r'^rses$', views.rses, name='rses'),
@@ -120,7 +120,7 @@ urlpatterns = [
     url(r'^commitment$', views.commitment, name='commitment'),
 
     # RSE salary grade change view
-    url(r'^rse/(?P<rse_username>[\w]+)/salary$', views.rse_salary, name='rse_salary'),
+    url(r'^rse/(?P<rse_username>[\w.@+-]+)/salary$', views.rse_salary, name='rse_salary'),
 
     # RSE salary grade change delete
     url(r'^rse/salarychange/delete/(?P<pk>[0-9]+)$', views.rse_salarygradechange_delete.as_view(), name='rse_salarygradechange_delete'),
@@ -162,13 +162,13 @@ urlpatterns = [
     url(r'^costdistributions$', views.costdistributions, name='costdistributions'),
 
     # View projected cost distribution (for an individual)
-    url(r'^costdistribution/(?P<rse_username>[\w]+)$', views.costdistribution, name='costdistribution'),
+    url(r'^costdistribution/(?P<rse_username>[\w.@+-]+)$', views.costdistribution, name='costdistribution'),
 
     # View rses staff costs summary
     url(r'^rses/staffcosts$', views.rses_staffcosts, name='rses_staffcosts'),
 
     # View rses staff costs summary
-    url(r'^rse/(?P<rse_username>[\w]+)/staffcost$', views.rse_staffcost, name='rse_staffcost'),
+    url(r'^rse/(?P<rse_username>[\w.@+-]+)/staffcost$', views.rse_staffcost, name='rse_staffcost'),
 
     # View service projects and invoice status
     url(r'^service/income/outstanding$', views.serviceoutstanding, name='serviceoutstanding'),
