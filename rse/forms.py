@@ -283,8 +283,16 @@ class ServiceProjectForm(forms.ModelForm):
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if 'start' in cleaned_data and 'end' in cleaned_data:
+            # end cant be beofre start
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Project end date can not be before start date')
+
+            # duration must be long enough to complete the project
+            if cleaned_data['days']:
+                fte_days = ServiceProject.days_to_fte_days(cleaned_data['days'])
+                duration = (cleaned_data['end'] - cleaned_data['start']).days
+                if fte_days > duration:
+                    errors['end'] = (f"Project duration is not long enough for the {fte_days} fte days required to deliver {cleaned_data['days']} service days.")
         
         if errors:
             raise ValidationError(errors)

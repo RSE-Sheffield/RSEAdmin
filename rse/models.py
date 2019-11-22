@@ -728,13 +728,20 @@ class ServiceProject(Project):
         """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
         return not self.internal and charged
 
-    @property
-    def duration(self) -> int:
+    @staticmethod
+    def days_to_fte_days(days: int) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are 220 TRAC working days) to a FTE duration
         """
-        return floor(self.days * (365.0 / 220.0))
+        return floor(days * (365.0 / 220.0))
+    
+    @property
+    def duration(self) -> int:
+        """
+        Use the avilable static method to convert days to FTE days
+        """
+        return ServiceProject.days_to_fte_days(self.days)
 
     def value(self) -> float:
         """
