@@ -576,10 +576,15 @@ class SalaryGradeChangeForm(forms.ModelForm):
         cleaned_data=super(SalaryGradeChangeForm, self).clean()
         errors = {}
 
-        # Check that there is not already a salary grade change for the specified year
         if cleaned_data['rse'] and cleaned_data['year']:
+            # Check that there is not already a salary grade change for the specified year
             if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=cleaned_data['year']):
                  errors['year'] = ('A salary grade change for the specified year already exists for the RSE!')
+
+            # Check that the salary grade change is not before the RSE is employed
+            if date(cleaned_data['year'].year, 8, 1) < cleaned_data['rse'].employed_from:
+                errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
+
         if errors:
             raise ValidationError(errors)
 
