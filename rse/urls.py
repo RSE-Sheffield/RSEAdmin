@@ -159,6 +159,9 @@ urlpatterns = [
     ##################
     
     # View current cost distribution (staff charging)
+    url(r'^allocations/recent$', views.allocations_recent, name='allocations_recent'),
+
+    # View current cost distribution (staff charging)
     url(r'^costdistributions$', views.costdistributions, name='costdistributions'),
 
     # View projected cost distribution (for an individual)

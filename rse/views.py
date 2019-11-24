@@ -632,7 +632,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
 class project_allocations_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
     model = RSEAllocation
-    success_message = "Project allocation deleted successfully."
+    success_message = "Project allocation marked as deleted."
     
     def test_func(self):
         """ Only for super users """
@@ -647,7 +647,12 @@ class project_allocations_delete(UserPassesTestMixin, DeleteView):
         
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
-        return super(project_allocations_delete, self).delete(request, *args, **kwargs)
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        # do not actually delete but flag as deleted
+        self.object.deleted_date = timezone.now()
+        self.object.save()
+        return HttpResponseRedirect(success_url)
     
 class project_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to project allocation view """
@@ -1153,6 +1158,30 @@ class financialyear_salaryband_delete(UserPassesTestMixin, DeleteView):
 ##################
 ### Reporting ####
 ##################
+
+@user_passes_test(lambda u: u.is_superuser)
+def allocations_recent(request: HttpRequest) -> HttpResponse:
+    view_dict = {} 
+
+    # create filter form
+    recent = timezone.now() - timedelta(days=settings.HOME_PAGE_DAYS_RECENT)
+    if request.method == 'GET':
+        if 'from_date' in request.GET:
+            form = FilterDateForm(request.GET)
+        else:
+            # create unbound form if no request data
+            form = FilterDateForm()
+        if form.is_valid():
+            recent = form.cleaned_data['from_date']
+    view_dict['form'] = form
+            
+    # get recent allocations
+    q = Q(created_date__gte=recent) | Q(deleted_date__gte=recent)
+    allocations = RSEAllocation.objects.all(deleted=True).filter(q)
+    view_dict['allocations'] = allocations
+
+    return render(request, 'allocations_recent.html', view_dict)
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def costdistributions(request: HttpRequest) -> HttpResponse:

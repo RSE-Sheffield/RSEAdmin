@@ -4,6 +4,13 @@ Reports
 The RSE Admin tool provides a number of useful reports fro team administration. These are only available to Admin users (or RSE users with administrative privileges).
 
 
+Recent Allocations
+------------------
+
+Allocations are not deleted from the database (unless a project is deleted). Instead they have deleted date which removes them from views and reports. The Recent Allocations report shows any created or deleted allocations from a given date. This can be useful in identifying where cost distributions have changed, especially if they need to be recreated in some external financial system periodically.
+
+The default date in the filter is based off todays date less the HOME_PAGE_DAYS_RECENT value in the settings file.
+
 Cost Distributions
 ------------------
 

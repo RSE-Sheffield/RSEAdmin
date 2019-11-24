@@ -845,7 +845,25 @@ class ReportingTemplateTests(SeleniumTemplateTest):
             if RSE.objects.all():
                 self.first_rse = RSE.objects.all()[0]
 
-    def test_salaryband_edit(self):
+    def test_allocations_recent(self):
+        """ Tests the allocations recent page """
+
+        # test url
+        url = f"{self.live_server_url}{reverse_lazy('allocations_recent')}"
+
+        # test admin view
+        self.get_url_as_admin(url)
+        expected = f"RSE Group Administration Tool: View Recent Allocation Changes"
+        self.assertEqual(self.selenium.title, expected)
+        self.check_for_log_errors()
+        
+        # test rse view (login should be required)
+        self.get_url_as_rse(url)
+        expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
+        self.assertEqual(self.selenium.title, expected)  
+        self.check_for_log_errors()
+    
+    def test_costdistributions(self):
         """ Tests the costdistributions page """
 
         # test url

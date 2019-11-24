@@ -2,6 +2,7 @@ from django import forms
 from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import RegexValidator
+from django.conf import settings
 
 from .models import *
 
@@ -69,9 +70,22 @@ class FilterDateRangeForm(forms.Form):
     @property 
     def years(self):
         return FinancialYear.objects.all()
-        
-        
-        
+
+
+class FilterDateForm(forms.Form):
+    """
+    Class represents a date field using the javascript daterangepicker library 
+    It is specific to the RSEAdmin tool as it default date is set to settings.HOME_PAGE_DAYS_RECENT (default 30)
+    """
+
+    from_date =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+    def __init__ (self, *args, **kwargs):
+        """ Set the initial date """
+        super(FilterDateForm, self).__init__(*args, **kwargs)
+        self.initial_date = datetime.now() - timedelta(days=settings.HOME_PAGE_DAYS_RECENT)
+        self.fields['from_date'].initial = datetime.strftime(self.initial_date, '%d/%m/%Y')
+
         
 class ProjectTypeForm(forms.Form):
     """

@@ -792,9 +792,25 @@ class ServiceProject(Project):
         return 100
 
 
+class RSEAllocationManager(models.Manager):
+    """
+    RSEAllocation objects are transactional in that they are never actually deleted they are just flagged as deleted
+    This custom manager allows all() to return on objects which have not been flagged as deleted 
+    """
+    def get_queryset(self):
+        return super(RSEAllocationManager, self).get_queryset().filter(deleted_date__isnull=True)
+
+    def all(self, deleted=False):
+        if deleted:
+            return super(RSEAllocationManager, self).get_queryset()
+        else:
+            # default is to return only non deleted items
+            return self.get_queryset()
+
 class RSEAllocation(models.Model):
     """
     Defines an allocation of an RSE to project with a given percentage of time.
+    RSEAllocation objects are transactional in that they are never actually deleted they are just flagged as deleted.
     """
     rse = models.ForeignKey(RSE, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -802,6 +818,11 @@ class RSEAllocation(models.Model):
                                                MaxValueValidator(100)])
     start = models.DateField()
     end = models.DateField()
+
+    created_date = models.DateTimeField(default=timezone.now, editable=False)
+    deleted_date = models.DateTimeField(null=True, blank=True)
+
+    objects = RSEAllocationManager()
 
     def __str__(self) -> str:
         return f"{self.rse} on {self.project} at {self.percentage}%"
