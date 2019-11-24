@@ -160,6 +160,14 @@ class ProjectAllocationForm(forms.ModelForm):
     def clean(self):
         cleaned_data=super(ProjectAllocationForm, self).clean()
         errors = {}
+
+        # Check that the RSE has valid Salary data from the start date (i.e. a salary grade change exists which can be used to calculate salary)
+        if cleaned_data['start'] and cleaned_data['rse']:
+            rse = cleaned_data['rse']
+            try:
+                rse.futureSalaryBand(date=cleaned_data['start'])
+            except ValueError:
+                errors['start'] = ("The selected RSE has no salary information within the same financial year as the proposed start date")
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if cleaned_data['start'] and cleaned_data['end']:

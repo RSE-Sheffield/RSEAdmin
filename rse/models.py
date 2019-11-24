@@ -356,6 +356,16 @@ class RSE(models.Model):
         # Unable to find any data
         raise ValueError('No Salary Data exists before specified date period for this RSE')
 
+    def firstSalaryGradeChange(self):
+        """
+        Gets the last salary grade change before the specified date (i.e. the last appropriate grade change)
+        """
+        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
+        if len(sgcs) > 0:
+            return sgcs[0]
+        else:
+            raise ValueError('No Salary Data exists for this RSE')
+
     def futureSalaryBand(self, date: date):
         """
         Gets the last valid salary grade change event.

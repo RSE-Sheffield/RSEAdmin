@@ -156,7 +156,7 @@ def index(request: HttpRequest) -> HttpResponse:
 ### Helper Functions ####
 #########################
 
-def append_project_and_allocation_costs(project: Project, allocations: TypedQuerySet[RSEAllocation]):
+def append_project_and_allocation_costs(request: HttpRequest, project: Project, allocations: TypedQuerySet[RSEAllocation]):
     
     # calculate project budget and effort
     total_value = project.value()
@@ -172,7 +172,11 @@ def append_project_and_allocation_costs(project: Project, allocations: TypedQuer
     total_staff_cost = 0
     for a in allocations:
         # staff cost
-        salary_value = a.staff_cost()
+        try:
+            salary_value = a.staff_cost()
+        except ValueError:
+            salary_value = SalaryValue()
+            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation starting at {a.project.start} so will incur no cost.')
         a.staff_cost = salary_value.staff_cost
         a.project_budget_percentage = a.staff_cost / staff_budget * 100.0
         total_staff_cost += a.staff_cost
@@ -432,7 +436,8 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['commitment_data'] = commitment_data
 
     # append salary and costs information for template
-    append_project_and_allocation_costs(proj, allocations)
+    append_project_and_allocation_costs(request, proj, allocations)
+
 	
 
     return render(request, 'project.html', view_dict)
@@ -598,7 +603,7 @@ def project_allocations_edit(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['allocations'] = allocations
     
     # append salary and costs information for template
-    append_project_and_allocation_costs(proj, allocations)
+    append_project_and_allocation_costs(request, proj, allocations)
 
     view_dict['form'] = form
 
@@ -618,7 +623,7 @@ def project_allocations(request: HttpRequest, project_id) -> HttpResponse:
     view_dict['allocations'] = allocations
 
     # append salary and costs information for template
-    append_project_and_allocation_costs(proj, allocations)
+    append_project_and_allocation_costs(request, proj, allocations)
 
 
     return render(request, 'project_allocations.html', view_dict)
@@ -1292,13 +1297,19 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
         try:
             staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
-            staff_salary = 0
-            messages.add_message(request, messages.ERROR, f'RSE user {rse} does not have salary data within the specified range so will incur no cost.')
+            # no salary data fro date range so warn and calculate from first available point
+            first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+            staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+            messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
         recovered_staff_cost = 0
         internal_project_staff_cost = 0
         for a in allocations:
             # staff cost
-            value = a.staff_cost(start=from_date, end=until_date).staff_cost
+            try:
+                value = a.staff_cost(start=from_date, end=until_date).staff_cost
+            except ValueError:
+                value = 0
+                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation starting at {from_date} so will incur no cost.')
             # sum staff cost from allocation
             if (a.project.internal):    # internal
                 internal_project_staff_cost += value
@@ -1373,8 +1384,10 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
     try:
         staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
     except ValueError:
-        staff_salary = 0
-        messages.add_message(request, messages.ERROR, f'RSE user {rse.user.username} does not have salary data within the specified range so will incur no cost.')
+        # no salary data fro date range so warn and calculate from first available point
+        first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+        staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+        messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
 
     project_costs = {}
     recovered_staff_cost = 0
@@ -1382,7 +1395,11 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
     # group costs by project
     for p in projects:
         # Get all staff costs for the project and rse
-        staff_cost = p.staff_cost(from_date=from_date, until_date=until_date, rse=rse, consider_internal=True)
+        try:
+            staff_cost = p.staff_cost(from_date=from_date, until_date=until_date, rse=rse, consider_internal=True)
+        except ValueError:
+            staff_cost = SalaryValue()
+            messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
         # only include projects with staff effort
         if staff_cost.staff_cost > 0:
             if (p.internal):    # internal or recovered staff costs
@@ -1474,7 +1491,11 @@ def serviceincome(request: HttpRequest) -> HttpResponse:
         # project has a staff cost if it has been charged
         staff_cost = 0
         if p.charged == True:
-            p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
+            try:
+                p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
+            except ValueError:
+                staff_cost = SalaryValue()
+                messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
             staff_cost = p_costs.staff_cost
         # surplus is the balance in the accounting period
         surplus = value - staff_cost
@@ -1539,7 +1560,11 @@ def projects_income_summary(request: HttpRequest) -> HttpResponse:
     total_staff_cost = 0
     total_overhead = 0
     for p in projects:
-        p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
+        try:
+            p_costs = p.staff_cost(from_date=from_date, until_date=until_date)
+        except ValueError:
+            p_costs = SalaryValue()
+            messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
         staff_cost = p_costs.staff_cost
         overhead = p.overhead_value(from_date=from_date, until_date=until_date)
         # add project and project costs to dictionary and calculate sums
@@ -1582,7 +1607,11 @@ def project_staffcosts(request: HttpRequest, project_id: int) -> HttpResponse:
     view_dict['form'] = form
 
     # Get the project costs
-    costs = project.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
+    try:
+        costs = project.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
+    except ValueError:
+        costs = SalaryValue()
+        messages.add_message(request, messages.ERROR, f'ERROR: Project {project} has allocations with missing RSE salary data in the time period starting at {from_date}.')
     view_dict['costs'] = costs
 	
     return render(request, 'project_staffcosts.html', view_dict)
@@ -1610,7 +1639,11 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
     # sum staff time contributions so far from existing allocations
     staff_cost = 0
     for a in allocations:
-        staff_cost += a.staff_cost().staff_cost
+        try:
+            staff_cost += a.staff_cost().staff_cost
+        except ValueError:
+            staff_cost = 0
+            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data allocation starting at {from_date} so will incur no cost.')
     remaining_budget = project.staff_budget() - staff_cost
 
     # get the remaining FTE days for rse given remaining budget
@@ -1669,7 +1702,11 @@ def projects_internal_summary(request: HttpRequest) -> HttpResponse:
     project_costs = {}
     total_staff_cost = 0
     for p in projects:
-        p_costs = p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
+        try:
+            p_costs = p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True)
+        except ValueError:
+            p_costs = SalaryValue()
+            messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
         staff_cost = p_costs.staff_cost
         # add project and project costs to dictionary and calculate sums
         project_costs[p] = {'staff_cost': staff_cost}
@@ -1729,19 +1766,28 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
         try:
             salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
-            messages.add_message(request, messages.ERROR, f'RSE user {rse} does not have salary data within the specified range so will incur no cost.')
-
+            first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+            salary_costs += rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+            messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
+			
     # Project Costs and Service Income (all project in date range)
     for p in projects:
         project_recovered_costs = 0
         # Internal Project Costs
         if (p.internal):
-            internal_project_staff_costs += p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True).staff_cost
+            try:
+                internal_project_staff_costs += p.staff_cost(from_date=from_date, until_date=until_date, consider_internal=True).staff_cost
+            except ValueError:
+                messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
         # Recovered Staff Costs (allocated or charged service projects)
         elif isinstance(p, AllocatedProject) or (isinstance(p, ServiceProject) and p.charged == True):  
-            project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+            try:
+                project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
+            except ValueError:
+                project_recovered_costs = 0
+                messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
             recovered_staff_costs += project_recovered_costs
-            # acculate overheads
+            # accumulate overheads
             overheads += p.overhead_value(from_date=from_date, until_date=until_date)
         # Service income
         if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
