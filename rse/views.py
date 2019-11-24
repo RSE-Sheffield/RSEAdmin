@@ -176,7 +176,7 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
             salary_value = a.staff_cost()
         except ValueError:
             salary_value = SalaryValue()
-            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation starting at {a.project.start} so will incur no cost.')
+            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation on project {a.project} starting at {a.project.start} so will incur no cost.')
         a.staff_cost = salary_value.staff_cost
         a.project_budget_percentage = a.staff_cost / staff_budget * 100.0
         total_staff_cost += a.staff_cost
@@ -1298,9 +1298,13 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
             staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
             # no salary data fro date range so warn and calculate from first available point
-            first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
-            staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
-            messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
+            try:
+                first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+                staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+                messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
+            except ValueError:
+                staff_salary = 0
+                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {rse} does not have any salary information and will incur no cost.')
         recovered_staff_cost = 0
         internal_project_staff_cost = 0
         for a in allocations:
@@ -1309,7 +1313,7 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
                 value = a.staff_cost(start=from_date, end=until_date).staff_cost
             except ValueError:
                 value = 0
-                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation starting at {from_date} so will incur no cost.')
+                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation on project {a.project} starting at {from_date} so will incur no cost.')
             # sum staff cost from allocation
             if (a.project.internal):    # internal
                 internal_project_staff_cost += value
@@ -1385,10 +1389,13 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
         staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
     except ValueError:
         # no salary data fro date range so warn and calculate from first available point
-        first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
-        staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
-        messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
-
+            try:
+                first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+                staff_salary = rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+                messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
+            except ValueError:
+                staff_salary = 0
+                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {rse} does not have any salary information and will incur no cost.')
     project_costs = {}
     recovered_staff_cost = 0
     internal_project_staff_cost = 0
@@ -1399,7 +1406,7 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
             staff_cost = p.staff_cost(from_date=from_date, until_date=until_date, rse=rse, consider_internal=True)
         except ValueError:
             staff_cost = SalaryValue()
-            messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
+            messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing salary data for {rse} in the time period starting at {from_date}.')
         # only include projects with staff effort
         if staff_cost.staff_cost > 0:
             if (p.internal):    # internal or recovered staff costs
@@ -1643,7 +1650,7 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
             staff_cost += a.staff_cost().staff_cost
         except ValueError:
             staff_cost = 0
-            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data allocation starting at {from_date} so will incur no cost.')
+            messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation on project {a.project} starting at {from_date} so will incur no cost.')
     remaining_budget = project.staff_budget() - staff_cost
 
     # get the remaining FTE days for rse given remaining budget
@@ -1766,10 +1773,15 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
         try:
             salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
-            first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
-            salary_costs += rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
-            messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
-			
+            # no salary data fro date range so warn and calculate from first available point
+            try:
+                first_sgc = rse.firstSalaryGradeChange().salary_band.year.start_date()
+                salary_costs += rse.staff_cost(from_date=first_sgc, until_date=until_date).staff_cost
+                messages.add_message(request, messages.WARNING, f'WARNING: RSE user {rse} does not have salary data until {first_sgc} and will incur no cost until this point.')
+            except ValueError:
+                messages.add_message(request, messages.ERROR, f'ERROR: RSE user {rse} does not have any salary information and will incur no cost.')
+
+
     # Project Costs and Service Income (all project in date range)
     for p in projects:
         project_recovered_costs = 0

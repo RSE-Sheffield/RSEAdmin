@@ -572,7 +572,17 @@ class SalaryGradeChangeForm(forms.ModelForm):
         # not required as query set will be dynamically loaded via ajax
         #self.fields['salary_band'].queryset = SalaryBand.objects.all()
 
-    
+    def clean(self):
+        cleaned_data=super(SalaryGradeChangeForm, self).clean()
+        errors = {}
+
+        # Check that there is not already a salary grade change for the specified year
+        if cleaned_data['rse'] and cleaned_data['year']:
+            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=cleaned_data['year']):
+                 errors['year'] = ('A salary grade change for the specified year already exists for the RSE!')
+        if errors:
+            raise ValidationError(errors)
+
     class Meta:
         model = SalaryGradeChange
         fields = ['rse', 'salary_band']
