@@ -24,6 +24,14 @@ def setup_user_and_rse_data():
     rse.employed_until = date(2025, 1, 1)
     rse.save()
 
+    # create a user and rse with short employment period to test staff costing methods
+    # employed for 10 months (spanning grade change)
+    user = User.objects.create_user(username='testuser2', password='12345')
+    rse = RSE(user=user)
+    rse.employed_from = date(2018, 1, 1)
+    rse.employed_until = date(2018, 10, 1)
+    rse.save()
+
 
 def setup_salary_and_banding_data():
     """
@@ -90,6 +98,11 @@ def setup_salary_and_banding_data():
     sgc1.save()
     sgc2 = SalaryGradeChange(rse=rse, salary_band=sb13_2018)
     sgc2.save()
+
+    # Create a salary grade change for short contract rse
+    rse2 = RSE.objects.get(user__username='testuser2')
+    sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017)
+    sgc3.save()
     
 
 def setup_project_and_allocation_data():
@@ -423,6 +436,26 @@ class SalaryCalculationTests(TestCase):
         # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
         #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
         self.assertAlmostEqual(sb.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, 169.95, places=2)
+
+    def test_staff_cost_employment_range(self):
+        """
+        Test the staff cost function to ensure no time is costed outside of an RSEs employment period
+        """
+
+        rse = RSE.objects.filter(user__username='testuser2')[0]
+
+        # Test over the time period of employment
+        # Expected behaviour is that the cost should be 10 months salary with new financial year change in August
+        # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
+        #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
+        # TODO: This is failing as someone appointed in January is getting an increment before starting work!
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.12, places=2)
+
+        # test salary cost in previous financial year
+
+        # test cost before employment
+
+        # test costs after employment
 
 class ProjectAllocationTests(TestCase):
     """

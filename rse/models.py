@@ -375,8 +375,18 @@ class RSE(models.Model):
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
 
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+
+        # Restrict from and until dates based off employment start and end
+        if self.employed_from > from_date:
+            from_date = self.employed_from
+        if self.employed_until < until_date:
+            until_date = self.employed_until
+
         # Get the last salary grade charge for the RSE at the start of the cost query
         sgc = self.lastSalaryGradeChange(from_date)
+
+        # If employment starts after 1st january in the sgc year then do not increment!
+
         # Get the salary band at the start date of the cost query
         sb = sgc.salary_band_at_future_date(from_date)
 
@@ -397,6 +407,7 @@ class SalaryGradeChange(models.Model):
     A SalaryGradeChange may be required where there is promotion or exceptional progression through grade bands.
     All salary grade changes are assumed to be from 1st August as this is the date in which finical year runs.
     This is different to annual increments which occur in January and are considered when calculating salary.
+
     """
     rse = models.ForeignKey(RSE, on_delete=models.CASCADE)
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)

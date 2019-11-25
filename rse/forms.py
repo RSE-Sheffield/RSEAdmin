@@ -503,6 +503,29 @@ class NewRSEUserForm(forms.ModelForm):
                 sgc = SalaryGradeChange(rse=rse, salary_band=self.cleaned_data["salary_band"])
                 sgc.save()
         return rse
+
+    def clean(self):
+        """
+        Check that the salary grade change is for the correct year of employment
+        """
+        cleaned_data=super(NewRSEUserForm, self).clean()
+        errors = {}
+
+        if cleaned_data['employed_from'] and cleaned_data['year']:
+            y = cleaned_data['year'].year
+            ef = cleaned_data['employed_from']
+
+            # Check that the salary grade change is not before the RSE is employed
+            if ef.month > 8:
+                # rse employed from date is after 1st august
+                if y != ef.year:
+                    errors['year'] = ('Proposed salary grade change not in the financial year in which the rse employment starts')
+            else:
+                # rse employed from date is before august (start of financial year)
+                if y+1 != ef.year:
+                    errors['year'] = ('Proposed salary grade change not in the financial year in which the rse employment starts')
+        if errors:
+            raise ValidationError(errors)
         
 class NewSalaryBandForm(forms.ModelForm):
     """
@@ -591,14 +614,22 @@ class SalaryGradeChangeForm(forms.ModelForm):
         errors = {}
 
         if cleaned_data['rse'] and cleaned_data['year']:
+            y = cleaned_data['year'].year
+            ef = cleaned_data['rse'].employed_from
+
             # Check that there is not already a salary grade change for the specified year
-            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=cleaned_data['year']):
+            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=y):
                  errors['year'] = ('A salary grade change for the specified year already exists for the RSE!')
 
             # Check that the salary grade change is not before the RSE is employed
-            if date(cleaned_data['year'].year, 8, 1) < cleaned_data['rse'].employed_from:
-                errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
-
+            if ef.month > 8:
+                # rse employed from date is after 1st august
+                if y < ef.year:
+                    errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
+            else:
+                # rse employed from date is before august (start of financial year)
+                if y+1 < ef.year:
+                    errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
         if errors:
             raise ValidationError(errors)
 
