@@ -374,6 +374,21 @@ class RSE(models.Model):
         """
         return self.lastSalaryGradeChange(date).salary_band_at_future_date(date)
 
+    def employed_in_financial_year(self, year: int):
+        """
+        Returns True is the rse employmnt starts in the given financial year
+        """
+        if self.employed_from.month >= 8:
+            if self.employed_from.year == year:
+                return True
+            else:
+                return False
+        else:
+            if self.employed_from.year == year+1:
+                return True
+            else:
+                return False
+
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
 
         # Restrict from and until dates based off employment start and end
@@ -385,7 +400,10 @@ class RSE(models.Model):
         # Get the last salary grade charge for the RSE at the start of the cost query
         sgc = self.lastSalaryGradeChange(from_date)
 
-        # If employment starts after 1st january in the sgc year then do not increment!
+        # If salary grade change represents the first (i.e. starting salary change) and
+        # employment starts after 1st january then do not perform the first increment!
+        if self.employed_from.month >= 8 and self.employed_in_financial_year(sgc.salary_band.year.year):
+            skip_first_increment = True
 
         # Get the salary band at the start date of the cost query
         sb = sgc.salary_band_at_future_date(from_date)
@@ -413,7 +431,7 @@ class SalaryGradeChange(models.Model):
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)
 
     # Gets the incremented salary given some point in the future
-    def salary_band_at_future_date(self, future_date):
+    def salary_band_at_future_date(self, future_date): # TODO: start from start of financial year or start from calendar year (this dependings on employment start date)
         """
         Returns a salary band at some date in the future.
         The SalaryGradeChange represents a starting point for the calculation of future grade points and as such can be used to apply increments

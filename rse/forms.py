@@ -516,7 +516,7 @@ class NewRSEUserForm(forms.ModelForm):
             ef = cleaned_data['employed_from']
 
             # Check that the salary grade change is not before the RSE is employed
-            if ef.month > 8:
+            if ef.month >= 8:
                 # rse employed from date is after 1st august
                 if y != ef.year:
                     errors['year'] = ('Proposed salary grade change not in the financial year in which the rse employment starts')
@@ -622,7 +622,7 @@ class SalaryGradeChangeForm(forms.ModelForm):
                  errors['year'] = ('A salary grade change for the specified year already exists for the RSE!')
 
             # Check that the salary grade change is not before the RSE is employed
-            if ef.month > 8:
+            if ef.month >= 8:
                 # rse employed from date is after 1st august
                 if y < ef.year:
                     errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')

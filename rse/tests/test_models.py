@@ -406,9 +406,10 @@ class SalaryCalculationTests(TestCase):
         self.assertFalse(fy.date_in_financial_year(date(2018, 8, 1)))
         
     
-    def test_staff_costs(self):
+    def test_salary_band_staff_costs(self):
         """
-        Test the true cost of staff accounting for grade changes and inflation
+        Test the true cost of staff accounting for grade changes and inflation with a given salary band
+        Does not test for RSE staff costs which have to account also for salary grade changes.
         """
         
         # Get initial test data from DB
@@ -436,6 +437,13 @@ class SalaryCalculationTests(TestCase):
         # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
         #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
         self.assertAlmostEqual(sb.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, 169.95, places=2)
+
+    def test_staff_cost_with_salary_grade_change(self):
+        """
+        There is no current test for caluclating a staff cost when there is an explicit salary grade change
+        Currently staff costs a just projected from the salary band
+        """
+        pass
 
     def test_staff_cost_employment_range(self):
         """
