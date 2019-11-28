@@ -93,7 +93,7 @@ def random_salary_and_banding_data():
 
     # Create salary grade changes
     for r in RSE.objects.all():
-        sgc1 = SalaryGradeChange(rse=r, salary_band=sb11_2017)
+        sgc1 = SalaryGradeChange(rse=r, salary_band=sb11_2017, date=sb11_2017.year.start_date())
         sgc1.save()
 
 def random_project_and_allocation_data():

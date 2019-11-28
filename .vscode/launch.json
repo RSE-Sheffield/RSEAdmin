@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {"name":"Python: Django","type":"python","request":"launch","program":"${workspaceFolder}\\manage.py","args":["runserver"],"django":true},
         {
             "name": "Python: Django",
             "type": "python",
@@ -15,14 +14,14 @@
             ],
             "django": true
         },
-        {"name":"Python: Django Test","type":"python","request":"launch","program":"${workspaceFolder}\\manage.py","args":["test"],"django":true},
-        {
-            "name": "Python: Django",
+         {
+            "name": "Python: Django Test",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}\\manage.py",
             "args": [
-                "test"
+                "test",
+                "rse.tests.test_models.SalaryCalculationTests.test_staff_costs"
             ],
             "django": true
         },
