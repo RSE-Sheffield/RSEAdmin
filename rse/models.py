@@ -354,7 +354,7 @@ class RSE(models.Model):
         """
         sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
         for sgc in sgcs:
-            if sgc.salary_band.year.start_date() <= date:
+            if sgc.date <= date:
                 return sgc
         # Unable to find any data
         raise ValueError('No Salary Data exists before specified date period for this RSE')

@@ -21,7 +21,7 @@
             "program": "${workspaceFolder}\\manage.py",
             "args": [
                 "test",
-                "rse.tests.test_models.SalaryCalculationTests.test_staff_costs"
+                "rse.tests.test_models.SalaryCalculationTests.test_staff_cost_employment_range"
             ],
             "django": true
         },

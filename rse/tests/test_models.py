@@ -99,10 +99,14 @@ def setup_salary_and_banding_data():
     sgc2 = SalaryGradeChange(rse=rse, salary_band=sb13_2018, date=sb13_2018.year.start_date())
     sgc2.save()
 
-    # Create a salary grade change for short contract rse
+    # Create a salary grade change on 1st january to test for double increments
     rse2 = RSE.objects.get(user__username='testuser2')
-    sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=sb11_2017.year.start_date())
+    sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=date(2018, 1, 1))    # initial salary grade change matches starting employment date
     sgc3.save()
+    sgc4 = SalaryGradeChange(rse=rse2, salary_band=sb13_2018, date=date(2019, 1, 1))
+    sgc4.save()
+
+
     
 
 def setup_project_and_allocation_data():
@@ -401,6 +405,34 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.grade, 1)
         self.assertEqual(sb.grade_point, 4)
         self.assertEqual(sb.year.year, 2019)
+
+        # Get initial test data from DB for testuser2
+        # first grade change is for 2017 on salary band 1.1
+        # second grade change is 1/1/2019 for G1.3 2018
+        sgc = SalaryGradeChange.objects.filter(rse__user__username="testuser2")[0]  
+        sgc2 = SalaryGradeChange.objects.filter(rse__user__username="testuser2")[1] 
+
+        # Check salary for rse (testuser2) employed at G1.1 (2017) from 1/1/2018 at a date just prior to second salary grade change
+        # Should be G1.1 2018
+        sb = sgc.salary_band_at_future_date(date(2018, 12, 31))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 1)
+        self.assertEqual(sb.year.year, 2018)
+
+        # Check salary for rse (testuser2) employed at G1.1 (2017) from 1/1/2018 at a date just after second salary grade change
+        # Should be G1.3 2018 (i.e. manual salary grade change with no increment)
+        sb = sgc.salary_band_at_future_date(date(2019, 1, 1))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 3)
+        self.assertEqual(sb.year.year, 2018)
+
+        # Check salary for rse (testuser2) employed at G1.1 (2017) from 1/1/2018 at a date just after second salary grade change
+        # Should be G1.4 2019 (i.e. increment and year increase from last salary grade change)
+        sb = sgc.salary_band_at_future_date(date(2020, 1, 1))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 4)
+        self.assertEqual(sb.year.year, 2019)
+
     
     def test_date_in_financial_year(self):
         """
@@ -471,21 +503,25 @@ class SalaryCalculationTests(TestCase):
         """
         Test the staff cost function to ensure no time is costed outside of an RSEs employment period
         """
-        pass
-        #rse = RSE.objects.filter(user__username='testuser2')[0]
+        rse = RSE.objects.filter(user__username='testuser2')[0]
 
         # Test over the time period of employment
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        # TODO: This is failing as someone appointed in January is getting an increment before starting work!
-        #self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.12, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
 
-        # test salary cost in previous financial year
+        # Test over the time period including before of employment
+        # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost prior to 1/1/2018
+        # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
+        #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2017, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
 
-        # test cost before employment
-
-        # test costs after employment
+        # Test over the time period including after employment
+        # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost after to 1/10/2018
+        # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
+        #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, 748.11, places=2)
 
 class ProjectAllocationTests(TestCase):
     """
