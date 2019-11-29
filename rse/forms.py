@@ -182,6 +182,14 @@ class ProjectAllocationForm(forms.ModelForm):
                 rse.futureSalaryBand(date=cleaned_data['start'])
             except ValueError:
                 errors['start'] = ("The selected RSE has no salary information within the same financial year as the proposed start date")
+
+        # Check that the RSE is employed for the duration of the allocation
+        if cleaned_data['start'] and cleaned_data['start'] and cleaned_data['rse']:
+            rse = cleaned_data['rse']
+            if rse.employed_from > cleaned_data['start']:
+                errors['start'] = ('Allocation start date is before RSE is employed')
+            if rse.employed_until < cleaned_data['end']:
+                errors['end'] = ('Allocation end date is after RSE is employed')
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if cleaned_data['start'] and cleaned_data['end']:
