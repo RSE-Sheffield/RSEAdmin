@@ -171,6 +171,7 @@
 {% if not edit %}
 <script type="text/javascript">	
 	
+	// function sets the salary band drop down options based from specified start date
 	function populate_salary_band() {
       
 	  	var date = moment($("#{{rse_form.employed_from.id_for_label}}").val(), 'DD/MM/YYYY');
