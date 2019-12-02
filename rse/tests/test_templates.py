@@ -72,7 +72,6 @@ class SeleniumTemplateTest(LiveServerTestCase):
             # need a single RSE user to view pages
             u = User.objects.create_user(username='user2', email='rse@rseadmin.com', password='12345', first_name="RSE", last_name="Person")
             rse = RSE(user=u)
-            rse.employed_from = date(2017, 1, 1)
             rse.employed_until = date(2025, 1, 1)
             rse.save()
 

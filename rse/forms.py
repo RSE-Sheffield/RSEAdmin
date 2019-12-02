@@ -186,7 +186,9 @@ class ProjectAllocationForm(forms.ModelForm):
         # Check that the RSE is employed for the duration of the allocation
         if cleaned_data['start'] and cleaned_data['start'] and cleaned_data['rse']:
             rse = cleaned_data['rse']
-            if rse.employed_from > cleaned_data['start']:
+            if not rse.employed_from:
+                errors['start'] = ('RSE does not have a start date of employment (i.e. no salary grade change)')
+            elif rse.employed_from > cleaned_data['start']:
                 errors['start'] = ('Allocation start date is before RSE is employed')
             if rse.employed_until < cleaned_data['end']:
                 errors['end'] = ('Allocation end date is after RSE is employed')
@@ -476,13 +478,12 @@ class EditRSEUserForm(forms.ModelForm):
     Form to edit an RSE users. This is used alongside the new user form so does not extend it.
     """
     
-    employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
 
     class Meta:
         model = RSE
-        fields = ['employed_from', 'employed_until']
+        fields = ['employed_until']
 
 
 class NewRSEUserForm(forms.ModelForm):    
@@ -493,24 +494,11 @@ class NewRSEUserForm(forms.ModelForm):
     
     employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
-    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=False, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))           # triggers dynamic filter in JS
     salary_band = forms.ModelChoiceField(queryset = SalaryBand.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'})) # dynamically filtered (JS)
  
     class Meta:
         model = RSE
-        fields = ['employed_from', 'employed_until']
-
-    def save(self, commit=True):
-        """ Override save to make user a superuser """
-        rse = super(NewRSEUserForm, self).save(commit=False)
-        # commit
-        if commit:
-            rse.save()
-            # create an initial salary grade change
-            if self.cleaned_data["salary_band"]:
-                sgc = SalaryGradeChange(rse=rse, salary_band=self.cleaned_data["salary_band"])
-                sgc.save()
-        return rse
+        fields = ['employed_until']
 
     def clean(self):
         """
@@ -519,19 +507,10 @@ class NewRSEUserForm(forms.ModelForm):
         cleaned_data=super(NewRSEUserForm, self).clean()
         errors = {}
 
-        if cleaned_data['employed_from'] and cleaned_data['year']:
-            y = cleaned_data['year'].year
-            ef = cleaned_data['employed_from']
+        if cleaned_data['employed_from'] and cleaned_data['employed_until']:
+            if cleaned_data['employed_from'] > cleaned_data['employed_until']:
+                errors['year'] = ('Employed until date can not be later than employed from date!')
 
-            # Check that the salary grade change is not before the RSE is employed
-            if ef.month >= 8:
-                # rse employed from date is after 1st august
-                if y != ef.year:
-                    errors['year'] = ('Proposed salary grade change not in the financial year in which the rse employment starts')
-            else:
-                # rse employed from date is before august (start of financial year)
-                if y+1 != ef.year:
-                    errors['year'] = ('Proposed salary grade change not in the financial year in which the rse employment starts')
         if errors:
             raise ValidationError(errors)
         
@@ -623,7 +602,6 @@ class SalaryGradeChangeForm(forms.ModelForm):
 
 
         if cleaned_data['rse'] and cleaned_data['date']:
-            employed_from = cleaned_data['rse'].employed_from
             employed_until = cleaned_data['rse'].employed_until
             d = cleaned_data['date']
 
@@ -634,9 +612,7 @@ class SalaryGradeChangeForm(forms.ModelForm):
             if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=financial_year):
                  errors['date'] = ('A salary grade change for the specified year already exists for the RSE!')
 
-            # Check that the salary grade change is not before or after the RSE is employed
-            if d < employed_from:
-                errors['date'] = ('Proposed salary grade change is before the rse is employed')
+            # Check that the salary grade change is not after the RSE is employed
             if d > employed_until:
                 errors['date'] = ('Proposed salary grade change is after the rse is employed')
 

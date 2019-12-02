@@ -37,7 +37,7 @@
 						<tr>
 							<td>{{ rse.user.first_name }} {{ rse.user.last_name }}</td>
 							<td>{{ rse.user.username }}</td>
-							<td>{{ rse.employed_from }}</td>
+							<td>{{ rse.employed_from|default_if_none:"" }}</td>
 							<td>{{ rse.employed_until }}</td>
 							<td>
 								{% if rse.current_employment %}

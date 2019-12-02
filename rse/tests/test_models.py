@@ -20,7 +20,6 @@ def setup_user_and_rse_data():
     # save rse and user in class dict
     user = User.objects.create_user(username='testuser', password='12345')
     rse = RSE(user=user)
-    rse.employed_from = date(2017, 1, 1)
     rse.employed_until = date(2025, 1, 1)
     rse.save()
 
@@ -28,7 +27,6 @@ def setup_user_and_rse_data():
     # employed for 10 months (spanning grade change)
     user = User.objects.create_user(username='testuser2', password='12345')
     rse = RSE(user=user)
-    rse.employed_from = date(2018, 1, 1)
     rse.employed_until = date(2018, 10, 1)
     rse.save()
 
@@ -420,6 +418,7 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.year.year, 2018)
 
         # Check salary for rse (testuser2) employed at G1.1 (2017) from 1/1/2018 at a date just after second salary grade change
+        # Note: The fact that the RSE is no longer employed does not change the projected grade point
         # Should be G1.3 2018 (i.e. manual salary grade change with no increment)
         sb = sgc.salary_band_at_future_date(date(2019, 1, 1))
         self.assertEqual(sb.grade, 1)
@@ -427,6 +426,7 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.year.year, 2018)
 
         # Check salary for rse (testuser2) employed at G1.1 (2017) from 1/1/2018 at a date just after second salary grade change
+        # Note: The fact that the RSE is no longer employed does not change the projected grade point
         # Should be G1.4 2019 (i.e. increment and year increase from last salary grade change)
         sb = sgc.salary_band_at_future_date(date(2020, 1, 1))
         self.assertEqual(sb.grade, 1)

@@ -328,18 +328,26 @@ class RSE(models.Model):
     RSE represents a RSE staff member within the RSE team
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    employed_from = models.DateField()
     employed_until = models.DateField()
 
-    
+    @property 
+    def employed_from(self):
+        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('date')
+        if len(sgcs) > 0:
+            return sgcs[0].date
+        else:
+           return None
 
     @property
     def current_employment(self):
         """
         Is the staff member currently employed
         """
-        now = timezone.now().date()
-        return self.employed_from < now and self.employed_until > now
+        if not self.employed_from:
+            return False
+        else:
+            now = timezone.now().date()
+            return self.employed_from < now and self.employed_until > now
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name}"
@@ -350,11 +358,11 @@ class RSE(models.Model):
         now = timezone.now().date()
         return sum(a.percentage for a in RSEAllocation.objects.filter(rse=self, start__lte=now, end__gt=now, project__status='F'))
 
-    def lastSalaryGradeChange(self, date: date = timezone.now()):
+    def lastSalaryGradeChange(self, date: date = timezone.now().date()):
         """
         Gets the last salary grade change before the specified date (i.e. the last appropriate grade change)
         """
-        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
+        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-date')
         for sgc in sgcs:
             if sgc.date <= date:
                 return sgc
@@ -365,7 +373,7 @@ class RSE(models.Model):
         """
         Gets the last salary grade change before the specified date (i.e. the last appropriate grade change)
         """
-        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('-salary_band__year')
+        sgcs = SalaryGradeChange.objects.filter(rse=self).order_by('date')
         if len(sgcs) > 0:
             return sgcs[0]
         else:
@@ -383,6 +391,10 @@ class RSE(models.Model):
         """
         Returns True is the rse employment starts in the given financial year
         """
+
+        if not self.employed_from:
+            return False
+
         if self.employed_from.month >= 8:
             if self.employed_from.year == year:
                 return True
@@ -395,6 +407,10 @@ class RSE(models.Model):
                 return False
 
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+
+        # catch early case where there are no salary grade changes
+        if not self.employed_from:
+            return SalaryValue()
 
         # Restrict from and until dates based off employment start and end
         if self.employed_from > from_date:

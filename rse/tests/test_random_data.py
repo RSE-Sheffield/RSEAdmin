@@ -31,7 +31,6 @@ def random_user_and_rse_data():
     for i in range(10):
         u = User.objects.create_user(username=f"user{i}", password='12345', first_name=names[i][0], last_name=names[i][1])
         rse = RSE(user=u)
-        rse.employed_from = date(2017, 1, 1)
         rse.employed_until = date(2025, 1, 1)
         rse.save()
 

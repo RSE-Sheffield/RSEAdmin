@@ -37,9 +37,9 @@ def index_admin(request: HttpRequest) -> HttpResponse:
     view_dict['now'] = now
 
     # HIGHTLIGHT: team capacity
-    rses = RSE.objects.filter(employed_from__lte=now, employed_until__gt=now)
+    rses = [x for x in RSE.objects.filter() if x.current_employment]
     try:
-        average_capacity = sum(rse.current_capacity for rse in rses) / rses.count()
+        average_capacity = sum(rse.current_capacity for rse in rses) / len(rses)
     except ZeroDivisionError:
         average_capacity = 0
 
@@ -247,9 +247,9 @@ def user_new_rse(request: HttpRequest) -> HttpResponse:
             rse.user = user
             rse.save()
             # create a salary grade change for RSE
-            if rse_form.cleaned_data["salary_band"]:
-                sgc = SalaryGradeChange(rse=rse, salary_band=rse_form.cleaned_data["salary_band"])
-                sgc.save()
+            sgc = SalaryGradeChange(rse=rse, date=rse_form.cleaned_data["employed_from"], salary_band=rse_form.cleaned_data["salary_band"])
+            sgc.save()
+            # confirmation message
             messages.add_message(request, messages.SUCCESS, f'New RSE user {user.username} created.')
             # Go to view of RSE salary grade changes
             return HttpResponseRedirect(reverse_lazy('rse_salary', kwargs={'rse_username': user.username}))
@@ -260,6 +260,7 @@ def user_new_rse(request: HttpRequest) -> HttpResponse:
         
     view_dict['user_form'] = user_form
     view_dict['rse_form'] = rse_form
+    view_dict['edit'] = False   # form is nor new RSE not edit
 
     return render(request, 'user_new_rse.html', view_dict)
 
