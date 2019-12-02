@@ -1685,12 +1685,7 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
 
     # get the remaining FTE days for rse given remaining budget
     try:
-        # get the last salary grade change before the start date of the project
-        last_sgc = rse.lastSalaryGradeChange(date=start_date)
-        # get the salary band of the rse at the start date
-        sb = last_sgc.salary_band_at_future_date(start_date)
-        # project salary to find remaining days
-        days = sb.days_from_budget(start_date, float(remaining_budget), float(percent))
+        days = rse.days_from_budget(start_date, float(remaining_budget), float(percent))
     except ValueError:
         return JsonResponse({'days': 0})
 
