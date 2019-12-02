@@ -24,7 +24,7 @@
 			<div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Financial Summary</h3>
-					<p><i>Note: Service expendature (e.g. equipment and travel) is not included.</i></p>
+					<p><i>Note: Service expenditure (e.g. equipment and travel) is not included.</i></p>
 				</div>
 				<div class="box-body">
 					<table id="projects" class="table table-hover">
@@ -78,7 +78,7 @@
 								<td><span class="pull-right"><a href="{% url 'projects_income_summary' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Overheads Generated from Projects"><i class="fa fa-calculator"></i></a></span></td>
 							</tr>
 							<tr>
-								<td colspan="2">Total Income and Commitements</td>
+								<td colspan="2">Total Income and Commitments</td>
 								<td><strong>£{{income_total|floatformat:2|intcomma}}</strong></td>
 								<td></td>
 							</tr>
