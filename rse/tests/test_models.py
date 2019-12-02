@@ -30,6 +30,12 @@ def setup_user_and_rse_data():
     rse.employed_until = date(2018, 10, 1)
     rse.save()
 
+    # create a user to test salary band estimations
+    user = User.objects.create_user(username='testuser3', password='12345')
+    rse = RSE(user=user)
+    rse.employed_until = date(2025, 10, 1)
+    rse.save()
+
 
 def setup_salary_and_banding_data():
     """
@@ -99,9 +105,14 @@ def setup_salary_and_banding_data():
 
     # Create a salary grade change on 1st january to test for double increments
     rse2 = RSE.objects.get(user__username='testuser2')
-    sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=date(2018, 1, 1))    # initial salary grade change matches starting employment date
+    sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=date(2018, 1, 1)) 
     sgc3.save()
     sgc4 = SalaryGradeChange(rse=rse2, salary_band=sb13_2018, date=date(2019, 1, 1))
+    sgc4.save()
+
+    # Create a salary grade change on 1st january to test for double increments
+    rse3 = RSE.objects.get(user__username='testuser3')
+    sgc4 = SalaryGradeChange(rse=rse3, salary_band=sb11_2019, date=sb11_2019.year.start_date()) 
     sgc4.save()
 
 
@@ -205,7 +216,7 @@ class SalaryCalculationTests(TestCase):
         self.rse = RSE.objects.get(user=self.user)
 
 
-    def test_salary_finacial_year_span(self):
+    def test_salary_financial_year_span(self):
         """
         Simple tests to check the to see if dates span the financial year.
         """
@@ -433,6 +444,37 @@ class SalaryCalculationTests(TestCase):
         self.assertEqual(sb.grade_point, 4)
         self.assertEqual(sb.year.year, 2019)
 
+        # Get initial test data from DB for testuser3
+        # first grade change is for 2019 on salary band 1.1 at 1/8/2019
+        sgc = SalaryGradeChange.objects.filter(rse__user__username="testuser3")[0]  
+
+        # Check to ensure that salary band salaries are correctly estimated
+        # Expected output is G1.1 (no increment as first year of employment) 
+        # Salary should received 3% interest from as in 2020 financial year
+        sb = sgc.salary_band_at_future_date(date(2020, 8, 1))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 1)
+        self.assertEqual(sb.year.year, 2019)    # estimated 2020
+        self.assertAlmostEqual(float(sb.salary), 1002.0*1.03, places=2)
+
+        # Check to ensure that salary band salaries are correctly estimated
+        # Expected output is G1.2 (no increment in first year but increment subsequent years) 
+        # Salary should received 3% interest from as in 2020 financial year
+        sb = sgc.salary_band_at_future_date(date(2020, 8, 1))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 1)
+        self.assertEqual(sb.year.year, 2019)    # estimated 2020
+        self.assertAlmostEqual(float(sb.salary), 1002.0*(1.03**1), places=2)
+
+        # Check to ensure that salary band salaries are correctly estimated
+        # Expected output is G1.2 (no increment in first year but increment subsequent years) 
+        # Salary should received 3% compound interest for 2 years as in 2020 financial year
+        sb = sgc.salary_band_at_future_date(date(2021, 8, 1))
+        self.assertEqual(sb.grade, 1)
+        self.assertEqual(sb.grade_point, 2)
+        self.assertEqual(sb.year.year, 2019)    # estimated 2020
+        self.assertAlmostEqual(float(sb.salary), 2002.0*(1.03**2), places=2)
+
     
     def test_date_in_financial_year(self):
         """
@@ -461,8 +503,6 @@ class SalaryCalculationTests(TestCase):
         Does not test for RSE staff costs which have to account also for salary grade changes (as no salary grade changes are present)
         """
 
-        # TODO: Salary band can not be used to get a staff cost as it will not consider salary grade changes
-        
         # Get initial test data from DB
         # first grade change is for 2017 on salary band 1.1 with salary of 1000
         sgc = SalaryGradeChange.objects.filter(rse=self.rse)[0]

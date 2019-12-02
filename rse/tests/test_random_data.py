@@ -267,7 +267,8 @@ class ProjectAllocationTests(TestCase):
     def test_accumulated_project_costs(self):
         """
         Tests the project costs to ensure this matches the allocation costs
-        Can fail if allocations exist outside of project or if staff cost functions have discrepancies
+        Can fail if staff cost functions have discrepancies.
+        Assumes that project starting salary is same as each rses starting salary.
         """
         
         # Test allocated projects (randomly generated fields)

@@ -116,11 +116,19 @@ class SalaryBand(models.Model):
             g = self.grade
             gp = self.grade_point + 1
             y = self.year.year
-            sb = SalaryBand.objects.filter(grade=g, grade_point=gp, year__year=y)  # order by year?
+            sbs = SalaryBand.objects.filter(grade=g, grade_point=gp, year__year=y)  # order by year?
 
             # Result of database query should be unique if next years data is available
-            if sb:
-                return sb[0]
+            if sbs:
+                sb = sbs[0]
+
+                # adjust object if current salary band is based off estimates (this can occur for salaries projecting into future)
+                if hasattr(self, 'estimated'):
+                    sb.estimated = True
+                    sb.inflation_years = self.inflation_years
+                    sb.salary = round(Decimal(float(sb.salary) * (1.03**sb.inflation_years)), 2)  # compound interest
+
+                return sb
             raise ObjectDoesNotExist('Incomplete salary data in database. Could not find a valid increment for current salary band.')
 
         # salary band does not increment so return self
@@ -148,6 +156,11 @@ class SalaryBand(models.Model):
             # Assume 3% inflation (modify salary but DO NOT SAVE)
             self.salary = round(Decimal(float(self.salary) * 1.03), 2)
             self.estimated = True
+            # track years fo compound inflation
+            if hasattr(self, 'inflation_years'):
+                self.inflation_years += 1
+            else:
+                self.inflation_years = 1
             return self
 
     @staticmethod
@@ -206,7 +219,8 @@ class SalaryBand(models.Model):
         
         Function operates in same way as salary_band_at_future_date
 
-        TODO: Salary band can not calculate a staff cost as it will not account for salary grade changes
+        Note: Should only be used for costing non allocated staff time as RSEs may have increments which need 
+        to be considered in the costing
         """
 
         # Check for obvious stupid
@@ -407,6 +421,14 @@ class RSE(models.Model):
                 return False
 
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+        """
+        Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
+        year as well as any additional salary grade changes. It works by iterating through chargable periods looking for 
+        changes in staff salary. 
+
+        This is different to a salary bad staff cost as it also considers salary grade changes which may be the result of
+        promotion or exceptional increments.
+        """
 
         # catch early case where there are no salary grade changes
         if not self.employed_from:
@@ -423,8 +445,6 @@ class RSE(models.Model):
 
         # Get the salary band at the start date of the cost query (will skip increments if required)
         sb = sgc.salary_band_at_future_date(from_date)
-
-        # TODO: skip increments if from date is start of employment
 
         # Now calculate the staff costs through iteration of chargeable periods (applying any increments)
         # Note salary band data may be estimated in future years so the date of increment must be tracked rather than just the salary band
@@ -1021,13 +1041,8 @@ class RSEAllocation(models.Model):
         if end is None or end > self.end:
             end = self.end
 
-        # Get the last salary grade charge for the RSE at the start of the cost query
-        sgc = self.rse.lastSalaryGradeChange(start)
-        # Get the salary band at the start date of the cost query
-        sb = sgc.salary_band_at_future_date(start)
-
         # calculate the staff cost of the RSE between the date range given the salary band at the start of the cost query
-        salary_cost = sb.staff_cost(start, end, self.percentage)
+        salary_cost = self.rse.staff_cost(start, end, self.percentage)
 
         return salary_cost
 
