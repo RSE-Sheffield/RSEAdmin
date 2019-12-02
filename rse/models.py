@@ -331,6 +331,8 @@ class RSE(models.Model):
     employed_from = models.DateField()
     employed_until = models.DateField()
 
+    
+
     @property
     def current_employment(self):
         """

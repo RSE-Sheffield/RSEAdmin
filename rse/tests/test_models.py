@@ -521,7 +521,7 @@ class SalaryCalculationTests(TestCase):
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost after to 1/10/2018
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, 748.11, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, 748.11, places=2) 
 
 class ProjectAllocationTests(TestCase):
     """

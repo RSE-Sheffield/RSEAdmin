@@ -600,7 +600,7 @@ class SalaryGradeChangeForm(forms.ModelForm):
     Class represents a form for a salary grade change for an RSE
     """
 
-    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    date =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
     def __init__ (self, *args, **kwargs):
         """ Set the initial data """
@@ -621,31 +621,32 @@ class SalaryGradeChangeForm(forms.ModelForm):
         cleaned_data=super(SalaryGradeChangeForm, self).clean()
         errors = {}
 
-        if cleaned_data['rse'] and cleaned_data['year']:
-            y = cleaned_data['year'].year
-            ef = cleaned_data['rse'].employed_from
+
+        if cleaned_data['rse'] and cleaned_data['date']:
+            employed_from = cleaned_data['rse'].employed_from
+            employed_until = cleaned_data['rse'].employed_until
+            d = cleaned_data['date']
 
             # Check that there is not already a salary grade change for the specified year
-            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=y):
-                 errors['year'] = ('A salary grade change for the specified year already exists for the RSE!')
+            financial_year = d.year
+            if d.month < 8:
+                financial_year -= 1
+            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=financial_year):
+                 errors['date'] = ('A salary grade change for the specified year already exists for the RSE!')
 
-            # Check that the salary grade change is not before the RSE is employed
-            if ef.month >= 8:
-                # rse employed from date is after 1st august
-                if y < ef.year:
-                    errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
-            else:
-                # rse employed from date is before august (start of financial year)
-                if y+1 < ef.year:
-                    errors['year'] = ('Proposed salary grade change is in a financial year before the rse is employed')
+            # Check that the salary grade change is not before or after the RSE is employed
+            if d < employed_from:
+                errors['date'] = ('Proposed salary grade change is before the rse is employed')
+            if d > employed_until:
+                errors['date'] = ('Proposed salary grade change is after the rse is employed')
+
         if errors:
             raise ValidationError(errors)
 
     class Meta:
         model = SalaryGradeChange
-        fields = ['rse', 'salary_band']
+        fields = ['rse', 'salary_band', 'date']
         widgets = {
             'rse': forms.HiddenInput(),
             'salary_band': forms.Select(attrs={'class' : 'form-control pull-right'}) # choices set dynamically
-            
         }
