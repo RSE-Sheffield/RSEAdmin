@@ -9,7 +9,7 @@ import django.utils.timezone
 def set_initial_salarygradechange_date(apps, schema_editor):
     SalaryGradeChange = apps.get_model('rse', 'SalaryGradeChange')
     for sgc in SalaryGradeChange.objects.all():
-        sgc.date = sgc.date = datetime.date(sgc.salary_band.year.year, 8, 1) #sgc.salary_band.year.start_date()
+        sgc.date = datetime.date(sgc.salary_band.year.year, 8, 1) #sgc.salary_band.year.start_date()
         sgc.save()
 
 def revert_initial_salarygradechange_date(apps, schema_editor):
