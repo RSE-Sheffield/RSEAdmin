@@ -3,7 +3,7 @@
 
 from datetime import date, timezone
 from django.db import migrations, models
-
+import django.utils.timezone
 
 def set_initial_salarygradechange_date(apps, schema_editor):
     SalaryGradeChange = apps.get_model('rse', 'SalaryGradeChange')
