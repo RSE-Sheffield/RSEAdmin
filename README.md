@@ -118,6 +118,12 @@ mkvirtualenv --python=/usr/bin/python3.6 rseadmin-virtualenv
 (rseadmin-virtualenv)$ pip install -r requirements.txt
 ```
 
+Note: The above assumes that a upto date `requirements.txt` file exists within the repo which matches the poetry dependencies. This should always be the case however if you change any poetry dependencies the requirements file should be updated by calling (requires peotry v1+);
+
+```
+poetry export -f requirements.txt -o requirements.txt
+```
+
 Within the bash console check that your secret settings are correct using
 
 

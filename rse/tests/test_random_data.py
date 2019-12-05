@@ -31,7 +31,6 @@ def random_user_and_rse_data():
     for i in range(10):
         u = User.objects.create_user(username=f"user{i}", password='12345', first_name=names[i][0], last_name=names[i][1])
         rse = RSE(user=u)
-        rse.employed_from = date(2017, 1, 1)
         rse.employed_until = date(2025, 1, 1)
         rse.save()
 
@@ -93,7 +92,7 @@ def random_salary_and_banding_data():
 
     # Create salary grade changes
     for r in RSE.objects.all():
-        sgc1 = SalaryGradeChange(rse=r, salary_band=sb11_2017)
+        sgc1 = SalaryGradeChange(rse=r, salary_band=sb11_2017, date=sb11_2017.year.start_date())
         sgc1.save()
 
 def random_project_and_allocation_data():
@@ -268,7 +267,8 @@ class ProjectAllocationTests(TestCase):
     def test_accumulated_project_costs(self):
         """
         Tests the project costs to ensure this matches the allocation costs
-        Can fail if allocations exist outside of project or if staff cost functions have discrepancies
+        Can fail if staff cost functions have discrepancies.
+        Assumes that project starting salary is same as each rses starting salary.
         """
         
         # Test allocated projects (randomly generated fields)

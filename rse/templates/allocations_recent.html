@@ -1,0 +1,105 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+{% load humanize %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool: View Recent Allocation Changes{% endblock %}
+
+{% block page_name %}RSE Group Administration Tool: View Allocation Changes Since {{form.from_date.value}}{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-9">
+		<div class="box">
+			<div class="box-header with-border">
+              <h3 class="box-title"> Changes Since {{form.from_date.value}}</h3>
+			</div>
+			<div class="box-body table-responsive padding">
+				<table id="allocations_table" class="table table-hover">
+					<thead>
+						<tr>
+							<th id="rse">RSE</th>
+							<th id="project">Project</th>
+							<th id="start">Start</th>
+							<th id="end">End</th>
+							<th id="FTE">FTE Percentage</th>
+							<th id="created">Created</th>
+							<th id="deleted">Deleted</th>
+							<th id="more">Cost Distribution</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for a in allocations %}
+						<tr>
+							<td>{{a.rse}}</td>
+							<td>{{a.project}}</td>
+							<td>{{a.start}}</td>
+							<td>{{a.end}}</td>
+							<td>{{a.percentage}}</td>
+							<td>{{a.created_date}}</td>
+							<td>{{a.deleted_date|default_if_none:""}}</td>
+							<td><a href="{% url 'costdistribution' a.rse.user.username %}" class="pull-right btn btn-primary btn-xs">Info</a></td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	</div>
+	
+	<div class="col-md-3">
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<form method='GET' id="filter_form">
+				<div class="box-body">
+					<div class="form-group">
+						<label>Show changes from date (default 1 month ago): </label>
+						{{form.from_date}}
+					</div>
+				</div>
+				<div class="box-footer">
+					<button type="submit" class="btn btn-primary">Apply</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	
+
+
+</div>
+
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
+<script type="text/javascript">	
+//Start Date Picker
+$('#{{form.from_date.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+</script>
+{% endblock %}
+

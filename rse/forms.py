@@ -1,6 +1,8 @@
 from django import forms
 from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.core.validators import RegexValidator
+from django.conf import settings
 
 from .models import *
 
@@ -68,9 +70,22 @@ class FilterDateRangeForm(forms.Form):
     @property 
     def years(self):
         return FinancialYear.objects.all()
-        
-        
-        
+
+
+class FilterDateForm(forms.Form):
+    """
+    Class represents a date field using the javascript daterangepicker library 
+    It is specific to the RSEAdmin tool as it default date is set to settings.HOME_PAGE_DAYS_RECENT (default 30)
+    """
+
+    from_date =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+    def __init__ (self, *args, **kwargs):
+        """ Set the initial date """
+        super(FilterDateForm, self).__init__(*args, **kwargs)
+        self.initial_date = datetime.now() - timedelta(days=settings.HOME_PAGE_DAYS_RECENT)
+        self.fields['from_date'].initial = datetime.strftime(self.initial_date, '%d/%m/%Y')
+
         
 class ProjectTypeForm(forms.Form):
     """
@@ -159,6 +174,24 @@ class ProjectAllocationForm(forms.ModelForm):
     def clean(self):
         cleaned_data=super(ProjectAllocationForm, self).clean()
         errors = {}
+
+        # Check that the RSE has valid Salary data from the start date (i.e. a salary grade change exists which can be used to calculate salary)
+        if cleaned_data['start'] and cleaned_data['rse']:
+            rse = cleaned_data['rse']
+            try:
+                rse.futureSalaryBand(date=cleaned_data['start'])
+            except ValueError:
+                errors['start'] = ("The selected RSE has no salary information within the same financial year as the proposed start date")
+
+        # Check that the RSE is employed for the duration of the allocation
+        if cleaned_data['start'] and cleaned_data['start'] and cleaned_data['rse']:
+            rse = cleaned_data['rse']
+            if not rse.employed_from:
+                errors['start'] = ('RSE does not have a start date of employment (i.e. no salary grade change)')
+            elif rse.employed_from > cleaned_data['start']:
+                errors['start'] = ('Allocation start date is before RSE is employed')
+            if rse.employed_until < cleaned_data['end']:
+                errors['end'] = ('Allocation end date is after RSE is employed')
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if cleaned_data['start'] and cleaned_data['end']:
@@ -282,8 +315,16 @@ class ServiceProjectForm(forms.ModelForm):
         
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if 'start' in cleaned_data and 'end' in cleaned_data:
+            # end cant be beofre start
             if cleaned_data['start'] > cleaned_data['end'] :
                 errors['end'] = ('Project end date can not be before start date')
+
+            # duration must be long enough to complete the project
+            if cleaned_data['days']:
+                fte_days = ServiceProject.days_to_fte_days(cleaned_data['days'])
+                duration = (cleaned_data['end'] - cleaned_data['start']).days
+                if fte_days > duration:
+                    errors['end'] = (f"Project duration is not long enough for the {fte_days} fte days required to deliver {cleaned_data['days']} service days.")
         
         if errors:
             raise ValidationError(errors)
@@ -361,22 +402,35 @@ class NewUserForm(UserCreationForm):
  
     def __init__(self, *args, **kwargs):
         """ Override init to customise the UserCreationForm widget class appearance """
+
+        # see if the user form should be admin
+        self.force_admin = kwargs.pop('force_admin', None)
+
         super(NewUserForm, self).__init__(*args, **kwargs)
-        
+
         # set html attributes of fields in parent form
         self.fields['username'].widget.attrs['class'] = 'form-control'
         self.fields['password1'].widget.attrs['class'] = 'form-control'
         self.fields['password2'].widget.attrs['class'] = 'form-control'
         for fieldname in ['username', 'password1', 'password2']:
             self.fields[fieldname].help_text = None
+
+        # if forced admin
+        if self.force_admin:
+             self.fields['is_admin'].widget = forms.HiddenInput()
+
+                
+        # set regex validator on username (to comply with URL restriction using username)
+        # Why the following does not work is a complete mystery. URL regex has instead been updated to recognise @/./+/-/_ characters
+        #self.fields['username'].validators = [RegexValidator(r'[\w]+', 'Only alphanumeric characters are allowed.')]
     
- 
+
     def save(self, commit=True):
         """ Override save to make user a superuser """
         user = super(NewUserForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
         # make an admin if checked
-        if self.cleaned_data["is_admin"]:
+        if self.cleaned_data["is_admin"] or self.force_admin:
             user.is_superuser = True
         # commit
         if commit:
@@ -424,13 +478,12 @@ class EditRSEUserForm(forms.ModelForm):
     Form to edit an RSE users. This is used alongside the new user form so does not extend it.
     """
     
-    employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
 
     class Meta:
         model = RSE
-        fields = ['employed_from', 'employed_until']
+        fields = ['employed_until']
 
 
 class NewRSEUserForm(forms.ModelForm):    
@@ -441,24 +494,25 @@ class NewRSEUserForm(forms.ModelForm):
     
     employed_from =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     employed_until =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
-    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=False, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))           # triggers dynamic filter in JS
     salary_band = forms.ModelChoiceField(queryset = SalaryBand.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'})) # dynamically filtered (JS)
  
     class Meta:
         model = RSE
-        fields = ['employed_from', 'employed_until']
+        fields = ['employed_until']
 
-    def save(self, commit=True):
-        """ Override save to make user a superuser """
-        rse = super(NewRSEUserForm, self).save(commit=False)
-        # commit
-        if commit:
-            rse.save()
-            # create an initial salary grade change
-            if self.cleaned_data["salary_band"]:
-                sgc = SalaryGradeChange(rse=rse, salary_band=self.cleaned_data["salary_band"])
-                sgc.save()
-        return rse
+    def clean(self):
+        """
+        Check that the salary grade change is for the correct year of employment
+        """
+        cleaned_data=super(NewRSEUserForm, self).clean()
+        errors = {}
+
+        if cleaned_data['employed_from'] and cleaned_data['employed_until']:
+            if cleaned_data['employed_from'] > cleaned_data['employed_until']:
+                errors['year'] = ('Employed until date can not be later than employed from date!')
+
+        if errors:
+            raise ValidationError(errors)
         
 class NewSalaryBandForm(forms.ModelForm):
     """
@@ -525,7 +579,7 @@ class SalaryGradeChangeForm(forms.ModelForm):
     Class represents a form for a salary grade change for an RSE
     """
 
-    year = forms.ModelChoiceField(queryset = FinancialYear.objects.all(), empty_label=None, required=True, widget=forms.Select(attrs={'class' : 'form-control pull-right'}))
+    date =  forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     
     def __init__ (self, *args, **kwargs):
         """ Set the initial data """
@@ -542,12 +596,33 @@ class SalaryGradeChangeForm(forms.ModelForm):
         # not required as query set will be dynamically loaded via ajax
         #self.fields['salary_band'].queryset = SalaryBand.objects.all()
 
-    
+    def clean(self):
+        cleaned_data=super(SalaryGradeChangeForm, self).clean()
+        errors = {}
+
+
+        if cleaned_data['rse'] and cleaned_data['date']:
+            employed_until = cleaned_data['rse'].employed_until
+            d = cleaned_data['date']
+
+            # Check that there is not already a salary grade change for the specified year
+            financial_year = d.year
+            if d.month < 8:
+                financial_year -= 1
+            if SalaryGradeChange.objects.filter(rse=cleaned_data['rse'], salary_band__year=financial_year):
+                 errors['date'] = ('A salary grade change for the specified year already exists for the RSE!')
+
+            # Check that the salary grade change is not after the RSE is employed
+            if d > employed_until:
+                errors['date'] = ('Proposed salary grade change is after the rse is employed')
+
+        if errors:
+            raise ValidationError(errors)
+
     class Meta:
         model = SalaryGradeChange
-        fields = ['rse', 'salary_band']
+        fields = ['rse', 'salary_band', 'date']
         widgets = {
             'rse': forms.HiddenInput(),
             'salary_band': forms.Select(attrs={'class' : 'form-control pull-right'}) # choices set dynamically
-            
         }

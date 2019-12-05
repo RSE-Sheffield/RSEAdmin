@@ -5,6 +5,7 @@
 
 {% block stylesheets %}
 {{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
 
@@ -14,7 +15,7 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-xs-9">
+	<div class="col-md-9">
 		<div class="box">
 			<div class="box-header with-border">
               <h3 class="box-title"> {{year}} Salary Grade Changes</h3>
@@ -24,8 +25,8 @@
 				<table id="grade_point_table" class="table table-hover">
 					<thead>
 						<tr>
-							<th id="year">Year</th>
-							<th id="grade">Grade and Point</th>
+							<th id="date">Date of change</th>
+							<th id="grade">Grade and Point (Year)</th>
 							<th id="salary">Salary</th>
 							<th id="buttons"></th>
 						</tr>
@@ -33,8 +34,8 @@
 					<tbody>
 						{% for sgc in sgcs %}
 						<tr>
-						    <td>{{sgc.salary_band.year}}</td>
-							<td>G{{ sgc.salary_band.grade }}.{{ sgc.salary_band.grade_point }}</td>
+							<td>{{sgc.date}}</td>
+							<td>G{{ sgc.salary_band.grade }}.{{ sgc.salary_band.grade_point }} ({{sgc.salary_band.year}})</td>
 							<td>£{{ sgc.salary_band.salary|intcomma }}</td>
 							<td align="right">  
 								<button type="button" class="btn btn-danger btn-xs" data-val="{{sgc.id}}" data-toggle="modal" data-target="#delete_modal">Delete</button>
@@ -55,8 +56,8 @@
 						{{ form.rse }}
 
 						<div class="form-group">
-							{{ form.year.label_tag }}
-							{{ form.year }}
+							{{ form.date.label_tag }}
+							{{ form.date }}
 						</div>
 
 						<div class="form-group">
@@ -126,15 +127,32 @@
 
 {% block javascript %}
 {{ block.super}}
+<script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
+<script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
 <script type="text/javascript">	
+	//Start Date Picker
+	$('#{{form.date.id_for_label}}').daterangepicker({
+		singleDatePicker: true,
+		locale: {
+			"format": "DD/MM/YYYY"
+		},
+	});
+
 	
-	function populate_salary_band(year) {
-      var url = "{% url 'ajax_salary_band_by_year' %}"
+	function populate_salary_band() {
+      
+	  	var date = moment($("#{{form.date.id_for_label}}").val(), 'DD/MM/YYYY');
+		var fy_year = date.year()
+		// Month is zero indexed (WTF!)
+		if (date.month() < 7)
+			fy_year = date.year()-1
+	  
+	  var url = "{% url 'ajax_salary_band_by_year' %}"
 
       $.ajax({
         url: url,
         data: {
-          'year': year       
+          'year': fy_year       
         },
         success: function (data) {
           $("#id_salary_band").html(data); 
@@ -151,17 +169,16 @@
 		$('#id_salarygradechange_delete_form').attr('action', url.toString());
 	});
 
+
 	// set values in salary band options form based off a responsive ajax query
-	$("#id_year").change(function(){
-		var year = $(this).val();
-		populate_salary_band(year);
+	$('#{{form.date.id_for_label}}').change(function(){
+		populate_salary_band();
 	});
 
 	//set initial values of salary band options
 	$(document).ready(function()
     {
-		var year = $("#id_year").val();
-        populate_salary_band(year);
+        populate_salary_band();
     });
 </script>
 {% endblock %}
