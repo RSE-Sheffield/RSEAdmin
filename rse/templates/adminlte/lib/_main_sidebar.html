@@ -47,6 +47,7 @@
 			</span>
 		</a>
 		<ul class="treeview-menu" style="">
+			<li {% if request.resolver_match.url_name == "allocations_recent"%} class="active" {% endif %} ><a href="{% url 'allocations_recent' %}"><i class="fa fa-circle-o"></i>Recent Allocations</a></li>
 			<li {% if request.resolver_match.url_name == "costdistributions"%} class="active" {% endif %} ><a href="{% url 'costdistributions' %}"><i class="fa fa-circle-o"></i>Cost Distributions</a></li>
 			<li {% if request.resolver_match.url_name == "rses_staffcosts"%} class="active" {% endif %} ><a href="{% url 'rses_staffcosts' %}"><i class="fa fa-circle-o"></i>RSE Costs</a></li>
 			<li {% if request.resolver_match.url_name == "serviceoutstanding"%} class="active" {% endif %} ><a href="{% url 'serviceoutstanding' %}"><i class="fa fa-circle-o"></i>Service Invoicing</a></li>

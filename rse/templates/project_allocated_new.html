@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Allocated Project{% endblock %}
-{% block page_name %}}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Allocated Project{% endblock %}
+{% block page_name %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Allocated Project{% endblock %}
 {% block content %}
 
 	<div class ="row">
@@ -142,6 +142,7 @@
 				</div>
 				<div class="modal-body">
 				<p>Deleting a project will delete ALL allocations and financial records associated with this project!</p>
+				<p>Note: Any allocations will be completely removed from the database (not just hidden). This may effect cost distributions without any way to tell. </p>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Cancel</button>
@@ -184,6 +185,43 @@
 
 
 
+</script>
+
+
+<script type="text/javascript">	
+	
+	// function sets the salary band drop down options based from specified start date
+	function populate_salary_band() {
+      
+	  	var date = moment($("#{{form.start.id_for_label}}").val(), 'DD/MM/YYYY');
+		var fy_year = date.year()
+		// Month is zero indexed (WTF!)
+		if (date.month() < 7)
+			fy_year = date.year()-1
+	  
+	  var url = "{% url 'ajax_salary_band_by_year' %}"
+
+      $.ajax({
+        url: url,
+        data: {
+          'year': fy_year       
+        },
+        success: function (data) {
+          $("#{{form.salary_band.id_for_label}}").html(data); 
+        }
+      });
+	}
+	
+	// set values in salary band options form based off a responsive ajax query
+	$("#{{form.start.id_for_label}}").change(function(){
+		populate_salary_band();
+	});
+
+	//set initial values of salary band options
+	$(document).ready(function()
+    {
+        populate_salary_band();
+    });
 </script>
 
 {% endblock %}

@@ -14,7 +14,7 @@
 
 {% block content %}
 <div class="row">
-	<div class="col-xs-9">
+	<div class="col-md-9">
 		<div class="box">
 			
 			<div class="box-body table-responsive padding">
@@ -37,7 +37,7 @@
 						<tr>
 							<td>{{ rse.user.first_name }} {{ rse.user.last_name }}</td>
 							<td>{{ rse.user.username }}</td>
-							<td>{{ rse.employed_from }}</td>
+							<td>{{ rse.employed_from|default_if_none:"" }}</td>
 							<td>{{ rse.employed_until }}</td>
 							<td>
 								{% if rse.current_employment %}

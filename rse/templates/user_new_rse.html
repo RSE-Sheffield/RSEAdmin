@@ -63,6 +63,7 @@
 							</label>
 						</div>
 						
+						{% if not edit %}
 						<div class="form-group">
 							<label>{{rse_form.employed_from.label_tag}}</label>
 							<div class="input-group">
@@ -72,6 +73,7 @@
 								{{ rse_form.employed_from }}
 							</div>
 						</div>
+						{% endif %}
 						
 						<div class="form-group">
 							<label>{{rse_form.employed_until.label_tag}}</label>
@@ -83,15 +85,12 @@
 							</div>
 						</div>
 
-						<div class="form-group">
-							{{ rse_form.year.label_tag }}
-							{{ rse_form.year }}
-						</div>
-
+						{% if not edit %}
 						<div class="form-group">
 							{{ rse_form.salary_band.label_tag }}
 							{{ rse_form.salary_band }}
 						</div>
+						{% endif %}
 							
 				</div>
 				<div class="box-footer">
@@ -146,6 +145,8 @@
 <script language="javascript" src="{% static 'daterangepicker/moment.min.js' %}"></script>
 <script language="javascript" src="{% static 'daterangepicker/daterangepicker.js' %}"></script>
 <script type="text/javascript">	
+
+	{% if not edit %}
 	//Start Date Picker
 	$('#{{rse_form.employed_from.id_for_label}}').daterangepicker({
 		singleDatePicker: true,
@@ -153,6 +154,8 @@
 			"format": "DD/MM/YYYY"
 		},
 	});
+	{% endif %}
+
 	//End date picker
 	$('#{{rse_form.employed_until.id_for_label}}').daterangepicker({
 		singleDatePicker: true,
@@ -165,15 +168,24 @@
 
 </script>
 
+{% if not edit %}
 <script type="text/javascript">	
 	
-	function populate_salary_band(year) {
-      var url = "{% url 'ajax_salary_band_by_year' %}"
+	// function sets the salary band drop down options based from specified start date
+	function populate_salary_band() {
+      
+	  	var date = moment($("#{{rse_form.employed_from.id_for_label}}").val(), 'DD/MM/YYYY');
+		var fy_year = date.year()
+		// Month is zero indexed (WTF!)
+		if (date.month() < 7)
+			fy_year = date.year()-1
+	  
+	  var url = "{% url 'ajax_salary_band_by_year' %}"
 
       $.ajax({
         url: url,
         data: {
-          'year': year       
+          'year': fy_year       
         },
         success: function (data) {
           $("#id_salary_band").html(data); 
@@ -182,17 +194,17 @@
 	}
 	
 	// set values in salary band options form based off a responsive ajax query
-	$("#id_year").change(function(){
-		var year = $(this).val();
-		populate_salary_band(year);
+	$("#{{rse_form.employed_from.id_for_label}}").change(function(){
+		populate_salary_band();
 	});
 
 	//set initial values of salary band options
 	$(document).ready(function()
     {
-		var year = $("#id_year").val();
-        populate_salary_band(year);
+        populate_salary_band();
     });
 </script>
+{% endif %}
+
 {% endif %}
 {% endblock %}

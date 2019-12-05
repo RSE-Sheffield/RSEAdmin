@@ -6,10 +6,10 @@
 # RSE Administration Tool
 
 This is a tool for tracking grant applications, managing RSE commitment and reporting on staff expenses and cost recovery.
-The site has two users types (Admin and RSE) which have different levels of permissions. RSE users can view, edit and create projects as well as see allocations to projects based on effort (i.e. days). Admin users are able to create allocations on projects (allocated by effort or budget) and view reports on group finance and staffing.
-There is a distinction between Allocated Projects (i.e. Directly incurred projects) where staff generate overheads for the university and Service Projects which are effort based and generate overheads for the group or facility.
 
 The tool is a web app written using the [Django][django] web framework (Python) and the [AdminLTE][adminlte2] theme.
+
+This readme covers installation, getting started and access to the demo site. Please refer to the [User Guide][userguide] documentation for a description of features.
 
 # Demo site
 
@@ -22,6 +22,7 @@ You can log in as either an RSE user (username of `user[0-9]` with password `123
 The site is populated with random demo data which is reset at midnight every night.
 
 ## Development install using Poetry
+
 
 To develop or test the site locally Poetry is used for dependency management. The ideal is that Poetry is simpler than using [conda][conda] and avoids manually creating a [virtualenv][virtualenv]. To configure Poetry;
 
@@ -127,6 +128,12 @@ mkvirtualenv --python=/usr/bin/python3.6 rseadmin-virtualenv
 (rseadmin-virtualenv)$ pip install -r requirements.txt
 ```
 
+Note: The above assumes that a upto date `requirements.txt` file exists within the repo which matches the poetry dependencies. This should always be the case however if you change any poetry dependencies the requirements file should be updated by calling (requires peotry v1+);
+
+```
+poetry export -f requirements.txt -o requirements.txt
+```
+
 Within the bash console check that your secret settings are correct using
 
 
@@ -193,3 +200,4 @@ A [separate repo is available](https://github.com/RSE-Sheffield/rseadmin-ansible
 [django]: https://www.djangoproject.com/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/
 [poetry]: https://poetry.eustace.io/
+[userguide]: https://rseadmin.readthedocs.io/en/latest/
