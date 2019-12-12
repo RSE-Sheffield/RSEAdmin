@@ -30,8 +30,8 @@
 							<th id="start">Start</th>
 							<th id="end">End</th>
 							<th id="schedule">Schedule</th>
-							<th id="department">Department</th>
-							<th id="progress">Commitment</th>
+							<th id="department">Client</th>
+							<th id="progress">Commitment (Effort)</th>
 							<th id="progress_label"></th>
 							<th id="more"></th>
 						</tr>
@@ -49,7 +49,7 @@
 							<td>{{ p.start|date:'Y-m-d' }}</td>
 							<td>{{ p.end|date:'Y-m-d' }}</td>
 							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
-							<td>{{ p.client.department }}</td>
+							<td>{{ p.client.name }} ({{ p.client.department }})</td>
 							<td>
 								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
 									<div class="progress-bar {% if p.percent_allocated < 50 %}progress-bar-danger{% elif p.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated|percent}}%"></div>
