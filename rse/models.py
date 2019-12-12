@@ -378,6 +378,19 @@ class RSE(models.Model):
             else:
                 return False
 
+    def employed_in_period(self, from_date: date, until_date: date):
+        """
+        Returns True is the rse employment within the specified period
+        """
+
+        if not self.employed_from:
+            return False
+
+        if self.employed_from < until_date and self.employed_until > from_date:
+            return True
+        else:
+            return False
+
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
         """
         Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
