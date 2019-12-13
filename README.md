@@ -3,7 +3,7 @@
 [![Documentation Status](https://readthedocs.org/projects/rseadmin/badge/?version=latest)](https://rseadmin.readthedocs.io/en/latest/?badge=latest)
     
 
-# RSE Administration Tool
+# RSE Administration Tool 
 
 This is a tool for tracking grant applications, managing RSE commitment and reporting on staff expenses and cost recovery.
 

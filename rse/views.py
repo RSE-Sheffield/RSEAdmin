@@ -1321,7 +1321,7 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
 
     rses_costs = {}
     total_staff_salary = total_recovered_staff_cost = total_internal_project_staff_cost = total_non_recovered_cost = total_staff_liability = 0
-    for rse in (rse for rse in RSE.objects.all() if rse.current_employment):
+    for rse in (rse for rse in RSE.objects.all() if rse.employed_in_period(from_date, until_date)):
         # get any allocations for rse
         allocations = RSEAllocation.objects.filter(rse=rse).filter(q)
         try:
@@ -1794,7 +1794,7 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
     service_income = 0
     
     # Salary Costs (all RSEs)
-    for rse in (rse for rse in RSE.objects.all() if rse.current_employment): # for all currently employed RSEs
+    for rse in (rse for rse in RSE.objects.all() if rse.employed_in_period(from_date, until_date)): # for all currently employed RSEs
         try:
             salary_costs += rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
