@@ -204,7 +204,9 @@
       $.ajax({
         url: url,
         data: {
-          'year': fy_year       
+          'year': fy_year{% if edit %},    
+		  'selected': {{ form.salary_band.value }}
+		  {% endif %} 
         },
         success: function (data) {
           $("#{{form.salary_band.id_for_label}}").html(data); 

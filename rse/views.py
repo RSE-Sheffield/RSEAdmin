@@ -866,8 +866,13 @@ def ajax_salary_band_by_year(request):
     Not required to be post logged in (publically available information)
     """
     year = request.GET.get('year')
+    selected = request.GET.get('selected')
     sbs = SalaryBand.objects.filter(year=year).order_by('year')
-    return render(request, 'includes/salaryband_options.html', {'sbs': sbs})
+    view_dict = {}
+    view_dict['sbs'] = sbs
+    if selected is not None and selected.isnumeric():
+        view_dict['selected'] = int(selected)
+    return render(request, 'includes/salaryband_options.html', view_dict)
 
 @user_passes_test(lambda u: u.is_superuser)
 def rse_salary(request: HttpRequest, rse_username: str) -> HttpResponse:
