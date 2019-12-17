@@ -25,6 +25,7 @@ PROJ_DIR = os.path.join(BASE_DIR, 'RSEAdmin')
 INSTALLED_APPS = [
     'polymorphic',
     'rse.apps.RseConfig',
+    'timetracking.apps.TimetrackingConfig',
     'django_adminlte',
     'django_adminlte_theme',
     'django.contrib.admin',

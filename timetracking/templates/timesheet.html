@@ -1,0 +1,150 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/fullcalendar/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/daygrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/timegrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/list/main.css' %}"/>
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool: Edit Timesheet{% endblock %}
+{% block page_name %}RSE Group Administration Tool: Edit Timesheet{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-9">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Calendar</h3>
+            </div>
+            <div class="box-body">
+              <div id="calendar">
+			  </div>
+			  
+			  
+            </div>
+          </div>
+        </div>
+		
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Projects</h3>
+				</div>
+				<div class="box-body">		
+					<p>Drag projects to calendar</p>
+
+					<!-- the events -->
+					<div id="external-events">
+						<div class="external-event bg-green">Lunch</div>
+						<div class="external-event bg-yellow">Go home</div>
+						<div class="external-event bg-aqua">Do homework</div>
+						<div class="external-event bg-light-blue">Work on UI design</div>
+						<div class="external-event bg-red">Sleep tight</div>
+					</div>
+				</div>
+			</div>
+		  
+        </div>
+		
+		
+		
+    </div>
+
+
+
+   
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script type="text/javascript" src="{% static 'timetracking/fullcalendar/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/interaction/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/daygrid/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/timegrid/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/list/main.js' %}"></script>
+
+<script type="text/javascript">
+	document.addEventListener('DOMContentLoaded', function() {
+		var Calendar = FullCalendar.Calendar;
+		var Draggable = FullCalendarInteraction.Draggable
+
+		/* initialize the external events
+		-----------------------------------------------------------------*/
+
+		var containerEl = document.getElementById('external-events');
+		new Draggable(containerEl, {
+			itemSelector: '.external-event',
+			eventData: function(eventEl) {
+				return {
+					title: eventEl.innerText.trim(),
+					//duration: '08:00:00'
+				}
+			}
+		});
+
+		//// the individual way to do it
+		// var containerEl = document.getElementById('external-events-list');
+		// var eventEls = Array.prototype.slice.call(
+		//   containerEl.querySelectorAll('.fc-event')
+		// );
+		// eventEls.forEach(function(eventEl) {
+		//   new Draggable(eventEl, {
+		//     eventData: {
+		//       title: eventEl.innerText.trim(),
+		//     }
+		//   });
+		// });
+
+		/* initialize the calendar
+		-----------------------------------------------------------------*/
+
+		var calendarEl = document.getElementById('calendar');
+		var bHours = {
+				daysOfWeek: [ 1, 2, 3, 4 ], // Monday - Thursday
+				startTime: '9:00', // a start time (10am in this example)
+				endTime: '17:00', // an end time (6pm in this example)
+			};
+		var calendar = new Calendar(calendarEl, {
+			plugins: [ 'interaction', 'dayGrid', 'timeGrid', 'list' ],
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+			},
+			editable: true,
+			droppable: true, // this allows things to be dropped onto the calendar
+			businessHours: bHours,
+			eventConstraint: bHours,
+			allDaySlot: false,
+			eventOverlap: false,
+			drop: function(info) {
+				if (!confirm("is this okay?")) {
+					info.revert();
+				}
+			},
+			eventResize: function(info){
+				//alert(info.event.title + " end is now " + info.event.end.toISOString());
+
+				if (!confirm("is this okay?")) {
+					info.revert();
+				}
+			}
+		});
+		calendar.render();
+
+	});
+	
+</script>
+	
+{% endblock %}
