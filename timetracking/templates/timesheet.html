@@ -126,6 +126,20 @@
 			//eventConstraint: "businessHours",
 			allDaySlot: true,
 			eventOverlap: false,
+			events: {
+				// events from DB
+				url: '{% url "timesheet_events" %}',
+				method: 'GET',
+				extraParams: {
+					custom_param1: 'something',
+					custom_param2: 'somethingelse'
+				},
+				failure: function() {
+					alert('there was an error while fetching events!');
+				},
+				color: 'red',   // a non-ajax option
+				textColor: 'black' // a non-ajax option	
+			},
 			eventReceive: function(info) {
 	
 				console.log(info);

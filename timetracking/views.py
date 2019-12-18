@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.core.serializers import serialize
 from django.http import JsonResponse
+import json
 
 from timetracking.forms import *
 
@@ -24,6 +25,37 @@ def timesheet(request: HttpRequest) -> HttpResponse:
     
     return render(request, 'timesheet.html')
 
+
+@login_required
+def timesheet_events(request: HttpRequest) -> HttpResponse:
+    """
+    Gets a JSON set of events
+    """
+    start = request.GET.get('start', None)
+    end = request.GET.get('end', None)
+
+    if not start or not end:
+        response = JsonResponse({"Error": "Query requires 'start' and 'end' GET parameters"})
+        response.status_code = 500
+        return response
+
+    # query database
+    tses = TimeSheetEntry.objects.filter(person__id=1)
+    events = []
+    for tse in tses:
+        event = {}
+        event['title'] = tse.project.name
+        if tse.all_day:
+            event['start'] = tse.date.strftime(r'%Y-%m-%d')
+            event['allDay '] = True
+        else:
+            event_start = datetime.combine(tse.date, tse.start_time)
+            event_end = datetime.combine(tse.date, tse.end_time)
+            event['start'] = event_start.strftime(r'%Y-%m-%dT%H:%M:%S')
+            event['end'] = event_end.strftime(r'%Y-%m-%dT%H:%M:%S')
+        events.append(event)
+
+    return JsonResponse(events, safe=False)
 
 @login_required
 def timesheet_add(request: HttpRequest) -> HttpResponse:
