@@ -17,5 +17,6 @@ urlpatterns = [
     ### AJAX Responsive URLS ####
     #############################
     
+    url(r'^time/timesheet/add$', views.timesheet_add, name='timesheet_add'),
 
 ]

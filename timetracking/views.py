@@ -11,6 +11,10 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.serializers import serialize
+from django.http import JsonResponse
+
+from timetracking.forms import *
 
 @login_required
 def timesheet(request: HttpRequest) -> HttpResponse:
@@ -19,3 +23,25 @@ def timesheet(request: HttpRequest) -> HttpResponse:
     """
     
     return render(request, 'timesheet.html')
+
+
+@login_required
+def timesheet_add(request: HttpRequest) -> HttpResponse:
+    """
+    Adds a timesheet entry (e.g. as a result of drag drop)
+    """
+
+    if request.method == 'POST':
+        form = TimesheetForm(request.POST)
+        if form.is_valid():
+            entry = form.save()
+            data = serialize('json', [entry])
+            return JsonResponse(data, safe=False)
+        else:
+            response = JsonResponse({"Error": "Timesheet Entry has Invalid Data"})
+            response.status_code = 403
+            return response
+    
+    response = JsonResponse({"Error": "Unable to create new Timesheet Entry"})
+    response.status_code = 500
+    return response

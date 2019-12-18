@@ -68,11 +68,13 @@
 {% block javascript %}
 {{ block.super}}
 
+<script type="text/javascript" src="{% static 'timetracking/moment/moment.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'timetracking/fullcalendar/main.js' %}"></script>
 <script type="text/javascript" src="{% static 'timetracking/interaction/main.js' %}"></script>
 <script type="text/javascript" src="{% static 'timetracking/daygrid/main.js' %}"></script>
 <script type="text/javascript" src="{% static 'timetracking/timegrid/main.js' %}"></script>
 <script type="text/javascript" src="{% static 'timetracking/list/main.js' %}"></script>
+
 
 <script type="text/javascript">
 	document.addEventListener('DOMContentLoaded', function() {
@@ -111,7 +113,7 @@
 
 		var calendarEl = document.getElementById('calendar');
 
-		var calendar = new Calendar(calendarEl, {
+		calendar = new Calendar(calendarEl, {
 			plugins: [ 'interaction', 'dayGrid', 'timeGrid', 'list' ],
 			header: {
 				left: 'prev,next today',
@@ -124,33 +126,32 @@
 			//eventConstraint: "businessHours",
 			allDaySlot: true,
 			eventOverlap: false,
-			drop: function(info) {
-				//if (!confirm("is this okay?")) {
-				//	info.revert();
-				//}
-				/*
-				// check ok with database
+			eventReceive: function(info) {
+	
+				console.log(info);
+				var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
+			
 				$.ajax({
 					type: "POST",
-					url: "${pageContext.request.contextPath}/task/periodic-task-update",
+					url: "{% url 'timesheet_add' %}",
+					headers: {'X-CSRFToken': '{{ csrf_token }}'},
 					data : {
-						id : event.id , 
-						date :event.start.format()
+						project : 1,
+						person: 1,
+						all_day: info.event.allDay,
+						date: moment(info.event.start).format("DD/MM/YYYY"),
+						start_time:  moment(info.event.start).format("hh:mm"),
+						end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("hh:mm") )
 					},
 					success: function(data) {
-						if(data=='Task Period Succesfully Changed'){
-							toastr.success("Task Period Succesfully Changed.");
-						}else{
-							toastr.success("Something Wrong");
-							revertFunc();
-						} 
+						 
 					},
-					error: function(data,textStatus,xhr) {
-						toastr.success("Something Wrong");
-						revertFunc();
+					error: function(data) {
+						alert("Error:" + data.responseJSON.Error);
+						info.event.remove();
 					}       
 				});
-				*/
+				
 			},
 			eventResize: function(info){
 				//alert(info.event.title + " end is now " + info.event.end.toISOString());
