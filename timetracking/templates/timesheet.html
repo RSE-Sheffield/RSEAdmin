@@ -42,11 +42,6 @@
 
 					<!-- the events -->
 					<div id="external-events">
-						<div class="external-event bg-green">Lunch</div>
-						<div class="external-event bg-yellow">Go home</div>
-						<div class="external-event bg-aqua">Do homework</div>
-						<div class="external-event bg-light-blue">Work on UI design</div>
-						<div class="external-event bg-red">Sleep tight</div>
 					</div>
 				</div>
 			</div>
@@ -77,36 +72,13 @@
 
 
 <script type="text/javascript">
+
+
 	document.addEventListener('DOMContentLoaded', function() {
 		var Calendar = FullCalendar.Calendar;
 		var Draggable = FullCalendarInteraction.Draggable
 
-		/* initialize the external events
-		-----------------------------------------------------------------*/
 
-		var containerEl = document.getElementById('external-events');
-		new Draggable(containerEl, {
-			itemSelector: '.external-event',
-			eventData: function(eventEl) {
-				return {
-					title: eventEl.innerText.trim(),
-					//duration: '01:00:00'
-				}
-			}
-		});
-
-		//// the individual way to do it
-		// var containerEl = document.getElementById('external-events-list');
-		// var eventEls = Array.prototype.slice.call(
-		//   containerEl.querySelectorAll('.fc-event')
-		// );
-		// eventEls.forEach(function(eventEl) {
-		//   new Draggable(eventEl, {
-		//     eventData: {
-		//       title: eventEl.innerText.trim(),
-		//     }
-		//   });
-		// });
 
 		/* initialize the calendar
 		-----------------------------------------------------------------*/
@@ -131,18 +103,16 @@
 				url: '{% url "timesheet_events" %}',
 				method: 'GET',
 				extraParams: {
-					custom_param1: 'something',
-					custom_param2: 'somethingelse'
+					rse_id: 1
 				},
 				failure: function() {
 					alert('there was an error while fetching events!');
 				},
-				color: 'red',   // a non-ajax option
 				textColor: 'black' // a non-ajax option	
 			},
 			eventReceive: function(info) {
 	
-				console.log(info);
+				//console.log(info);
 				var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
 			
 				$.ajax({
@@ -150,10 +120,10 @@
 					url: "{% url 'timesheet_add' %}",
 					headers: {'X-CSRFToken': '{{ csrf_token }}'},
 					data : {
-						project : 1,
-						person: 1,
+						project : info.event.extendedProps.extendedProperties["project_id"],
+						person: info.event.extendedProps.extendedProperties["person_id"],
 						all_day: info.event.allDay,
-						date: moment(info.event.start).format("DD/MM/YYYY"),
+						date: moment(info.event.start).format("YYYY-MM-DD"),
 						start_time:  moment(info.event.start).format("hh:mm"),
 						end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("hh:mm") )
 					},
@@ -173,6 +143,49 @@
 				//if (!confirm("is this okay?")) {
 				//	info.revert();
 				//}
+			},
+			datesRender:  function(info){
+				// function is called when dates in view change so can be used to update available projects
+				$.ajax({
+					type: "GET",
+					url: "{% url 'timesheet_projects' %}",
+					data : {
+						start: moment(info.view.activeStart).format("YYYY-MM-DD"),
+						end: moment(info.view.activeEnd).format("YYYY-MM-DD"),
+					},
+					success: function(data) {
+						//clear existing projects
+						$('#external-events').html("");
+						//append new draggable projects
+						$.each(data,function(i,v) {
+							var rgb_str = 'rgb('+v.r+','+v.g+','+v.b+')'
+							var p_id_str = "project-" + v.id;
+							$('#external-events').append('<div id="project-'+v.id+'"></div>');
+							$('#'+p_id_str).addClass("external-event");
+							$('#'+p_id_str).css("background-color", rgb_str);
+							$('#'+p_id_str).html(v.name);
+							// set event data attributes
+							extendedProperties = {
+								"project_id": v.id,
+								"person_id": 1
+							};
+							event = {
+								"title": v.name,
+								"backgroundColor": rgb_str,
+								"extendedProperties": extendedProperties
+							};
+							$('#'+p_id_str).attr("data-event", JSON.stringify(event));
+							//set as draggable
+							new Draggable($('#'+p_id_str)[0])
+
+						})
+						//set draggable
+						//updateDraggable()
+					},
+					error: function(data) {
+						alert("Error:" + data.responseJSON.Error);
+					}       
+				});
 			}
 		});
 		calendar.render();

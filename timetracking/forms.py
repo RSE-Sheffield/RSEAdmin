@@ -12,7 +12,7 @@ class TimesheetForm(forms.ModelForm):
     The form has no widgets as form data is submit from javascript
     """
  
-    date = forms.DateField(input_formats=('%d/%m/%Y',))
+    date = forms.DateField(input_formats=(r'%Y-%m-%d',))
 
     class Meta:
         model = TimeSheetEntry

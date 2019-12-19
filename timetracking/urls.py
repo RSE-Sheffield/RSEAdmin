@@ -19,6 +19,8 @@ urlpatterns = [
     
     url(r'^time/timesheet/events$', views.timesheet_events, name='timesheet_events'),
 
+    url(r'^time/timesheet/projects$', views.timesheet_projects, name='timesheet_projects'),
+
     url(r'^time/timesheet/add$', views.timesheet_add, name='timesheet_add'),
 
 ]
