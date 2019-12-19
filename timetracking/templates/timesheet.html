@@ -124,8 +124,8 @@
 						person: info.event.extendedProps.extendedProperties["person_id"],
 						all_day: info.event.allDay,
 						date: moment(info.event.start).format("YYYY-MM-DD"),
-						start_time:  moment(info.event.start).format("hh:mm"),
-						end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("hh:mm") )
+						start_time:  moment(info.event.start).format("HH:mm"),
+						end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
 					},
 					success: function(data) {
 						 
