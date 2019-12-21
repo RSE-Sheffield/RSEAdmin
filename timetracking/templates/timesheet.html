@@ -73,12 +73,108 @@
 
 <script type="text/javascript">
 
+	var Calendar = FullCalendar.Calendar;
+	var Draggable = FullCalendarInteraction.Draggable
+
+
+
+	function handleError(message){
+		//alert for now
+		//TODO: Use Modal
+		alert("Error:" + message);
+	}
+
+	/**
+	 * Used in eventReceive slot for handling any new events dropped onto the calendar
+	 */
+	function receiveEvent(info) {
+		
+		//console.log(info);
+		var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
+
+		$.ajax({
+			type: "POST",
+			url: "{% url 'timesheet_add' %}",
+			headers: {'X-CSRFToken': '{{ csrf_token }}'},
+			data : {
+				project : info.event.extendedProps.extendedProperties["project_id"],
+				person: info.event.extendedProps.extendedProperties["person_id"],
+				all_day: info.event.allDay,
+				date: moment(info.event.start).format("YYYY-MM-DD"),
+				start_time:  moment(info.event.start).format("HH:mm"),
+				end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
+			},
+			success: function(data) {
+				//no action required
+			},
+			error: function(data) {
+				handleError(data.responseJSON.Error);
+				info.event.remove();
+			}       
+		});
+		
+	}
+
+	/**
+	* Used in eventReceive slot for handling any events being moved or changed
+	*/
+	function resizeEvent(info){
+		//alert(info.event.title + " end is now " + info.event.end.toISOString());
+
+		//if (!confirm("is this okay?")) {
+		//	info.revert();
+		//}
+	}
+
+
+	/**
+	 * Updates the draggable events which can be added to the calendar based off the available projects
+	 */
+	function updateAvailableEvents(info){
+		// function is called when dates in view change so can be used to update available projects
+		$.ajax({
+			type: "GET",
+			url: "{% url 'timesheet_projects' %}",
+			data : {
+				start: moment(info.view.activeStart).format("YYYY-MM-DD"),
+				end: moment(info.view.activeEnd).format("YYYY-MM-DD"),
+			},
+			success: function(data) {
+				//clear existing projects
+				$('#external-events').html("");
+				//append new draggable projects
+				$.each(data,function(i,v) {
+					var rgb_str = 'rgb('+v.r+','+v.g+','+v.b+')'
+					var p_id_str = "project-" + v.id;
+					$('#external-events').append('<div id="project-'+v.id+'"></div>');
+					$('#'+p_id_str).addClass("external-event");
+					$('#'+p_id_str).css("background-color", rgb_str);
+					$('#'+p_id_str).html(v.name);
+					// set event data attributes
+					extendedProperties = {
+						"project_id": v.id,
+						"person_id": 1
+					};
+					event = {
+						"title": v.name,
+						"backgroundColor": rgb_str,
+						"extendedProperties": extendedProperties
+					};
+					$('#'+p_id_str).attr("data-event", JSON.stringify(event));
+					//set as draggable
+					new Draggable($('#'+p_id_str)[0])
+
+				})
+				//set draggable
+				//updateDraggable()
+			},
+			error: function(data) {
+				alert("Error:" + data.responseJSON.Error);
+			}       
+		});
+	}
 
 	document.addEventListener('DOMContentLoaded', function() {
-		var Calendar = FullCalendar.Calendar;
-		var Draggable = FullCalendarInteraction.Draggable
-
-
 
 		/* initialize the calendar
 		-----------------------------------------------------------------*/
@@ -95,98 +191,24 @@
 			editable: true,
 			droppable: true, // this allows things to be dropped onto the calendar
 			businessHours: true,
-			//eventConstraint: "businessHours",
+			//eventConstraint: "businessHours", //Prevents all day events
 			allDaySlot: true,
 			eventOverlap: false,
 			events: {
-				// events from DB
+				// events from DB called whenever view changes and includes a start and end parameter
 				url: '{% url "timesheet_events" %}',
 				method: 'GET',
 				extraParams: {
 					rse_id: 1
 				},
 				failure: function() {
-					alert('there was an error while fetching events!');
+					handleError('There was an error while fetching events from the database!');
 				},
 				textColor: 'black' // a non-ajax option	
 			},
-			eventReceive: function(info) {
-	
-				//console.log(info);
-				var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
-			
-				$.ajax({
-					type: "POST",
-					url: "{% url 'timesheet_add' %}",
-					headers: {'X-CSRFToken': '{{ csrf_token }}'},
-					data : {
-						project : info.event.extendedProps.extendedProperties["project_id"],
-						person: info.event.extendedProps.extendedProperties["person_id"],
-						all_day: info.event.allDay,
-						date: moment(info.event.start).format("YYYY-MM-DD"),
-						start_time:  moment(info.event.start).format("HH:mm"),
-						end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
-					},
-					success: function(data) {
-						 
-					},
-					error: function(data) {
-						alert("Error:" + data.responseJSON.Error);
-						info.event.remove();
-					}       
-				});
-				
-			},
-			eventResize: function(info){
-				//alert(info.event.title + " end is now " + info.event.end.toISOString());
-
-				//if (!confirm("is this okay?")) {
-				//	info.revert();
-				//}
-			},
-			datesRender:  function(info){
-				// function is called when dates in view change so can be used to update available projects
-				$.ajax({
-					type: "GET",
-					url: "{% url 'timesheet_projects' %}",
-					data : {
-						start: moment(info.view.activeStart).format("YYYY-MM-DD"),
-						end: moment(info.view.activeEnd).format("YYYY-MM-DD"),
-					},
-					success: function(data) {
-						//clear existing projects
-						$('#external-events').html("");
-						//append new draggable projects
-						$.each(data,function(i,v) {
-							var rgb_str = 'rgb('+v.r+','+v.g+','+v.b+')'
-							var p_id_str = "project-" + v.id;
-							$('#external-events').append('<div id="project-'+v.id+'"></div>');
-							$('#'+p_id_str).addClass("external-event");
-							$('#'+p_id_str).css("background-color", rgb_str);
-							$('#'+p_id_str).html(v.name);
-							// set event data attributes
-							extendedProperties = {
-								"project_id": v.id,
-								"person_id": 1
-							};
-							event = {
-								"title": v.name,
-								"backgroundColor": rgb_str,
-								"extendedProperties": extendedProperties
-							};
-							$('#'+p_id_str).attr("data-event", JSON.stringify(event));
-							//set as draggable
-							new Draggable($('#'+p_id_str)[0])
-
-						})
-						//set draggable
-						//updateDraggable()
-					},
-					error: function(data) {
-						alert("Error:" + data.responseJSON.Error);
-					}       
-				});
-			}
+			eventReceive: receiveEvent,
+			eventResize: resizeEvent,
+			datesRender: updateAvailableEvents,
 		});
 		calendar.render();
 
