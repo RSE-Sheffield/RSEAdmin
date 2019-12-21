@@ -116,7 +116,7 @@
 	}
 
 	/**
-	* Used in eventReceive slot for handling any events being moved or changed
+	* Used in eventReceive slot for handling any (non all day) events having the time period changed
 	*/
 	function resizeEvent(info){
 		//alert(info.event.title + " end is now " + info.event.end.toISOString());
@@ -124,6 +124,16 @@
 		//if (!confirm("is this okay?")) {
 		//	info.revert();
 		//}
+		console.log("resize");
+	}
+
+
+	/**
+	 * Used in eventDrop slot for handling any existing events being moved
+	 */
+	function movedEvent(info){
+
+		console.log("moved");
 	}
 
 
@@ -209,6 +219,7 @@
 			eventReceive: receiveEvent,
 			eventResize: resizeEvent,
 			datesRender: updateAvailableEvents,
+			eventDrop: movedEvent
 		});
 		calendar.render();
 
