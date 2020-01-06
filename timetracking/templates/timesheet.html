@@ -105,8 +105,9 @@
 				end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
 			},
 			success: function(data) {
-				//append db id to event
-				info.event.setExtendedProp("db_id", data['id']);
+				//remove event and reload view from database
+				info.event.remove();
+				calendar.refetchEvents();
 				//console.log(data);
 			},
 			error: function(data) {
