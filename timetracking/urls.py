@@ -17,10 +17,16 @@ urlpatterns = [
     ### AJAX Responsive URLS ####
     #############################
     
+    # Responsive view to return all events/ time sheet entries (for a given rse)
     url(r'^time/timesheet/events$', views.timesheet_events, name='timesheet_events'),
 
+    # Responsive view to return all projects (with a given set of dates in GET)
     url(r'^time/timesheet/projects$', views.timesheet_projects, name='timesheet_projects'),
 
+    # Responsive view to add a time sheet entry
     url(r'^time/timesheet/add$', views.timesheet_add, name='timesheet_add'),
+
+    # Responsive view to move or edit (resize) a time sheet entry
+    url(r'^time/timesheet/edit$', views.timesheet_edit, name='timesheet_edit'),
 
 ]

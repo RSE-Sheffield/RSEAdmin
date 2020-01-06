@@ -36,12 +36,12 @@
                 "--noreload"
             ],
             "django": true,
-            "debugOptions": [
-                "WaitOnAbnormalExit",
-                "WaitOnNormalExit",
-                "RedirectOutput",
-                "DjangoDebugging"
-            ]
+            //"debugOptions": [
+            //    "WaitOnAbnormalExit",
+            //    "WaitOnNormalExit",
+            //    "RedirectOutput",
+            //    "DjangoDebugging"
+            //]
         },
     ]
 }

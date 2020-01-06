@@ -97,18 +97,20 @@
 			url: "{% url 'timesheet_add' %}",
 			headers: {'X-CSRFToken': '{{ csrf_token }}'},
 			data : {
-				project : info.event.extendedProps.extendedProperties["project_id"],
-				person: info.event.extendedProps.extendedProperties["person_id"],
+				project : info.event.extendedProps["project_id"],
+				rse: info.event.extendedProps["rse_id"],
 				all_day: info.event.allDay,
 				date: moment(info.event.start).format("YYYY-MM-DD"),
 				start_time:  moment(info.event.start).format("HH:mm"),
 				end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
 			},
 			success: function(data) {
-				//no action required
+				//append db id to event
+				info.event.setExtendedProp("db_id", data['id']);
+				//console.log(data);
 			},
 			error: function(data) {
-				handleError(data.responseJSON.Error);
+				handleError(data.Error);
 				info.event.remove();
 			}       
 		});
@@ -116,24 +118,33 @@
 	}
 
 	/**
-	* Used in eventReceive slot for handling any (non all day) events having the time period changed
+	* Used in eventReceive and dropEvent slots for handling any event moves or resizes
 	*/
-	function resizeEvent(info){
-		//alert(info.event.title + " end is now " + info.event.end.toISOString());
+	function eventEdit(info){
+		//console.log("move or resize");
 
-		//if (!confirm("is this okay?")) {
-		//	info.revert();
-		//}
-		console.log("resize");
-	}
-
-
-	/**
-	 * Used in eventDrop slot for handling any existing events being moved
-	 */
-	function movedEvent(info){
-
-		console.log("moved");
+		$.ajax({
+			type: "POST",
+			url: "{% url 'timesheet_edit' %}",
+			headers: {'X-CSRFToken': '{{ csrf_token }}'},
+			data : {
+				id : info.event.extendedProps["db_id"],
+				project : info.event.extendedProps["project_id"],
+				rse: info.event.extendedProps["rse_id"],
+				all_day: info.event.allDay,
+				date: moment(info.event.start).format("YYYY-MM-DD"),
+				start_time:  moment(info.event.start).format("HH:mm"),
+				end_time: (info.event.allDay ? null : moment(info.event.end).format("HH:mm"))
+			},
+			success: function(data) {
+				//nothing to do
+				//console.log(data);
+			},
+			error: function(data) {
+				handleError(data.Error);
+				info.revert();
+			}       
+		});
 	}
 
 
@@ -163,25 +174,31 @@
 					// set event data attributes
 					extendedProperties = {
 						"project_id": v.id,
-						"person_id": 1
+						"rse_id": 1
 					};
 					event = {
 						"title": v.name,
 						"backgroundColor": rgb_str,
-						"extendedProperties": extendedProperties
+						"extendedProps": extendedProperties
 					};
 					$('#'+p_id_str).attr("data-event", JSON.stringify(event));
 					//set as draggable
 					new Draggable($('#'+p_id_str)[0])
 
 				})
-				//set draggable
-				//updateDraggable()
+
 			},
 			error: function(data) {
-				alert("Error:" + data.responseJSON.Error);
+				alert("Error:" + data.Error);
 			}       
 		});
+	}
+
+	/*
+	 * Event click function (for debugging)
+	 */
+	function eventClick(info){
+		console.log(info.event);
 	}
 
 	document.addEventListener('DOMContentLoaded', function() {
@@ -201,7 +218,7 @@
 			editable: true,
 			droppable: true, // this allows things to be dropped onto the calendar
 			businessHours: true,
-			//eventConstraint: "businessHours", //Prevents all day events
+			//eventConstraint: "businessHours", // Prevents all day events so currently disabled does allow events to be created out of hours
 			allDaySlot: true,
 			eventOverlap: false,
 			events: {
@@ -211,15 +228,17 @@
 				extraParams: {
 					rse_id: 1
 				},
-				failure: function() {
-					handleError('There was an error while fetching events from the database!');
+				failure: function(data) {
+					console.log(data);
+					handleError(data.Error);
 				},
 				textColor: 'black' // a non-ajax option	
 			},
 			eventReceive: receiveEvent,
-			eventResize: resizeEvent,
+			eventResize: eventEdit,
 			datesRender: updateAvailableEvents,
-			eventDrop: movedEvent
+			eventDrop: eventEdit,
+			eventClick: eventClick
 		});
 		calendar.render();
 

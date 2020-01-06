@@ -19,6 +19,18 @@ from django.forms.models import model_to_dict
 from timetracking.forms import *
 
 
+def timesheetentry_json(timesheetentry) -> dict:
+    data = {}
+    data['id'] = timesheetentry.id
+    data['project'] = timesheetentry.project.id
+    data['rse'] = timesheetentry.rse.id
+    data['date'] = timesheetentry.date.strftime(r'%Y-%m-%d')
+    data['all_day'] = timesheetentry.all_day
+    data['start_time'] = timesheetentry.start_time.strftime(r'%H:%M:%S')
+    data['end_time'] = timesheetentry.start_time.strftime(r'%H:%M:%S')
+
+    return data
+
 def json_error_response(message:str) -> JsonResponse:
     response = JsonResponse({"Error": message})
     response.status_code = 500
@@ -38,6 +50,8 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
     """
     Gets a JSON set of events
     """
+    
+
     start_str = request.GET.get('start', None)
     end_str = request.GET.get('end', None)
 
@@ -45,15 +59,18 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
     if not start_str or not end_str:
         return json_error_response("Query requires 'start' and 'end' GET parameters")
 
+    logger.error(f"get={request.GET}")
+
     # format date
     try:
-        start = datetime.strptime(start_str, r"%Y-%m-%dT%H:%M:%SZ")
-        end = datetime.strptime(end_str, r"%Y-%m-%dT%H:%M:%SZ")
+        start = datetime.strptime(start_str, r"%Y-%m-%dT%H:%M:%S%z")
+        end = datetime.strptime(end_str, r"%Y-%m-%dT%H:%M:%S%z")
     except (ValueError ):
-        return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%SZ'")
+        return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%S%z'")
 
     # query database
-    tses = TimeSheetEntry.objects.filter(person__id=1, date__gte=start, date__lte=end)
+    # TODO: select rse
+    tses = TimeSheetEntry.objects.filter(rse__id=1, date__gte=start, date__lte=end)
     events = []
     for tse in tses:
         event = {}
@@ -68,7 +85,16 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
             event_end = datetime.combine(tse.date, tse.end_time)
             event['start'] = event_start.strftime(r'%Y-%m-%dT%H:%M:%S')
             event['end'] = event_end.strftime(r'%Y-%m-%dT%H:%M:%S')
+        # extended properties
+        extendedProps = {}
+        extendedProps['db_id'] = tse.id
+        extendedProps['project_id'] = tse.project.id
+        extendedProps['rse_id'] = tse.rse.id
+        event['extendedProps'] = extendedProps
+
+        # append event to list
         events.append(event)
+
 
     return JsonResponse(events, safe=False)
 
@@ -85,7 +111,6 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
         return json_error_response("Query requires 'start' and 'end' GET parameters")
 
     # format date
-    logger.error(start_str)
     try:
         start = datetime.strptime(start_str, r"%Y-%m-%d")
         end = datetime.strptime(end_str, r"%Y-%m-%d")
@@ -111,9 +136,35 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
         form = TimesheetForm(request.POST)
         if form.is_valid():
             entry = form.save()
-            data = serialize('json', [entry])
-            return JsonResponse(data, safe=False)
+            return JsonResponse(json.dumps(timesheetentry_json(entry)), safe=False)
         else:
             return json_error_response("Timesheet Entry has Invalid Data")
     
     return json_error_response("Unable to create new Timesheet Entry")
+
+
+@login_required
+def timesheet_edit(request: HttpRequest) -> HttpResponse:
+    """
+    Edit a timesheet entry (e.g. as a result of drag drop)
+    """
+
+    if request.method == 'POST':
+
+        # get instance
+        if 'id' not in request.POST:
+            return json_error_response("Timesheet Entry id not provided in POST")
+        id = request.POST.get('id')
+        try:
+            event = TimeSheetEntry.objects.get(id=id)
+        except DoesNotExist:
+            return json_error_response(f"Timesheet Entry id={id} does not exist")
+
+        form = TimesheetForm(request.POST, instance=event)
+        if form.is_valid():
+            entry = form.save()
+            return JsonResponse(json.dumps(timesheetentry_json(entry)), safe=False)
+        else:
+            return json_error_response("Timesheet Entry could not be edited")
+    
+    return json_error_response("Unable to edit Timesheet Entry")
