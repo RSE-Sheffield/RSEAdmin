@@ -29,4 +29,11 @@ urlpatterns = [
     # Responsive view to move or edit (resize) a time sheet entry
     url(r'^time/timesheet/edit$', views.timesheet_edit, name='timesheet_edit'),
 
+    ########################
+    ### Reporting Views ####
+    ########################
+
+    # Project commitment per person or team
+    url(r'^time/project/(?P<project_id>[0-9]+)$', views.time_project, name='time_project'),
+
 ]

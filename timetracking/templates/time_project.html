@@ -1,0 +1,193 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/fullcalendar/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/daygrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/timegrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/list/main.css' %}"/>
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool: View Project Timesheet{% endblock %}
+{% block page_name %}RSE Group Administration Tool: View Project Timesheet{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-9">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Calendar</h3>
+            </div>
+            <div class="box-body">
+				<canvas id="id_graph" width="100%"></canvas>			  
+            </div>
+          </div>
+        </div>
+		
+
+		{% if user.is_superuser %}
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">RSE</h3>
+				</div>
+				<div class="box-body">		
+					<p>Select an RSE</p>
+
+					<select name="select_rse" class="form-control pull-right" id="id_select_rse">
+						<option value="">All</option>
+						{% for rse in rses %}
+						<option value="{{rse.id}}">{{rse}}</option>
+						{% endfor %}
+					</select>
+					
+				</div>
+			</div>
+		  
+        </div>
+		{% endif %}
+
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Options</h3>
+				</div>
+				<div class="box-body">		
+					<p><i>Some options</i></p>
+
+				</div>
+			</div>
+		  
+        </div>
+		
+		
+		
+    </div>
+
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/Chart.js' %}"></script>
+<script type="text/javascript">
+	
+    var ctx = $('#id_graph')[0].getContext('2d');
+    var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+				
+                datasets: [
+				{% for plot_rse, commitments in commitment_data %}
+                {
+                    label: "{{plot_rse.user.first_name}} {{plot_rse.user.last_name}}",
+					steppedLine: 'before',
+                    data: [
+                        {% for date, value in commitments %}
+                            {
+                                "x": moment("{{date | date:'Y-m-d'}}"), 
+                                "y": {{value}},
+								tooltip: "{{plot_rse.user.first_name}} {{plot_rse.user.last_name}} " + Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*7.4 *100)/100 + " hours"
+                            },
+                        {% endfor %}
+                    ],
+					backgroundColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 0.1)',
+					borderColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+					fill: true,
+                },
+				{% endfor %}
+                {
+                    label: "Current Date Today",  
+                    borderDash: [10,5] , 
+                    data: [
+                        
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"), 
+                                "y": 0,
+                            },
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"), 
+                                "y": 10.0,
+                            },
+                    ],
+					borderColor: 'rgba(255, 0, 0, 1.0)',
+					fill: false,
+                },
+                ]
+            },
+            options: {
+				responsive: true,
+				legend: {
+						display: true,
+					},
+				scales: {
+                    yAxes: [{
+                        //stacked: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Days'
+						}
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+							//TODO: Adjust to months based off range
+                            unit: 'day',
+                            displayFormats: {
+                                quarter: 'MMM D'
+                            }
+                        }
+                    }]                    
+                },
+				tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].tooltip
+                            return label;
+                        }
+					}	
+                }
+            }
+    });
+	
+
+</script>
+
+
+<script type="text/javascript">
+
+	// RSE selection function
+	{% if user.is_superuser %}
+		function get_rse_id(){
+			return $('#id_select_rse').val();
+		}
+	{% else %}
+		function get_rse_id(){
+			return {{rse.id}};
+		}
+	{% endif %}
+
+	
+
+	// RSE selection
+	{% if user.is_superuser %}
+		//update calendar and events on RSE drop down change
+		$('#id_select_rse').on('change', function(){
+			console.log($('#id_select_rse').val())
+		});
+	{% endif %}
+
+	
+</script>
+	
+{% endblock %}

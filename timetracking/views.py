@@ -193,3 +193,41 @@ def timesheet_edit(request: HttpRequest) -> HttpResponse:
             return json_error_response("Timesheet Entry could not be edited")
     
     return json_error_response("Unable to edit Timesheet Entry")
+
+
+########################
+### Reporting Views ####
+########################
+
+@login_required
+def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
+
+    view_dict = {}
+
+    # get time breakdown
+    commitment_data = []
+    
+    #TODO: RSE selection
+    rse = RSE.objects.all()[0]
+    project = get_object_or_404(Project, id=project_id)
+
+    # Time sheet entries
+    tses = TimeSheetEntry.objects.filter(rse=rse, project=project).order_by('date')
+    commitments = []
+    total = 0
+    for tse in tses:
+        date = tse.date
+        # accumulate time
+        if tse.all_day:
+            total += 1
+        else:
+            # convert seconds to days
+            total += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*7.4)
+        commitments.append([date, total])
+    
+    commitment_data.append((rse, commitments))
+    view_dict['commitment_data'] = commitment_data
+
+
+
+    return render(request, 'time_project.html', view_dict)
