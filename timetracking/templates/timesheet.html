@@ -31,6 +31,30 @@
           </div>
         </div>
 		
+
+		{% if user.is_superuser %}
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">RSE</h3>
+				</div>
+				<div class="box-body">		
+					<p>Select an RSE</p>
+
+					<select name="select_rse" class="form-control pull-right" id="id_select_rse">
+						<option value="-1">-----</option>
+						{% for rse in rses %}
+						<option value="{{rse.id}}">{{rse}}</option>
+						{% endfor %}
+					</select>
+					
+				</div>
+			</div>
+		  
+        </div>
+		{% endif %}
+
 		<div class="col-md-3">
           
 			 <div class="box box-default">
@@ -38,7 +62,7 @@
 					<h3 class="box-title">Projects</h3>
 				</div>
 				<div class="box-body">		
-					<p>Drag projects to calendar</p>
+					<p><i>Projects available can be dragged onto the calendar.</i></p>
 
 					<!-- the events -->
 					<div id="external-events">
@@ -54,7 +78,22 @@
 
 
 
-   
+	<div class="modal modal-danger fade" id="error_modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">There was an Error!</h4>
+				</div>
+				<div class="modal-body">
+				<p id="id_error_modal_msg">Error Message</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Ok</button>
+				</div>
+			</div>
+		</div>
+	</div>
     
     
     
@@ -77,11 +116,21 @@
 	var Draggable = FullCalendarInteraction.Draggable
 
 
+	// RSE selection function
+	{% if user.is_superuser %}
+		function get_rse_id(){
+			return $('#id_select_rse').val();
+		}
+	{% else %}
+		function get_rse_id(){
+			return {{rse.id}};
+		}
+	{% endif %}
 
 	function handleError(message){
-		//alert for now
-		//TODO: Use Modal
-		alert("Error:" + message);
+		//alert("Error:" + message);
+		$("#id_error_modal_msg").text(message);
+		$("#error_modal").modal();
 	}
 
 	/**
@@ -89,7 +138,8 @@
 	 */
 	function receiveEvent(info) {
 		
-		//console.log(info);
+		//console.log("Received new calendar event");
+
 		var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
 
 		$.ajax({
@@ -111,7 +161,7 @@
 				//console.log(data);
 			},
 			error: function(data) {
-				handleError(data.Error);
+				handleError(data.responseJSON.Error);
 				info.event.remove();
 			}       
 		});
@@ -139,10 +189,10 @@
 			},
 			success: function(data) {
 				//nothing to do
-				//console.log(data);
+				
 			},
 			error: function(data) {
-				handleError(data.Error);
+				handleError(data.responseJSON.Error);
 				info.revert();
 			}       
 		});
@@ -160,6 +210,7 @@
 			data : {
 				start: moment(info.view.activeStart).format("YYYY-MM-DD"),
 				end: moment(info.view.activeEnd).format("YYYY-MM-DD"),
+				rse_id: get_rse_id()
 			},
 			success: function(data) {
 				//clear existing projects
@@ -175,7 +226,7 @@
 					// set event data attributes
 					extendedProperties = {
 						"project_id": v.id,
-						"rse_id": 1
+						"rse_id": get_rse_id()
 					};
 					event = {
 						"title": v.name,
@@ -190,7 +241,7 @@
 
 			},
 			error: function(data) {
-				alert("Error:" + data.Error);
+				handleError(data.responseJSON.Error);
 			}       
 		});
 	}
@@ -204,9 +255,7 @@
 
 	document.addEventListener('DOMContentLoaded', function() {
 
-		/* initialize the calendar
-		-----------------------------------------------------------------*/
-
+		// initialize the calendar
 		var calendarEl = document.getElementById('calendar');
 
 		calendar = new Calendar(calendarEl, {
@@ -215,6 +264,11 @@
 				left: 'prev,next today',
 				center: 'title',
 				right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+			},
+			views: {
+				timeGridWeek: { 
+					columnHeaderFormat: { month: 'short', day: '2-digit' }
+				}
 			},
 			editable: true,
 			droppable: true, // this allows things to be dropped onto the calendar
@@ -226,11 +280,12 @@
 				// events from DB called whenever view changes and includes a start and end parameter
 				url: '{% url "timesheet_events" %}',
 				method: 'GET',
-				extraParams: {
-					rse_id: 1
+				extraParams: function(){
+					return {
+						rse_id: get_rse_id()
+					}
 				},
 				failure: function(data) {
-					console.log(data);
 					handleError(data.Error);
 				},
 				textColor: 'black' // a non-ajax option	
@@ -241,6 +296,19 @@
 			eventDrop: eventEdit,
 			eventClick: eventClick
 		});
+
+
+		// RSE selection
+		{% if user.is_superuser %}
+			//update calendar and events on RSE drop down change
+			$('#id_select_rse').on('change', function(){
+				//console.log($('#id_select_rse').val())
+				calendar.refetchEvents();
+				calendar.render();
+			});
+		{% endif %}
+
+		//render calendar
 		calendar.render();
 
 	});

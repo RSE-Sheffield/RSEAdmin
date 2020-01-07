@@ -27,6 +27,20 @@ class TimesheetForm(forms.ModelForm):
             if cleaned_data['end_time'] <= cleaned_data['start_time']:
                 errors['end_time'] = ("The end time can not be before the start time")
 
+        # time sheet entry can not be outside project period (but may be outside allocation)
+        if 'project' in cleaned_data and cleaned_data['project'] is not None and \
+            'rse' in cleaned_data and cleaned_data['rse'] is not None and \
+            'date' in cleaned_data and cleaned_data['date'] is not None :
+            p = cleaned_data['project']
+            rse = cleaned_data['rse']
+            date = cleaned_data['date']
+            
+            # check dates
+            if p.start > date:
+                    errors['date'] = f"The time sheet entry date is before the start of the project ({p.start})"
+            if p.end < date:
+                    errors['date'] = f"The time sheet entry date is after the end of the project ({p.end})"
+
         if errors:
             raise ValidationError(errors)
   

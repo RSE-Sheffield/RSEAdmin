@@ -33,7 +33,7 @@ def timesheetentry_json(timesheetentry) -> dict:
 
 def json_error_response(message:str) -> JsonResponse:
     response = JsonResponse({"Error": message})
-    response.status_code = 500
+    response.status_code = 400
     return response
 
 @login_required
@@ -41,8 +41,17 @@ def timesheet(request: HttpRequest) -> HttpResponse:
     """
     Renders the timesheet page for a given RSE user
     """
+    view_dict = {}
+
+    # if admin then include rses in view dict
+    if request.user.is_superuser:
+        view_dict['rses'] = RSE.objects.all()
+    #else get the rse id of user
+    else:
+        rse = get_object_or_404(RSE, user=request.user)
+        view_dict['rse'] = rse
     
-    return render(request, 'timesheet.html')
+    return render(request, 'timesheet.html', view_dict)
 
 
 @login_required
@@ -59,8 +68,6 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
     if not start_str or not end_str:
         return json_error_response("Query requires 'start' and 'end' GET parameters")
 
-    logger.error(f"get={request.GET}")
-
     # format date
     try:
         start = datetime.strptime(start_str, r"%Y-%m-%dT%H:%M:%S%z")
@@ -68,9 +75,16 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
     except (ValueError ):
         return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%S%z'")
 
+    #select an RSE
+    if request.user.is_superuser:
+        rse_id = request.GET.get('rse_id', -1)
+    #else get the rse id of user
+    else:
+        rse = get_object_or_404(RSE, user=request.user)
+        rse_id = rse.id
+
     # query database
-    # TODO: select rse
-    tses = TimeSheetEntry.objects.filter(rse__id=1, date__gte=start, date__lte=end)
+    tses = TimeSheetEntry.objects.filter(rse__id=rse_id, date__gte=start, date__lte=end)
     events = []
     for tse in tses:
         event = {}
@@ -101,8 +115,9 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_projects(request: HttpRequest) -> HttpResponse:
     """
-    Gets a JSON set of events
+    Gets a JSON set of projects for a given time period and RSE
     """
+
     start_str = request.GET.get('start', None)
     end_str = request.GET.get('end', None)
 
@@ -117,9 +132,16 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
     except (ValueError ):
         return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%SZ'")
 
+    # get the RSE
+    if request.user.is_superuser:
+        rse_id = request.GET.get('rse_id', -1)
+    #else get the rse id of user
+    else:
+        rse = get_object_or_404(RSE, user=request.user)
+        rse_id = rse.id
 
     # get any allocation tht fall within query period
-    project_ids = RSEAllocation.objects.filter(rse__id=1, start__lt=end, end__gt=start).values_list('project_id').distinct()
+    project_ids = RSEAllocation.objects.filter(rse__id=rse_id, start__lt=end, end__gt=start).values_list('project_id').distinct()
     projects = Project.objects.filter(id__in=project_ids)
     # merge rgb property with selected project fields
     output = [dict(model_to_dict(p, fields=['id', 'name', 'start', 'end']), **p.colour_rbg) for p in projects]
@@ -138,7 +160,10 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
             entry = form.save()
             return JsonResponse(json.dumps(timesheetentry_json(entry)), safe=False)
         else:
-            return json_error_response("Timesheet Entry has Invalid Data")
+            # construct an error string based off validation field values
+            # requires double join as each field may have multiple error strings
+            error_str = ". ".join(". ".join(error) for error in form.errors.values())
+            return json_error_response(error_str)
     
     return json_error_response("Unable to create new Timesheet Entry")
 
@@ -146,7 +171,7 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_edit(request: HttpRequest) -> HttpResponse:
     """
-    Edit a timesheet entry (e.g. as a result of drag drop)
+    Edit a timesheet entry (e.g. as a result of drag drop or resize)
     """
 
     if request.method == 'POST':
