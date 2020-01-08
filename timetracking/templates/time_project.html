@@ -97,8 +97,25 @@
 								},
 							{% endfor %}
 						],
-						borderColor: 'rgba(0,0,255, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
-						backgroundColor: 'rgba(0,0,255, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						borderColor: 'rgba(0,255,0, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						backgroundColor: 'rgba(0,255,0, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						fill: false,
+					},
+					// project allocated days
+					{
+						label: "{{rse_name}} Allocated Days",
+						steppedLine: 'before',
+						data: [
+							{% for date, value in allocated_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,0,255, 1.0)',
+						backgroundColor: 'rgba(0,0,255, 1.0)',
 						fill: false,
 					},
 					// project expected days
@@ -118,23 +135,6 @@
 						backgroundColor: 'rgba(0,0,0, 1.0)',
 						fill: false,
 					},
-					// project allocated days
-					{
-						label: "Project allocated days",
-						steppedLine: 'before',
-						data: [
-							{% for date, value in allocated_days %}
-								{
-									"x": moment("{{date | date:'Y-m-d'}}"), 
-									"y": {{value}},
-									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
-								},
-							{% endfor %}
-						],
-						borderColor: 'rgba(255,0,0, 1.0)',
-						backgroundColor: 'rgba(255,0,0, 1.0)',
-						fill: false,
-					},
 					// Today plot
 					{
 						label: "Current Date Today",  
@@ -147,7 +147,7 @@
 								},
 								{
 									"x": moment("{% now 'Y-m-d'%}"), 
-									"y": 10.0,
+									"y": {{project_working_days}},
 								},
 						],
 						borderColor: 'rgba(255, 0, 0, 1.0)',

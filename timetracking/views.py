@@ -286,6 +286,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     
     # settings required in view for displaying fractional days w.r.t. hours
     view_dict['WORKING_HOURS_PER_DAY'] = settings.WORKING_HOURS_PER_DAY
+    view_dict['project_working_days'] = project.working_days
 
 
 
