@@ -15,6 +15,7 @@ from django.core.serializers import serialize
 from django.http import JsonResponse
 import json
 from django.forms.models import model_to_dict
+from django.conf import settings
 
 from timetracking.forms import *
 
@@ -36,6 +37,20 @@ def json_error_response(message:str) -> JsonResponse:
     response.status_code = 400
     return response
 
+def daterange(start_date, end_date):
+    """
+    Generator function for iterating between two dates
+    """
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + timedelta(n)
+
+
+
+
+############################
+### Time Tracking Pages ####
+############################
+
 @login_required
 def timesheet(request: HttpRequest) -> HttpResponse:
     """
@@ -53,6 +68,10 @@ def timesheet(request: HttpRequest) -> HttpResponse:
     
     return render(request, 'timesheet.html', view_dict)
 
+
+#############################
+### AJAX Responsive URLS ####
+#############################
 
 @login_required
 def timesheet_events(request: HttpRequest) -> HttpResponse:
@@ -206,27 +225,63 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
 
     # get time breakdown
     commitment_data = []
-    
+
     #TODO: RSE selection
     rse = RSE.objects.all()[0]
     project = get_object_or_404(Project, id=project_id)
+    allocations = RSEAllocation.objects.filter(rse=rse, project=project)
 
-    # Time sheet entries
-    tses = TimeSheetEntry.objects.filter(rse=rse, project=project).order_by('date')
-    commitments = []
-    total = 0
-    for tse in tses:
-        date = tse.date
-        # accumulate time
-        if tse.all_day:
-            total += 1
-        else:
-            # convert seconds to days
-            total += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*7.4)
-        commitments.append([date, total])
+    # form
+    form = ProjectTimeViewOptionsForm(request.GET, project=project)
+    view_dict['form'] = form
     
-    commitment_data.append((rse, commitments))
-    view_dict['commitment_data'] = commitment_data
+
+    # project expected days
+    project_days = []
+    project_days_sum = 0
+    working_day = project.working_days / (project.end - project.start).days  # average fractional day for project
+    # project allocated days
+    allocated_days = []
+    allocated_days_sum = 0
+    # rse time sheet hours
+    timesheet_days = []
+    timesheet_days_sum = 0
+    tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
+
+    # iterate through days on project to build dataset for graphing
+    for date in daterange(project.start, project.end):
+        # project expected days
+        project_days_sum += working_day
+        project_days.append([date, project_days_sum])
+        
+        # project allocated days by allocations which are active on current
+        active = allocations.filter(start__lte=date, end__gt=date)
+        for a in active:
+            # allocated day need to be converted into equivalent working days
+            allocated_days_sum += (settings.WORKING_DAYS_PER_YEAR /365.0) * a.percentage/100.0
+        allocated_days.append([date, allocated_days_sum])
+
+        # timesheet entries
+        tses_for_day = tses.filter(date=date)
+        for tse in tses_for_day:
+            date = tse.date
+            # accumulate time
+            if tse.all_day:
+                timesheet_days_sum += 1
+            else:
+                timesheet_days_sum += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*settings.WORKING_HOURS_PER_DAY) # convert hours to fractional days
+        timesheet_days.append([date, timesheet_days_sum])
+
+    # add datasets to dict
+    view_dict['allocated_days'] = allocated_days
+    view_dict['project_days'] = project_days
+    view_dict['timsheet_days'] = timesheet_days
+    
+    # settings required in view for displaying fractional days w.r.t. hours
+    view_dict['WORKING_HOURS_PER_DAY'] = settings.WORKING_HOURS_PER_DAY
+    # name of RSE in view
+    view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
+
 
 
 

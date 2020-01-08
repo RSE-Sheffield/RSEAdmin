@@ -107,6 +107,13 @@ USE_I18N = True
 
 USE_TZ = True
 
+########################################################
+
+# Working days per year (TRAC Days)
+WORKING_DAYS_PER_YEAR = 220
+
+# Working hours per day (37 hour work week)
+WORKING_HOURS_PER_DAY = 7.4
 
 # Number of items to show in lists such as starting soon
 HOME_PAGE_NUMBER_ITEMS = 7
@@ -117,4 +124,7 @@ HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
 # Days to consider as soon
 HOME_PAGE_DAYS_SOON = 365
 
+# Days to consider as recent on home page
 HOME_PAGE_DAYS_RECENT = 30
+
+

@@ -14,6 +14,7 @@ from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
 from copy import deepcopy
+from django.conf import settings
 
 # import the logging library for debugging
 import logging
@@ -691,6 +692,13 @@ class Project(PolymorphicModel):
 
     @property
     def duration(self) -> Optional[int]:
+        """ Number of calendar days required to complete the project """
+        """ Implemented by concrete classes """
+        pass
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of workings days in the project """
         """ Implemented by concrete classes """
         pass
 
@@ -793,6 +801,13 @@ class Project(PolymorphicModel):
         except (OperationalError, ProgrammingError):
             return timezone.now().date()
 
+    @staticmethod
+    def fte_days_to_working_days(fte_days: int) -> int:
+        """
+        This maps FTE days into a number of working days
+        """
+        return fte_days * settings.WORKING_DAYS_PER_YEAR / 365.0
+
     def staff_cost(self, from_date: date = None, until_date: date = None, rse: RSE = None, consider_internal: bool = False) -> SalaryValue:
         """
         Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
@@ -858,6 +873,12 @@ class AllocatedProject(Project):
         if self.end and self.start:
             dur = (self.end - self.start).days
         return dur
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of workings days in the project """
+        """ Calculated by adjusting duration by TRAC """
+        return Project.fte_days_to_working_days(self.duration)* self.fte / 100.0
 
     def value(self) -> float:
         """
@@ -935,9 +956,10 @@ class ServiceProject(Project):
     def days_to_fte_days(days: int) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
-        This maps service days (of which there are 220 TRAC working days) to a FTE duration
+        This maps service days (of which there are a fixed number if working days which are in settings file) to a FTE duration
         """
-        return floor(days * (365.0 / 220.0))
+        return floor(days * (365.0 / settings.WORKING_DAYS_PER_YEAR))
+
     
     @property
     def duration(self) -> int:
@@ -945,6 +967,11 @@ class ServiceProject(Project):
         Use the avilable static method to convert days to FTE days
         """
         return ServiceProject.days_to_fte_days(self.days)
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of paid service days """
+        return self.days
 
     def value(self) -> float:
         """

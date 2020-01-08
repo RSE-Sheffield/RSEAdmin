@@ -43,4 +43,18 @@ class TimesheetForm(forms.ModelForm):
 
         if errors:
             raise ValidationError(errors)
-  
+
+class ProjectTimeViewOptionsForm(forms.Form):
+
+    rse = forms.ChoiceField(widget=forms.Select(attrs={'class' : 'form-control'}))
+    granularity = forms.ChoiceField(choices = (('day', 'Day'), ('week', 'Week'), ('month', 'Month')), widget=forms.Select(attrs={'class' : 'form-control'}))
+    
+    def __init__(self, *args,**kwargs):
+        if not 'project' in kwargs:
+            raise TypeError("ProjectTimeViewOptionsForm missing required argument: 'project'")
+        self.project = kwargs.pop('project')
+        self.rses = RSE.objects.all()
+        super(ProjectTimeViewOptionsForm, self).__init__(*args,**kwargs)
+
+        # populate RSE options
+        self.fields['rse'].choices =  [('', 'All')]+[(rse.id, rse) for rse in self.rses]

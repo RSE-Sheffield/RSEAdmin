@@ -59,7 +59,7 @@
 					<h3 class="box-title">Options</h3>
 				</div>
 				<div class="box-body">		
-					<p><i>Some options</i></p>
+					{{form}}
 
 				</div>
 			</div>
@@ -88,41 +88,76 @@
             data: {
 				
                 datasets: [
-				{% for plot_rse, commitments in commitment_data %}
-                {
-                    label: "{{plot_rse.user.first_name}} {{plot_rse.user.last_name}}",
-					steppedLine: 'before',
-                    data: [
-                        {% for date, value in commitments %}
-                            {
-                                "x": moment("{{date | date:'Y-m-d'}}"), 
-                                "y": {{value}},
-								tooltip: "{{plot_rse.user.first_name}} {{plot_rse.user.last_name}} " + Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*7.4 *100)/100 + " hours"
-                            },
-                        {% endfor %}
-                    ],
-					backgroundColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 0.1)',
-					borderColor: 'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
-					fill: true,
-                },
-				{% endfor %}
-                {
-                    label: "Current Date Today",  
-                    borderDash: [10,5] , 
-                    data: [
-                        
-                            {
-                                "x": moment("{% now 'Y-m-d'%}"), 
-                                "y": 0,
-                            },
-                            {
-                                "x": moment("{% now 'Y-m-d'%}"), 
-                                "y": 10.0,
-                            },
-                    ],
-					borderColor: 'rgba(255, 0, 0, 1.0)',
-					fill: false,
-                },
+					// RSE timesheet plot
+					{
+						label: "{{rse_name}}",
+						steppedLine: 'before',
+						data: [
+							{% for date, value in timsheet_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: "{{rse_name}} " + Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,0,255, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						backgroundColor: 'rgba(0,0,255, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						fill: false,
+					},
+					// project expected days
+					{
+						label: "Total Project Working Days",
+						steppedLine: 'before',
+						data: [
+							{% for date, value in project_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,0,0, 1.0)',
+						backgroundColor: 'rgba(0,0,0, 1.0)',
+						fill: false,
+					},
+					// project allocated days
+					{
+						label: "Project allocated days",
+						steppedLine: 'before',
+						data: [
+							{% for date, value in allocated_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(255,0,0, 1.0)',
+						backgroundColor: 'rgba(255,0,0, 1.0)',
+						fill: false,
+					},
+					// Today plot
+					{
+						label: "Current Date Today",  
+						borderDash: [10,5] , 
+						data: [
+							
+								{
+									"x": moment("{% now 'Y-m-d'%}"), 
+									"y": 0,
+								},
+								{
+									"x": moment("{% now 'Y-m-d'%}"), 
+									"y": 10.0,
+								},
+						],
+						borderColor: 'rgba(255, 0, 0, 1.0)',
+						backgroundColor: 'rgba(255, 255, 255, 1.0)',
+						fill: false,
+					},
                 ]
             },
             options: {
@@ -141,10 +176,9 @@
                     xAxes: [{
                         type: 'time',
                         time: {
-							//TODO: Adjust to months based off range
-                            unit: 'day',
+                            unit: 'month',
                             displayFormats: {
-                                quarter: 'MMM D'
+                                quarter: 'D MMM YYYY'
                             }
                         }
                     }]                    
