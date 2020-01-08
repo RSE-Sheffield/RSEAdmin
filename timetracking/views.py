@@ -226,13 +226,21 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     # get time breakdown
     commitment_data = []
 
-    #TODO: RSE selection
-    rse = RSE.objects.all()[0]
+    #gte the project
     project = get_object_or_404(Project, id=project_id)
-    allocations = RSEAllocation.objects.filter(rse=rse, project=project)
 
     # form
     form = ProjectTimeViewOptionsForm(request.GET, project=project)
+    if form.is_valid():
+        if form.cleaned_data['rse'] == "":
+            allocations = RSEAllocation.objects.filter(project=project)
+            tses = TimeSheetEntry.objects.filter(project=project)
+            view_dict['rse_name'] = f"RSE Team (all RSEs)"
+        else:
+            rse = get_object_or_404(RSE, id=form.cleaned_data['rse'])
+            allocations = RSEAllocation.objects.filter(rse=rse, project=project)
+            tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
+            view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
     view_dict['form'] = form
     
 
@@ -246,7 +254,6 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     # rse time sheet hours
     timesheet_days = []
     timesheet_days_sum = 0
-    tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
 
     # iterate through days on project to build dataset for graphing
     for date in daterange(project.start, project.end):
@@ -279,8 +286,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     
     # settings required in view for displaying fractional days w.r.t. hours
     view_dict['WORKING_HOURS_PER_DAY'] = settings.WORKING_HOURS_PER_DAY
-    # name of RSE in view
-    view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
+
 
 
 

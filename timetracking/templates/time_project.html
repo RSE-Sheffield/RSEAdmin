@@ -29,37 +29,33 @@
         </div>
 		
 
-		{% if user.is_superuser %}
-		<div class="col-md-3">
-          
-			 <div class="box box-default">
-				<div class="box-header with-border">
-					<h3 class="box-title">RSE</h3>
-				</div>
-				<div class="box-body">		
-					<p>Select an RSE</p>
-
-					<select name="select_rse" class="form-control pull-right" id="id_select_rse">
-						<option value="">All</option>
-						{% for rse in rses %}
-						<option value="{{rse.id}}">{{rse}}</option>
-						{% endfor %}
-					</select>
-					
-				</div>
-			</div>
-		  
-        </div>
-		{% endif %}
-
 		<div class="col-md-3">
           
 			 <div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Options</h3>
 				</div>
-				<div class="box-body">		
-					{{form}}
+				<form method='GET' id="filter_form">
+					<div class="box-body">
+						<div class="form-group">
+							
+							<label>Select RSE:</label>
+							<p><i>All RSEs are included regardless of allocations</i><p>
+							{{ form.rse }}
+							</br>
+							
+							
+							<label>Report Granularity</label>
+							<p><i>The level at which the graph reports on accumulated effort</i></p>
+							{{ form.granularity }}
+							</br>
+							
+						</div>
+					</div>
+					<div class="box-footer">
+						<button type="submit" class="btn btn-primary">Apply</button>
+					</div>
+				</form>
 
 				</div>
 			</div>
@@ -195,33 +191,6 @@
     });
 	
 
-</script>
-
-
-<script type="text/javascript">
-
-	// RSE selection function
-	{% if user.is_superuser %}
-		function get_rse_id(){
-			return $('#id_select_rse').val();
-		}
-	{% else %}
-		function get_rse_id(){
-			return {{rse.id}};
-		}
-	{% endif %}
-
-	
-
-	// RSE selection
-	{% if user.is_superuser %}
-		//update calendar and events on RSE drop down change
-		$('#id_select_rse').on('change', function(){
-			console.log($('#id_select_rse').val())
-		});
-	{% endif %}
-
-	
 </script>
 	
 {% endblock %}
