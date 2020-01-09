@@ -16,6 +16,7 @@ from django.http import JsonResponse
 import json
 from django.forms.models import model_to_dict
 from django.conf import settings
+from django.views.generic.edit import DeleteView
 
 from timetracking.forms import *
 
@@ -213,6 +214,37 @@ def timesheet_edit(request: HttpRequest) -> HttpResponse:
     
     return json_error_response("Unable to edit Timesheet Entry")
 
+
+class timesheet_delete(UserPassesTestMixin, DeleteView):
+    model = TimeSheetEntry
+    success_message = "Timesheet entry was successfully deleted."
+    
+    def get(self, request, *args, **kwargs):
+        """ disable this view when arriving by get (i.e. only allow post) """
+        raise Http404("Page does not exist")
+
+    def test_func(self):
+        """ Only for super users or for RSEs to delete their own time sheet entries"""
+        if self.request.user.is_superuser:
+            return True
+        else:
+            # can only delete own time sheet entries
+            tse = self.get_object()
+            if tse.rse.user.id == self.request.user.id:
+                return True
+            else:
+                return False
+
+    def get_object(self, queryset=None):
+        id = self.request.POST['id']
+        return self.get_queryset().filter(id=id).get()
+      
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        # call super which will the the actual delete
+        self.get_object().delete()
+        return JsonResponse(json.dumps({'delete': 'ok'}), safe=False)
+        
 
 ########################
 ### Reporting Views ####

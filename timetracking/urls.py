@@ -29,6 +29,9 @@ urlpatterns = [
     # Responsive view to move or edit (resize) a time sheet entry
     url(r'^time/timesheet/edit$', views.timesheet_edit, name='timesheet_edit'),
 
+    # Responsive view to move or edit (resize) a time sheet entry
+    url(r'^time/timesheet/delete$', views.timesheet_delete.as_view(), name='timesheet_delete'),
+
     ########################
     ### Reporting Views ####
     ########################
