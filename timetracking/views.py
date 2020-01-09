@@ -140,6 +140,7 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
 
     start_str = request.GET.get('start', None)
     end_str = request.GET.get('end', None)
+    filter_str = request.GET.get('filter', 'A')
 
     # check for start and end paramaters
     if not start_str or not end_str:
@@ -154,15 +155,21 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
 
     # get the RSE
     if request.user.is_superuser:
-        rse_id = request.GET.get('rse_id', -1)
+        rse_id = request.GET.get('rse_id', '-1')
     #else get the rse id of user
     else:
         rse = get_object_or_404(RSE, user=request.user)
         rse_id = rse.id
 
-    # get any allocation tht fall within query period
-    project_ids = RSEAllocation.objects.filter(rse__id=rse_id, start__lt=end, end__gt=start).values_list('project_id').distinct()
-    projects = Project.objects.filter(id__in=project_ids)
+    # Filter all active projects
+    if filter_str == 'A' and rse_id != '-1':
+        projects =  Project.objects.filter(start__lt=end, end__gt=start)
+    # Filter projects allocated to the RSE
+    else:
+        # get any allocation tht fall within query period
+        project_ids = RSEAllocation.objects.filter(rse__id=rse_id, start__lt=end, end__gt=start).values_list('project_id').distinct()
+        projects = Project.objects.filter(id__in=project_ids)
+
     # merge rgb property with selected project fields
     output = [dict(model_to_dict(p, fields=['id', 'name', 'start', 'end']), **p.colour_rbg) for p in projects]
 
