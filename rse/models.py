@@ -1097,6 +1097,21 @@ class RSEAllocation(models.Model):
 
         return salary_cost
 
+    def working_days(self, start: None, end: None) -> Optional[int]:
+        """ Number of workings days in the allocation """
+
+        # If no time period then use defaults for project
+        # then limit specified time period to allocation
+        if start is None or start < self.start:
+            start = self.start
+        if end is None or end > self.end:
+            end = self.end
+
+        # calculate timedelta in days
+        duration = (end - start).days
+
+        return Project.fte_days_to_working_days(duration) * self.percentage / 100.0
+
     @staticmethod
     def min_allocation_start() -> date:
         """

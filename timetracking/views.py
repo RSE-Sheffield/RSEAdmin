@@ -38,12 +38,35 @@ def json_error_response(message:str) -> JsonResponse:
     response.status_code = 400
     return response
 
-def daterange(start_date, end_date):
+def daterange(start_date, end_date, delta: str ='days'):
     """
     Generator function for iterating between two dates
+    Delta can break the time period down by days weeks or months
     """
-    for n in range(int ((end_date - start_date).days)):
-        yield start_date + timedelta(n)
+
+    if delta == 'days':
+        for n in range(int ((end_date - start_date).days)):
+            yield (start_date + timedelta(n), start_date + timedelta(n+1), 1)
+    if delta == 'weeks':
+        for n in range(int ((end_date - start_date).days/7)):
+            yield (start_date + timedelta(n*7), start_date + timedelta((n+1)*7), 7)
+    if delta == 'months':
+        ym_start= 12*start_date.year + start_date.month - 1 
+        ym_end= 12*end_date.year + end_date.month - 1
+        for ym in range( ym_start, ym_end ):
+            y, m = divmod( ym, 12 )
+            # start
+            s = date(y, m+1, 1)
+            if s < start_date:
+                s = start_date
+            # end
+            ym_end += 1
+            y, m = divmod( ym, 12 )
+            # start
+            e = date(y, m+1, 1)
+            if e > end_date:
+                e = end_date
+            yield (s, e, (e-s).days)
 
 
 
@@ -295,20 +318,21 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     timesheet_days_sum = 0
 
     # iterate through days on project to build dataset for graphing
-    for date in daterange(project.start, project.end):
+    for start_date, end_date, duration in daterange(project.start, project.end, delta='months'):
+
         # project expected days
-        project_days_sum += working_day
-        project_days.append([date, project_days_sum])
+        project_days_sum += working_day*duration
+        project_days.append([start_date, project_days_sum])
         
         # project allocated days by allocations which are active on current
-        active = allocations.filter(start__lte=date, end__gt=date)
+        active = allocations.filter(start__lte=start_date, end__gt=end_date)
         for a in active:
             # allocated day need to be converted into equivalent working days
-            allocated_days_sum += (settings.WORKING_DAYS_PER_YEAR /365.0) * a.percentage/100.0
-        allocated_days.append([date, allocated_days_sum])
+            allocated_days_sum += a.working_days(start_date, end_date)
+        allocated_days.append([start_date, allocated_days_sum])
 
         # timesheet entries
-        tses_for_day = tses.filter(date=date)
+        tses_for_day = tses.filter(date__gte=start_date, date__lt=end_date)
         for tse in tses_for_day:
             date = tse.date
             # accumulate time
@@ -316,7 +340,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
                 timesheet_days_sum += 1
             else:
                 timesheet_days_sum += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*settings.WORKING_HOURS_PER_DAY) # convert hours to fractional days
-        timesheet_days.append([date, timesheet_days_sum])
+        timesheet_days.append([start_date, timesheet_days_sum])
 
     # add datasets to dict
     view_dict['allocated_days'] = allocated_days
