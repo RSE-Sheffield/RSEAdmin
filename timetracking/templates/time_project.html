@@ -87,7 +87,7 @@
 					// RSE timesheet plot
 					{
 						label: "{{rse_name}}",
-						steppedLine: 'before',
+						//steppedLine: 'before',
 						data: [
 							{% for date, value in timsheet_days %}
 								{
@@ -104,7 +104,7 @@
 					// project allocated days
 					{
 						label: "{{rse_name}} Allocated Days",
-						steppedLine: 'before',
+						//steppedLine: 'before',
 						data: [
 							{% for date, value in allocated_days %}
 								{
@@ -121,7 +121,7 @@
 					// project expected days
 					{
 						label: "Total Project Working Days",
-						steppedLine: 'before',
+						//steppedLine: 'before',
 						data: [
 							{% for date, value in project_days %}
 								{

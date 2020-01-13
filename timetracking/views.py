@@ -44,25 +44,28 @@ def daterange(start_date, end_date, delta: str ='days'):
     Delta can break the time period down by days weeks or months
     """
 
-    if delta == 'days':
-        for n in range(int ((end_date - start_date).days)):
+    if delta == 'day':
+        days = int ((end_date - start_date).days)
+        logger.error(f"days = {days}")
+        for n in range(days):
             yield (start_date + timedelta(n), start_date + timedelta(n+1), 1)
-    if delta == 'weeks':
-        for n in range(int ((end_date - start_date).days/7)):
+    if delta == 'week':
+        weeks = int ((end_date - start_date).days/7)
+        logger.error(f"weeks = {weeks}")
+        for n in range(weeks):
             yield (start_date + timedelta(n*7), start_date + timedelta((n+1)*7), 7)
-    if delta == 'months':
+    if delta == 'month':
+        # convert to months
         ym_start= 12*start_date.year + start_date.month - 1 
         ym_end= 12*end_date.year + end_date.month - 1
         for ym in range( ym_start, ym_end ):
-            y, m = divmod( ym, 12 )
             # start
+            y, m = divmod( ym, 12 )
             s = date(y, m+1, 1)
             if s < start_date:
                 s = start_date
             # end
-            ym_end += 1
-            y, m = divmod( ym, 12 )
-            # start
+            y, m = divmod( ym +1, 12 )
             e = date(y, m+1, 1)
             if e > end_date:
                 e = end_date
@@ -270,7 +273,8 @@ class timesheet_delete(UserPassesTestMixin, DeleteView):
         return self.get_queryset().filter(id=id).get()
       
     def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
+        # No success message as this wont be displayed until the next request (and page is AJAX based)
+        # messages.success(self.request, self.success_message)
         # call super which will the the actual delete
         self.get_object().delete()
         return JsonResponse(json.dumps({'delete': 'ok'}), safe=False)
@@ -291,9 +295,10 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     #gte the project
     project = get_object_or_404(Project, id=project_id)
 
-    # form
+    # form (is always valid as no fields are required)
     form = ProjectTimeViewOptionsForm(request.GET, project=project)
     if form.is_valid():
+        granularity = form.cleaned_data['granularity']
         if form.cleaned_data['rse'] == "":
             allocations = RSEAllocation.objects.filter(project=project)
             tses = TimeSheetEntry.objects.filter(project=project)
@@ -317,19 +322,24 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     timesheet_days = []
     timesheet_days_sum = 0
 
+    # 0 day
+    project_days.append([project.start, 0])
+    allocated_days.append([project.start, 0])
+    timesheet_days.append([project.start, 0])
+
     # iterate through days on project to build dataset for graphing
-    for start_date, end_date, duration in daterange(project.start, project.end, delta='months'):
+    for start_date, end_date, duration in daterange(project.start, project.end, delta=granularity):
 
         # project expected days
         project_days_sum += working_day*duration
-        project_days.append([start_date, project_days_sum])
+        project_days.append([end_date, project_days_sum])
         
         # project allocated days by allocations which are active on current
         active = allocations.filter(start__lte=start_date, end__gt=end_date)
         for a in active:
             # allocated day need to be converted into equivalent working days
             allocated_days_sum += a.working_days(start_date, end_date)
-        allocated_days.append([start_date, allocated_days_sum])
+        allocated_days.append([end_date, allocated_days_sum])
 
         # timesheet entries
         tses_for_day = tses.filter(date__gte=start_date, date__lt=end_date)
@@ -340,7 +350,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
                 timesheet_days_sum += 1
             else:
                 timesheet_days_sum += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*settings.WORKING_HOURS_PER_DAY) # convert hours to fractional days
-        timesheet_days.append([start_date, timesheet_days_sum])
+        timesheet_days.append([end_date, timesheet_days_sum])
 
     # add datasets to dict
     view_dict['allocated_days'] = allocated_days
