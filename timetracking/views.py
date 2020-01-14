@@ -46,12 +46,10 @@ def daterange(start_date, end_date, delta: str ='days'):
 
     if delta == 'day':
         days = int ((end_date - start_date).days)
-        logger.error(f"days = {days}")
         for n in range(days):
             yield (start_date + timedelta(n), start_date + timedelta(n+1), 1)
     if delta == 'week':
         weeks = int ((end_date - start_date).days/7)
-        logger.error(f"weeks = {weeks}")
         for n in range(weeks):
             yield (start_date + timedelta(n*7), start_date + timedelta((n+1)*7), 7)
     if delta == 'month':
@@ -295,19 +293,29 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     #gte the project
     project = get_object_or_404(Project, id=project_id)
 
-    # form (is always valid as no fields are required)
-    form = ProjectTimeViewOptionsForm(request.GET, project=project)
-    if form.is_valid():
-        granularity = form.cleaned_data['granularity']
-        if form.cleaned_data['rse'] == "":
-            allocations = RSEAllocation.objects.filter(project=project)
-            tses = TimeSheetEntry.objects.filter(project=project)
-            view_dict['rse_name'] = f"RSE Team (all RSEs)"
-        else:
-            rse = get_object_or_404(RSE, id=form.cleaned_data['rse'])
-            allocations = RSEAllocation.objects.filter(rse=rse, project=project)
-            tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
-            view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
+    # create the form
+    if len(request.GET):
+        form = ProjectTimeViewOptionsForm(request.GET, project=project)
+        if form.is_valid():
+            granularity = form.cleaned_data['granularity'] 
+            # load data depending on RSE selection
+            if form.cleaned_data['rse'] == "":
+                allocations = RSEAllocation.objects.filter(project=project)
+                tses = TimeSheetEntry.objects.filter(project=project)
+                view_dict['rse_name'] = f"RSE Team (all RSEs)"
+            else:
+                rse = get_object_or_404(RSE, id=form.cleaned_data['rse'])
+                allocations = RSEAllocation.objects.filter(rse=rse, project=project)
+                tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
+                view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
+    else:
+        # create unbound form and load data
+        form = ProjectTimeViewOptionsForm(project=project)
+        granularity = 'week'
+        allocations = RSEAllocation.objects.filter(project=project)
+        tses = TimeSheetEntry.objects.filter(project=project)
+        view_dict['rse_name'] = f"RSE Team (all RSEs)"
+
     view_dict['form'] = form
     
 
@@ -329,13 +337,12 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
 
     # iterate through days on project to build dataset for graphing
     for start_date, end_date, duration in daterange(project.start, project.end, delta=granularity):
-
         # project expected days
         project_days_sum += working_day*duration
         project_days.append([end_date, project_days_sum])
         
         # project allocated days by allocations which are active on current
-        active = allocations.filter(start__lte=start_date, end__gt=end_date)
+        active = allocations.filter(start__lte=end_date, end__gt=start_date)
         for a in active:
             # allocated day need to be converted into equivalent working days
             allocated_days_sum += a.working_days(start_date, end_date)

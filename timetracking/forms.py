@@ -47,8 +47,9 @@ class TimesheetForm(forms.ModelForm):
 class ProjectTimeViewOptionsForm(forms.Form):
 
     rse = forms.ChoiceField(widget=forms.Select(attrs={'class' : 'form-control'}), required=False)
-    granularity = forms.ChoiceField(choices = (('day', 'Day'), ('week', 'Week'), ('month', 'Month')), widget=forms.Select(attrs={'class' : 'form-control'}), required=False)
+    granularity = forms.TypedChoiceField(choices = (('day', 'Day'), ('week', 'Week'), ('month', 'Month')), widget=forms.Select(attrs={'class' : 'form-control'}), required=False)
     
+
     def __init__(self, *args,**kwargs):
         if not 'project' in kwargs:
             raise TypeError("ProjectTimeViewOptionsForm missing required argument: 'project'")
@@ -60,3 +61,6 @@ class ProjectTimeViewOptionsForm(forms.Form):
         # populate RSE options
         self.fields['rse'].choices =  [('', '--- Team ---')]+[(rse.id, rse) for rse in self.rses]
         self.fields['rse'].empty_label = '--- Team ---'
+
+        # inital value of granularity
+        self.fields['granularity'].initial = 'week'
