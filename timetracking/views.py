@@ -290,7 +290,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     # get time breakdown
     commitment_data = []
 
-    #gte the project
+    #get the project
     project = get_object_or_404(Project, id=project_id)
 
     # create the form
@@ -309,9 +309,16 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
                 tses = TimeSheetEntry.objects.filter(rse=rse, project=project)
                 view_dict['rse_name'] = f"{rse.user.first_name} {rse.user.last_name}"
     else:
-        # create unbound form and load data
-        form = ProjectTimeViewOptionsForm(project=project)
-        granularity = 'week'
+        # default granularity for unbound form (i.e. first load without form submission)
+        d = project.duration
+        if d < 14:
+            granularity = 'day'
+        elif d < 60:
+            granularity = 'week'
+        else:
+            granularity = 'month'
+        # create unbound form (this is the only way to use initial value for a choice field) and load data
+        form = ProjectTimeViewOptionsForm(project=project, initial={'granularity': granularity})
         allocations = RSEAllocation.objects.filter(project=project)
         tses = TimeSheetEntry.objects.filter(project=project)
         view_dict['rse_name'] = f"RSE Team (all RSEs)"

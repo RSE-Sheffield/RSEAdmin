@@ -61,6 +61,3 @@ class ProjectTimeViewOptionsForm(forms.Form):
         # populate RSE options
         self.fields['rse'].choices =  [('', '--- Team ---')]+[(rse.id, rse) for rse in self.rses]
         self.fields['rse'].empty_label = '--- Team ---'
-
-        # inital value of granularity
-        self.fields['granularity'].initial = 'week'
