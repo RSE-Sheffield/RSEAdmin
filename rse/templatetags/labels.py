@@ -6,6 +6,10 @@ from django.core.exceptions import ObjectDoesNotExist
 register = template.Library()
 
 @register.filter
+def abs_value(value):
+    return abs(value)
+
+@register.filter
 def projectstatuslabel(value):
     """Converts a project status to a bootstrap label"""
     if value == Project.PREPARATION:

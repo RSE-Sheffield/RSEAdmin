@@ -61,9 +61,15 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # site wide template tags and filters
+            'libraries': {
+                'site_tags': 'RSEAdmin.templatetags.site_tags'
+            },
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'RSEAdmin.wsgi.application'
 

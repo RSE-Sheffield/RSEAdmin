@@ -292,6 +292,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
 
     #get the project
     project = get_object_or_404(Project, id=project_id)
+    rse = None
 
     # create the form
     if len(request.GET):
@@ -329,7 +330,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     # project expected days
     project_days = []
     project_days_sum = 0
-    working_day = project.working_days / (project.end - project.start).days  # average fractional day for project
+    working_day = project.working_days / (project.end - project.start).days  # average fractional day for project (varies for service projects)
     # project allocated days
     allocated_days = []
     allocated_days_sum = 0
@@ -357,26 +358,30 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
 
         # timesheet entries
         tses_for_day = tses.filter(date__gte=start_date, date__lt=end_date)
-        for tse in tses_for_day:
-            date = tse.date
-            # accumulate time
-            if tse.all_day:
-                timesheet_days_sum += 1
-            else:
-                timesheet_days_sum += (datetime.combine(date.today(), tse.end_time) - datetime.combine(date.today(), tse.start_time)).seconds / (60*60*settings.WORKING_HOURS_PER_DAY) # convert hours to fractional days
+        timesheet_days_sum += TimeSheetEntry.working_days(tses=tses_for_day)
         timesheet_days.append([end_date, timesheet_days_sum])
 
     # add datasets to dict
     view_dict['allocated_days'] = allocated_days
     view_dict['project_days'] = project_days
     view_dict['timsheet_days'] = timesheet_days
+
+    # Summary data
+    view_dict['today_expected'] = project.working_days_to_today(rse=rse)
+    view_dict['today_delivered'] = TimeSheetEntry.working_days(tses=tses.filter(date__gte=project.start, date__lte=datetime.now()))
+    view_dict['today_remaining'] = view_dict['today_expected'] - view_dict['today_delivered']
+    try:
+        view_dict['today_percent'] = view_dict['today_delivered']*100.0 / view_dict['today_expected']
+    except ZeroDivisionError:
+        view_dict['today_percent'] = 0
+    view_dict['total_expected'] = project.working_days
+    view_dict['total_delivered'] =  TimeSheetEntry.working_days(tses)
+    view_dict['total_remaining'] = view_dict['total_expected'] - view_dict['total_delivered']
+    view_dict['total_percent'] = view_dict['total_delivered']*100.0 / view_dict['total_expected']
+
     
     # settings required in view for displaying fractional days w.r.t. hours
     view_dict['WORKING_HOURS_PER_DAY'] = settings.WORKING_HOURS_PER_DAY
-    view_dict['project_working_days'] = project.working_days
-
-
-
-
+    view_dict['project'] = project
 
     return render(request, 'time_project.html', view_dict)

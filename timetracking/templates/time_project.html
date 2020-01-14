@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: View Project Timesheet{% endblock %}
-{% block page_name %}RSE Group Administration Tool: View Project Timesheet{% endblock %}
+{% block page_name %}RSE Group Administration Tool: View Project ({{project.name}}) Timesheet{% endblock %}
 {% block content %}
 
 	<div class ="row">
@@ -20,7 +20,8 @@
 		<div class="col-md-9">
           <div class="box box-solid">
             <div class="box-header with-border">
-              <h3 class="box-title">Calendar</h3>
+			  <h3 class="box-title">{{project.name}} Recorded and Scheduled Effort</h3>
+			  <span class="pull-right"><a href="{% url 'project' project.id%}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View project details and allocations"><i class="fa fa-eye"></i></a></span>
             </div>
             <div class="box-body">
 				<canvas id="id_graph" width="100%"></canvas>			  
@@ -59,6 +60,73 @@
 				</form>
 
 				</div>
+
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Todays Recorded Effort Summary</h3>
+					</div>
+					<div class="box-body">
+					  <p><i>This is a summary of recorded time-sheet effort for {{rse_name}} upto (and including today) compared with scheduled time on the projects.</i></p>
+					  <table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<div class="progress-group">
+									<span class="progress-text">Recorded Days upto Today</span>
+									<span class="progress-number"><b>{{today_percent|dp2}}%</b></span>
+				
+									<div class="progress sm">
+									  <div class="progress-bar progress-bar-aqua" style="width: {{today_percent|percent}}%"></div>
+									</div>
+								  </div>
+							</td></tr>
+							<tr><td>
+								<p>Days Recorded: {{today_delivered|dp2}}</p> 
+							</td></tr> 
+							<tr><td>
+								<p>Total Expected days: {{today_expected|dp2}}</p> 
+							</td></tr> 
+							<tr><td>
+								<p>Days {% if today_remaining > 0 %}Under-Committed{% else %}Over-Committed{% endif %}: {{today_remaining|abs_value|dp2}}</p> 
+							</td></tr> 
+						</tbody>
+					  </table>
+ 
+					</div>
+				</div>
+	
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Project Total Recorded Effort Summary</h3>
+					</div>
+					<div class="box-body">
+
+						<p><i>This is a summary of recorded and future scheduled time-sheet effort for {{rse_name}} compared to the total required project effort.</i></p>
+						<table class="table table-striped">
+							<tbody>
+								<tr><td>
+									<div class="progress-group">
+										<span class="progress-text">Total Recorded Days</span>
+										<span class="progress-number"><b>{{total_percent|dp2}}%</b></span>
+					
+										<div class="progress sm">
+										<div class="progress-bar progress-bar-aqua" style="width: {{total_percent|percent}}%%"></div>
+										</div>
+									</div>
+								</td></tr>
+								<tr><td>
+										<p>Total Days Recorded: {{total_delivered|dp2}}</p> 
+									</td></tr> 
+								<tr><td>
+									<p>Total Project Working Days: {{total_expected|dp2}}</p> 
+								</td></tr> 
+								<tr><td>
+									<p>Total Days Remaining: {{total_remaining|dp2}}</p> 
+								</td></tr> 
+							</tbody>
+						</table>
+					</div>
+				</div>
+
 			</div>
 		  
         </div>
@@ -87,7 +155,7 @@
                 datasets: [
 					// RSE timesheet plot
 					{
-						label: "{{rse_name}}",
+						label: "{{rse_name}} Recorded",
 						//steppedLine: 'before',
 						data: [
 							{% for date, value in timsheet_days %}
@@ -104,7 +172,7 @@
 					},
 					// project allocated days
 					{
-						label: "{{rse_name}} Allocated Days",
+						label: "{{rse_name}} Scheduled",
 						//steppedLine: 'before',
 						data: [
 							{% for date, value in allocated_days %}
@@ -121,7 +189,7 @@
 					},
 					// project expected days
 					{
-						label: "Total Project Working Days",
+						label: "Total Project Effort",
 						//steppedLine: 'before',
 						data: [
 							{% for date, value in project_days %}
@@ -148,7 +216,7 @@
 								},
 								{
 									"x": moment("{% now 'Y-m-d'%}"), 
-									"y": {{project_working_days}},
+									"y": {{project.working_days}},
 								},
 						],
 						borderColor: 'rgba(255, 0, 0, 1.0)',

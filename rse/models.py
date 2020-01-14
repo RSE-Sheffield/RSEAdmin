@@ -701,6 +701,21 @@ class Project(PolymorphicModel):
         """ Number of workings days in the project """
         """ Implemented by concrete classes """
         pass
+    
+    def working_days_to_today(self, rse = None) -> float:
+        """ Returns the total working days of the project upto today """
+        now = timezone.now().date()
+        allocated_days_sum = 0
+        # get allocations (all or by RSE if specified)
+        if not rse:
+            active = RSEAllocation.objects.filter(project=self, start__lte=now)
+        else:
+            active = RSEAllocation.objects.filter(project=self, rse=rse, start__lte=now)
+        for a in active:
+            # allocated day need to be converted into equivalent working days
+            allocated_days_sum += a.working_days(self.start, now)
+        
+        return allocated_days_sum
 
     def value(self) -> Optional[int]:
         """ Implemented by concrete classes."""
