@@ -23,6 +23,7 @@ from rse.forms import *
 
 
 def timesheetentry_json(timesheetentry) -> dict:
+    """ Helper function to convert a TimeSheetEntry object into a json dict with nice date and time formatting """
     data = {}
     data['id'] = timesheetentry.id
     data['project'] = timesheetentry.project.id
@@ -35,6 +36,7 @@ def timesheetentry_json(timesheetentry) -> dict:
     return data
 
 def json_error_response(message:str) -> JsonResponse:
+    """ Helper function for generating a json response with an error code"""
     response = JsonResponse({"Error": message})
     response.status_code = 400
     return response
@@ -80,7 +82,8 @@ def daterange(start_date, end_date, delta: str ='days'):
 @login_required
 def timesheet(request: HttpRequest) -> HttpResponse:
     """
-    Renders the timesheet page for a given RSE user
+    Renders the timesheet page for a given RSE user.
+    Further queries to the database are handled through the AJAX Responsive URLS
     """
     view_dict = {}
 
@@ -102,7 +105,8 @@ def timesheet(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_events(request: HttpRequest) -> HttpResponse:
     """
-    Gets a JSON set of events
+    Gets a JSON set of time sheet events for a given date time period.
+    This view is used to populate th JS FulCalendar display.
     """
     
 
@@ -160,7 +164,8 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_projects(request: HttpRequest) -> HttpResponse:
     """
-    Gets a JSON set of projects for a given time period and RSE
+    Gets a JSON set of projects (funded only) for a given time period and RSE
+    If the RSE id is -1 (value from template which represents whole team) then all projects are returned.
     """
 
     start_str = request.GET.get('start', None)
@@ -203,7 +208,8 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_add(request: HttpRequest) -> HttpResponse:
     """
-    Adds a timesheet entry (e.g. as a result of drag drop)
+    Adds a timesheet entry (e.g. as a result of external drag drop in JS FulCalendar library)
+    Returns a JSON response of object and raises an error code if the edit fails.
     """
 
     if request.method == 'POST':
@@ -223,7 +229,8 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
 @login_required
 def timesheet_edit(request: HttpRequest) -> HttpResponse:
     """
-    Edit a timesheet entry (e.g. as a result of drag drop or resize)
+    Edit a timesheet entry (e.g. as a result of drag drop or resize in JS FulCalendar library)
+    Returns a JSON response and raises an error code if the edit fails.
     """
 
     if request.method == 'POST':
@@ -248,6 +255,10 @@ def timesheet_edit(request: HttpRequest) -> HttpResponse:
 
 
 class timesheet_delete(UserPassesTestMixin, DeleteView):
+    """
+    DeletView class for deleteing TimeSheetEntry object.
+    Overriding the test_func prevents users from deleteing entries which do not belong to them.
+    """
     model = TimeSheetEntry
     success_message = "Timesheet entry was successfully deleted."
     
@@ -285,7 +296,10 @@ class timesheet_delete(UserPassesTestMixin, DeleteView):
 
 @login_required
 def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
-
+    """
+    This view presents the recorded (from time sheets), scheduled (from allocations) and project total effort committed.
+    Data is generated fro the ChartJS template into three sets of plots by iterating dat regions (in days, weeks, or months)
+    """
     view_dict = {}
 
     # get time breakdown
@@ -296,7 +310,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     rse = None
     view_dict['project'] = project
 
-    # create the form
+    # create the form used fro filtering by RSE or granularity of report
     if len(request.GET):
         form = ProjectTimeViewOptionsForm(request.GET, project=project)
         if form.is_valid():
@@ -345,7 +359,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     allocated_days.append([project.start, 0])
     timesheet_days.append([project.start, 0])
 
-    # iterate through days on project to build dataset for graphing
+    # iterate through days on project to build datasets for graphing
     for start_date, end_date, duration in daterange(project.start, project.end, delta=granularity):
         # project expected days
         project_days_sum += working_day*duration
@@ -379,14 +393,15 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     view_dict['total_expected'] = project.working_days
     view_dict['total_delivered'] =  TimeSheetEntry.working_days(tses)
     view_dict['total_remaining'] = view_dict['total_expected'] - view_dict['total_delivered']
-    view_dict['total_percent'] = view_dict['total_delivered']*100.0 / view_dict['total_expected']
+    view_dict['total_percent'] = view_dict['total_delivered']*100.0 / view_dict['total_expected'] # no need to catch div by 0 as total_expected can not be 0
 
     return render(request, 'time_project.html', view_dict)
 
 @login_required
 def time_projects(request: HttpRequest) -> HttpResponse:
     """
-    Filters to be handled client side with DataTables
+    View for all funded projects to provide a link for the full breakdown with graphing. 
+    Project objects are amended by adding scheduled and recorded time to the object for display in the template.
     """
 
     # view dict

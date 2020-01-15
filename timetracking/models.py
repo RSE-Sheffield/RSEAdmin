@@ -16,8 +16,9 @@ class TimeSheetEntry(models.Model):
     end_time = models.TimeField(blank=True, null=True)
 
     def duration(self):
+        """ duration is is based off the global WORKING_HOURS_PER_DAY value (if all day event) or the actual hours if hourly entry """
         if self.all_day:
-            return 7.5
+            return settings.WORKING_HOURS_PER_DAY
         else: # Need to construct a valid datetime object to subtract
             return datetime.combine(date.min, self.end_time) - datetime.combine(date.min, self.start_time)
 

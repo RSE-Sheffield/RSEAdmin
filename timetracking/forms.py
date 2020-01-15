@@ -45,6 +45,11 @@ class TimesheetForm(forms.ModelForm):
             raise ValidationError(errors)
 
 class ProjectTimeViewOptionsForm(forms.Form):
+    """
+    Form used for filtering on project time view.
+    Allows selection of an RSE (or team) and selection of a granularity specifying the graphing report period.
+    As the form is unbound it is up to the view to set a default value for granularity in the initial GET request data. There is probably a better way to do this but 2 days of searching stack overflow didn't lead me to it!
+    """
 
     rse = forms.ChoiceField(widget=forms.Select(attrs={'class' : 'form-control'}), required=False)
     granularity = forms.TypedChoiceField(choices = (('day', 'Day'), ('week', 'Week'), ('month', 'Month')), widget=forms.Select(attrs={'class' : 'form-control'}), required=False)

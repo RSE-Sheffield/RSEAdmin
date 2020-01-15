@@ -25,7 +25,7 @@ PROJ_DIR = os.path.join(BASE_DIR, 'RSEAdmin')
 INSTALLED_APPS = [
     'polymorphic',
     'rse.apps.RseConfig',
-    'timetracking.apps.TimetrackingConfig',
+    'timetracking.apps.TimetrackingConfig', # The following line should be commented out to remove the time tracking application (before creating DB)
     'django_adminlte',
     'django_adminlte_theme',
     'django.contrib.admin',
