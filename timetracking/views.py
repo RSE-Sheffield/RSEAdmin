@@ -19,6 +19,7 @@ from django.conf import settings
 from django.views.generic.edit import DeleteView
 
 from timetracking.forms import *
+from rse.forms import *
 
 
 def timesheetentry_json(timesheetentry) -> dict:
@@ -187,12 +188,12 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
 
     # Filter all active projects
     if filter_str == 'A' and rse_id != '-1':
-        projects =  Project.objects.filter(start__lt=end, end__gt=start)
+        projects =  Project.objects.filter(start__lt=end, end__gt=start, status=Project.FUNDED)
     # Filter projects allocated to the RSE
     else:
-        # get any allocation tht fall within query period
+        # get any allocations that fall within query period
         project_ids = RSEAllocation.objects.filter(rse__id=rse_id, start__lt=end, end__gt=start).values_list('project_id').distinct()
-        projects = Project.objects.filter(id__in=project_ids)
+        projects = Project.objects.filter(id__in=project_ids, status=Project.FUNDED)
 
     # merge rgb property with selected project fields
     output = [dict(model_to_dict(p, fields=['id', 'name', 'start', 'end']), **p.colour_rbg) for p in projects]
@@ -293,6 +294,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     #get the project
     project = get_object_or_404(Project, id=project_id)
     rse = None
+    view_dict['project'] = project
 
     # create the form
     if len(request.GET):
@@ -367,8 +369,8 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     view_dict['timsheet_days'] = timesheet_days
 
     # Summary data
-    view_dict['today_expected'] = project.working_days_to_today(rse=rse)
-    view_dict['today_delivered'] = TimeSheetEntry.working_days(tses=tses.filter(date__gte=project.start, date__lte=datetime.now()))
+    view_dict['today_expected'] = project.scheduled_working_days_to_today(rse=rse)
+    view_dict['today_delivered'] = TimeSheetEntry.working_days(tses=tses.filter(date__gte=project.start, date__lte=timezone.now().date()))
     view_dict['today_remaining'] = view_dict['today_expected'] - view_dict['today_delivered']
     try:
         view_dict['today_percent'] = view_dict['today_delivered']*100.0 / view_dict['today_expected']
@@ -379,9 +381,34 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     view_dict['total_remaining'] = view_dict['total_expected'] - view_dict['total_delivered']
     view_dict['total_percent'] = view_dict['total_delivered']*100.0 / view_dict['total_expected']
 
-    
-    # settings required in view for displaying fractional days w.r.t. hours
-    view_dict['WORKING_HOURS_PER_DAY'] = settings.WORKING_HOURS_PER_DAY
-    view_dict['project'] = project
-
     return render(request, 'time_project.html', view_dict)
+
+@login_required
+def time_projects(request: HttpRequest) -> HttpResponse:
+    """
+    Filters to be handled client side with DataTables
+    """
+
+    # view dict
+    view_dict = {}  # type: Dict[str, object]
+    
+    if request.method == 'GET':
+        form = ProjectsFilterForm(request.GET)
+    view_dict['form'] = form
+       
+    # funded projects only
+    now = timezone.now().date()
+    projects = Project.objects.filter(status=Project.FUNDED)
+
+    #append recorded and scheduled days
+    for p in projects:
+        p.scheduled = p.scheduled_working_days_to_today()
+        p.recorded = TimeSheetEntry.working_days(tses=TimeSheetEntry.objects.filter(project=p, date__gte=p.start, date__lte=timezone.now().date()))
+        try:
+            p.progress = p.recorded/p.scheduled*100
+        except ZeroDivisionError:
+            p.progress = 0
+
+    view_dict['projects'] = projects
+    
+    return render(request, 'time_projects.html', view_dict)

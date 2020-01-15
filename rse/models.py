@@ -702,7 +702,7 @@ class Project(PolymorphicModel):
         """ Implemented by concrete classes """
         pass
     
-    def working_days_to_today(self, rse = None) -> float:
+    def scheduled_working_days_to_today(self, rse = None) -> float:
         """ Returns the total working days of the project upto today """
         now = timezone.now().date()
         allocated_days_sum = 0

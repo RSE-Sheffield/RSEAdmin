@@ -1,6 +1,7 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 {% load labels %}
+{% load timetracking_labels %}
 
 
 {% block stylesheets %}
@@ -80,13 +81,13 @@
 								  </div>
 							</td></tr>
 							<tr><td>
-								<p>Days Recorded: {{today_delivered|dp2}}</p> 
+								<p>Days Recorded: {{today_delivered|days_to_days_and_hours}}</p> 
 							</td></tr> 
 							<tr><td>
-								<p>Total Expected days: {{today_expected|dp2}}</p> 
+								<p>Total Expected days: {{today_expected|days_to_days_and_hours}}</p> 
 							</td></tr> 
 							<tr><td>
-								<p>Days {% if today_remaining > 0 %}Under-Committed{% else %}Over-Committed{% endif %}: {{today_remaining|abs_value|dp2}}</p> 
+								<p>Days {% if today_remaining > 0 %}Under-Committed{% else %}Over-Committed{% endif %}: {{today_remaining|abs_value|days_to_days_and_hours}}</p> 
 							</td></tr> 
 						</tbody>
 					  </table>
@@ -109,18 +110,18 @@
 										<span class="progress-number"><b>{{total_percent|dp2}}%</b></span>
 					
 										<div class="progress sm">
-										<div class="progress-bar progress-bar-aqua" style="width: {{total_percent|percent}}%%"></div>
+										<div class="progress-bar progress-bar-aqua" style="width: {{total_percent|percent}}%"></div>
 										</div>
 									</div>
 								</td></tr>
 								<tr><td>
-										<p>Total Days Recorded: {{total_delivered|dp2}}</p> 
+										<p>Total Days Recorded: {{total_delivered|days_to_days_and_hours}}</p> 
 									</td></tr> 
 								<tr><td>
-									<p>Total Project Working Days: {{total_expected|dp2}}</p> 
+									<p>Total Project Working Days: {{total_expected|days_to_days_and_hours}}</p> 
 								</td></tr> 
 								<tr><td>
-									<p>Total Days Remaining: {{total_remaining|dp2}}</p> 
+									<p>Total Days Remaining: {{total_remaining|days_to_days_and_hours}}</p> 
 								</td></tr> 
 							</tbody>
 						</table>
@@ -162,7 +163,7 @@
 								{
 									"x": moment("{{date | date:'Y-m-d'}}"), 
 									"y": {{value}},
-									tooltip: "{{rse_name}} " + Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+									tooltip: "{{rse_name}} " + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
 								},
 							{% endfor %}
 						],
@@ -179,7 +180,7 @@
 								{
 									"x": moment("{{date | date:'Y-m-d'}}"), 
 									"y": {{value}},
-									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+									tooltip: Math.floor({{value}}) + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
 								},
 							{% endfor %}
 						],
@@ -196,7 +197,7 @@
 								{
 									"x": moment("{{date | date:'Y-m-d'}}"), 
 									"y": {{value}},
-									tooltip: Math.floor({{value}}) + " days and " + Math.round(({{value}}%1)*{{WORKING_HOURS_PER_DAY}} *100)/100 + " hours", //days and hours to 2 dp
+									tooltip: Math.floor({{value}}) + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
 								},
 							{% endfor %}
 						],

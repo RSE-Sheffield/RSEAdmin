@@ -39,4 +39,7 @@ urlpatterns = [
     # Project commitment per person or team
     url(r'^time/project/(?P<project_id>[0-9]+)$', views.time_project, name='time_project'),
 
+    # List of active projects to view time project breakdown
+    url(r'^time/projects$', views.time_projects, name='time_projects'),
+
 ]
