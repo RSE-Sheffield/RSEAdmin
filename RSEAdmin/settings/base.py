@@ -113,13 +113,20 @@ USE_I18N = True
 
 USE_TZ = True
 
-########################################################
-
-# Working days per year (TRAC Days)
-WORKING_DAYS_PER_YEAR = 220
+###############################################
+# Time tracking application required settings #
+###############################################
 
 # Working hours per day (37 hour work week)
 WORKING_HOURS_PER_DAY = 7.4
+
+
+###############################
+# RSEAdmin required setttings #
+###############################
+
+# Working days per year (TRAC Days)
+WORKING_DAYS_PER_YEAR = 220
 
 # Number of items to show in lists such as starting soon
 HOME_PAGE_NUMBER_ITEMS = 7
