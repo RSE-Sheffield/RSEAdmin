@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil import parser
 from typing import Dict
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -119,10 +120,10 @@ def timesheet_events(request: HttpRequest) -> HttpResponse:
 
     # format date
     try:
-        start = datetime.strptime(start_str, r"%Y-%m-%dT%H:%M:%S%z")
-        end = datetime.strptime(end_str, r"%Y-%m-%dT%H:%M:%S%z")
+        start = parser.parse(start_str)
+        end = parser.parse(end_str)
     except (ValueError ):
-        return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%S%z'")
+        return json_error_response("GET parameters 'start' and 'end' could not be parsed")
 
     #select an RSE
     if request.user.is_superuser:
@@ -178,8 +179,8 @@ def timesheet_projects(request: HttpRequest) -> HttpResponse:
 
     # format date
     try:
-        start = datetime.strptime(start_str, r"%Y-%m-%d")
-        end = datetime.strptime(end_str, r"%Y-%m-%d")
+        start = parser.parse(start_str) # r"%Y-%m-%d"
+        end = parser.parse(end_str) # r"%Y-%m-%d"
     except (ValueError ):
         return json_error_response("GET parameters 'start' and 'end' must be in format '%Y-%m-%dT%H:%M:%SZ'")
 
