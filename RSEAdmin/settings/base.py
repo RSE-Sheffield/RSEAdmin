@@ -14,6 +14,7 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 #BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJ_DIR = os.path.join(BASE_DIR, 'RSEAdmin')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -24,6 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 INSTALLED_APPS = [
     'polymorphic',
     'rse.apps.RseConfig',
+    'timetracking.apps.TimetrackingConfig', # The following line should be commented out to remove the time tracking application (before creating DB)
     'django_adminlte',
     'django_adminlte_theme',
     'django.contrib.admin',
@@ -50,7 +52,7 @@ ROOT_URLCONF = 'RSEAdmin.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [(os.path.join(PROJ_DIR, 'templates')),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -59,9 +61,15 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # site wide template tags and filters
+            'libraries': {
+                'site_tags': 'RSEAdmin.templatetags.site_tags'
+            },
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'RSEAdmin.wsgi.application'
 
@@ -105,6 +113,20 @@ USE_I18N = True
 
 USE_TZ = True
 
+###############################################
+# Time tracking application required settings #
+###############################################
+
+# Working hours per day (37 hour work week)
+WORKING_HOURS_PER_DAY = 7.4
+
+
+###############################
+# RSEAdmin required setttings #
+###############################
+
+# Working days per year (TRAC Days)
+WORKING_DAYS_PER_YEAR = 220
 
 # Number of items to show in lists such as starting soon
 HOME_PAGE_NUMBER_ITEMS = 7
@@ -115,4 +137,7 @@ HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
 # Days to consider as soon
 HOME_PAGE_DAYS_SOON = 365
 
+# Days to consider as recent on home page
 HOME_PAGE_DAYS_RECENT = 30
+
+

@@ -1,0 +1,266 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+{% load timetracking_labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/fullcalendar/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/daygrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/timegrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/list/main.css' %}"/>
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool: View Project Time Sheet{% endblock %}
+{% block page_name %}RSE Group Administration Tool: View Project ({{project.name}}) Time Sheet{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-9">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+			  <h3 class="box-title">{{project.name}} Recorded and Scheduled Effort</h3>
+			  <span class="pull-right"><a href="{% url 'project' project.id%}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View project details and allocations"><i class="fa fa-eye"></i></a></span>
+            </div>
+            <div class="box-body">
+				<canvas id="id_graph" width="100%"></canvas>			  
+            </div>
+          </div>
+        </div>
+		
+
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Options</h3>
+				</div>
+				<form method='GET' id="filter_form">
+					<div class="box-body">
+						<div class="form-group">
+							
+							<label>Select RSE:</label>
+							<p><i>All RSEs are included regardless of allocations</i><p>
+							{{ form.rse }}
+							</br>
+							
+							
+							<label>Report Granularity</label>
+							<p><i>The level at which the graph reports on accumulated effort</i></p>
+							{{ form.granularity }}
+
+							</br>
+							
+						</div>
+					</div>
+					<div class="box-footer">
+						<button type="submit" class="btn btn-primary">Apply</button>
+					</div>
+				</form>
+
+				</div>
+
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Todays Recorded Effort Summary</h3>
+					</div>
+					<div class="box-body">
+					  <p><i>This is a summary of recorded time-sheet effort for {{rse_name}} upto (and including today) compared with scheduled time on the projects.</i></p>
+					  <table class="table table-striped">
+						<tbody>
+							<tr><td>
+								<div class="progress-group">
+									<span class="progress-text">Recorded Days upto Today</span>
+									<span class="progress-number"><b>{{today_percent|dp2}}%</b></span>
+				
+									<div class="progress sm">
+									  <div class="progress-bar progress-bar-aqua" style="width: {{today_percent|percent}}%"></div>
+									</div>
+								  </div>
+							</td></tr>
+							<tr><td>
+								<p>Days Recorded: {{today_delivered|days_to_days_and_hours}}</p> 
+							</td></tr> 
+							<tr><td>
+								<p>Total Expected days: {{today_expected|days_to_days_and_hours}}</p> 
+							</td></tr> 
+							<tr><td>
+								<p>Days {% if today_remaining > 0 %}Under-Committed{% else %}Over-Committed{% endif %}: {{today_remaining|abs_value|days_to_days_and_hours}}</p> 
+							</td></tr> 
+						</tbody>
+					  </table>
+ 
+					</div>
+				</div>
+	
+				<div class="box box-default">
+					<div class="box-header with-border">
+						<h3 class="box-title">Project Total Recorded Effort Summary</h3>
+					</div>
+					<div class="box-body">
+
+						<p><i>This is a summary of recorded and future scheduled time-sheet effort for {{rse_name}} compared to the total required project effort.</i></p>
+						<table class="table table-striped">
+							<tbody>
+								<tr><td>
+									<div class="progress-group">
+										<span class="progress-text">Total Recorded Days</span>
+										<span class="progress-number"><b>{{total_percent|dp2}}%</b></span>
+					
+										<div class="progress sm">
+										<div class="progress-bar progress-bar-aqua" style="width: {{total_percent|percent}}%"></div>
+										</div>
+									</div>
+								</td></tr>
+								<tr><td>
+										<p>Total Days Recorded: {{total_delivered|days_to_days_and_hours}}</p> 
+									</td></tr> 
+								<tr><td>
+									<p>Total Project Working Days: {{total_expected|days_to_days_and_hours}}</p> 
+								</td></tr> 
+								<tr><td>
+									<p>Total Days Remaining: {{total_remaining|days_to_days_and_hours}}</p> 
+								</td></tr> 
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+			</div>
+		  
+        </div>
+		
+		
+		
+    </div>
+
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script language="javascript" src="{% static 'chartjs/moment.js' %}"></script>
+<script language="javascript" src="{% static 'chartjs/Chart.js' %}"></script>
+<script type="text/javascript">
+	
+    var ctx = $('#id_graph')[0].getContext('2d');
+    var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+				
+                datasets: [
+					// RSE timesheet plot
+					{
+						label: "{{rse_name}} Recorded",
+						//steppedLine: 'before',
+						data: [
+							{% for date, value in timsheet_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: "{{rse_name}} " + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,255,0, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						backgroundColor: 'rgba(0,255,0, 1.0)',//'rgba({{ plot_rse.colour_rbg.r }}, {{ plot_rse.colour_rbg.g }}, {{ plot_rse.colour_rbg.b }}, 1.0)',
+						fill: false,
+					},
+					// project allocated days
+					{
+						label: "{{rse_name}} Scheduled",
+						//steppedLine: 'before',
+						data: [
+							{% for date, value in allocated_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: Math.floor({{value}}) + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,0,255, 1.0)',
+						backgroundColor: 'rgba(0,0,255, 1.0)',
+						fill: false,
+					},
+					// project expected days
+					{
+						label: "Total Project Effort",
+						//steppedLine: 'before',
+						data: [
+							{% for date, value in project_days %}
+								{
+									"x": moment("{{date | date:'Y-m-d'}}"), 
+									"y": {{value}},
+									tooltip: Math.floor({{value}}) + "{{value|days_to_days_and_hours}}", //days and hours to 2 dp
+								},
+							{% endfor %}
+						],
+						borderColor: 'rgba(0,0,0, 1.0)',
+						backgroundColor: 'rgba(0,0,0, 1.0)',
+						fill: false,
+					},
+					// Today plot
+					{
+						label: "Current Date Today",  
+						borderDash: [10,5] , 
+						data: [
+							
+								{
+									"x": moment("{% now 'Y-m-d'%}"), 
+									"y": 0,
+								},
+								{
+									"x": moment("{% now 'Y-m-d'%}"), 
+									"y": {{project.working_days}},
+								},
+						],
+						borderColor: 'rgba(255, 0, 0, 1.0)',
+						backgroundColor: 'rgba(255, 255, 255, 1.0)',
+						fill: false,
+					},
+                ]
+            },
+            options: {
+				responsive: true,
+				legend: {
+						display: true,
+					},
+				scales: {
+                    yAxes: [{
+                        //stacked: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Days'
+						}
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                            displayFormats: {
+                                quarter: 'D MMM YYYY'
+                            }
+                        }
+                    }]                    
+                },
+				tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].tooltip
+                            return label;
+                        }
+					}	
+                }
+            }
+    });
+	
+
+</script>
+	
+{% endblock %}

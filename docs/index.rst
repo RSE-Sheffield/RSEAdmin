@@ -19,3 +19,4 @@ These documents provide an overview of the sites features. For notes on installa
    team/index
    projects/index
    reporting/index
+   timetracking/index

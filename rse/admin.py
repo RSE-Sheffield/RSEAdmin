@@ -1,15 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    Client,
-    FinancialYear,
-    AllocatedProject,
-    ServiceProject,
-    RSE,
-    RSEAllocation,
-    SalaryBand,
-    SalaryGradeChange,
-)
+from .models import *
 
 
 admin.site.register(SalaryBand)

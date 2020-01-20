@@ -1,7 +1,10 @@
 {% extends 'adminlte/lib/_main_footer.html' %}
 
+{% load site_tags %}
+
 {% block footer_right %}
-    <b>Version</b> {% block version %}1.0 Beta-Release Candidate{% endblock %}
+    {% timetracking_installed as timetracking %}
+    <b>Version</b> {% block version %}1.1 Beta-Release Candidate {% if timetracking %}(TimeTracking installed){% endif %}{% endblock %}
     (<a href="https://github.com/RSE-Sheffield/RSEAdmin">Available on GitHub</a>)
 {% endblock %}
 

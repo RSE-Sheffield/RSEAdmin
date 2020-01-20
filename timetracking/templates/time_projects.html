@@ -1,0 +1,154 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+{% load timetracking_labels %}
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+{% endblock %}
+
+
+{% block title %}RSE Group Administration Tool: View Projects for Time Tracking{% endblock %}
+
+{% block page_name %}RSE Group Administration Tool: View Projects for Time Tracking{% endblock %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-9">
+		<div class="box">
+			<div class="box-body table-responsive padding">
+				<p><i>The following table includes projects which are funded as time can not be recorded on any other project status.</i></p>
+				<table id="projects" class="table table-hover">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th id="type">Type</th>
+							<th id="title">Title</th>
+							<th id="duration">Working Days</th>
+							<th id="start">Start</th>
+							<th id="end">End</th>
+							<th id="schedule">Schedule</th>
+							<th id="progress">Current Progress ( recorded / scheduled )</th>
+							<th id="progress_label"></th>
+							<th id="more"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for p in projects %}
+						<tr>
+							<td>{{ p.id }}</td>
+							<td>{{ p.type_str }}</td>
+							<td>{{ p.name }}</td>
+							<td>{{ p.working_days|days_to_d_and_h }}</td>
+							<td>{{ p.start|date:'Y-m-d' }}</td>
+							<td>{{ p.end|date:'Y-m-d' }}</td>
+							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
+							<td>
+								<div class="progress progress-xs">
+									<div class="progress-bar progress-bar-primary" style="width: {{p.progress|percent}}%"></div>
+								</div>
+							</td>
+							<td>
+								<span class="badge bg-light-blue">{{p.recorded|floatformat:0}} / {{p.scheduled|floatformat:0}}</span>
+							</td>
+							<td><a href="{% url 'time_project' p.id %}" class="pull-right btn btn-primary btn-xs">Info</a></td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="box-body">
+				
+				
+				<div class="form-group">
+					<label>Project Type</label>
+					<p><i>Filter projects based off RSE allocated (cost recovered projects) or service work (day rate projects)</i></p>
+					{{form.type_filter}}
+					
+					</br>
+
+					<label>Schedule</label>
+					<p><i>Filter projects based on current schedule</i></p>
+					{{form.schedule_filter}}
+					
+					</br>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super}}
+	<script type="text/javascript" src="{% static 'DataTables/datatables.min.js' %}"></script>
+	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#projects').DataTable({
+				pageLength: 25,
+				scrollX: false,
+				initComplete: function () {
+					// Type filter
+					this.api().column("#type").every( function () {
+						var column = this;
+						var select = $('#id_type_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+		 
+						
+					} );
+					// Schedule filter
+					this.api().column("#schedule").every( function () {
+						var column = this;
+
+						var select = $('#id_schedule_filter')
+							.on( 'change', function () {
+								var val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? '^'+val+'$' : '', true, false )
+									.draw();
+							} );
+					} );
+				}
+			} );
+
+			// Search by initial values from form
+			initial_type_val = $.fn.dataTable.util.escapeRegex($('#id_type_filter').val());
+			initial_schedule_val = $.fn.dataTable.util.escapeRegex($('#id_schedule_filter').val());
+			$('#projects').DataTable().column("#type").search(initial_type_val ? '^'+initial_type_val+'$' : '', true, false).draw();
+			$('#projects').DataTable().column("#schedule").search(initial_schedule_val ? '^'+initial_schedule_val+'$' : '', true, false).draw();
+
+
+		} );
+		
+	</script>
+{% endblock %}
+

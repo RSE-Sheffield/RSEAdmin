@@ -1,5 +1,6 @@
 {% extends 'adminlte/lib/_main_sidebar.html' %}
 {% load labels %}
+{% load site_tags %}
 
 {% block nav_links %}
 
@@ -55,6 +56,22 @@
 			<li {% if request.resolver_match.url_name == "projects_income_summary"%} class="active" {% endif %} ><a href="{% url 'projects_income_summary' %}"><i class="fa fa-circle-o"></i>Project Costs &amp; Overheads</a></li>
 			<li {% if request.resolver_match.url_name == "projects_internal_summary"%} class="active" {% endif %} ><a href="{% url 'projects_internal_summary' %}"><i class="fa fa-circle-o"></i>Internal Project Costs</a></li>
 			<li {% if request.resolver_match.url_name == "financial_summary"%} class="active" {% endif %} ><a href="{% url 'financial_summary' %}"><i class="fa fa-circle-o"></i>Financial Summary</a></li>
+		</ul>
+	</li>
+	{% endif %}
+
+	{% timetracking_installed as timetracking %}
+	{% if timetracking %}
+	<li class="treeview"">
+		<a href="#">
+			<i class="fa fa-dashboard"></i> <span>Time Tracking</span>
+			<span class="pull-right-container">
+				<i class="fa fa-angle-left pull-right"></i>
+			</span>
+		</a>
+		<ul class="treeview-menu" style="">
+			<li {% if request.resolver_match.url_name == "timesheet"%} class="active" {% endif %} ><a href="{% url 'timesheet' %}"><i class="fa fa-circle-o"></i>Time Sheets</a></li>
+			<li {% if request.resolver_match.url_name == "time_projects"%} class="active" {% endif %} ><a href="{% url 'time_projects' %}"><i class="fa fa-circle-o"></i>Time Reporting</a></li>
 		</ul>
 	</li>
 	{% endif %}

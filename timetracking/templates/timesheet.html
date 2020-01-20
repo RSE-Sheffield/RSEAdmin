@@ -1,0 +1,397 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+{% load labels %}
+
+
+{% block stylesheets %}
+{{ block.super}}
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/fullcalendar/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/daygrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/timegrid/main.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'timetracking/list/main.css' %}"/>
+{% endblock %}
+
+{% block title %}RSE Group Administration Tool: Edit Time Sheet{% endblock %}
+{% block page_name %}RSE Group Administration Tool: Edit Time Sheet{% endblock %}
+{% block content %}
+
+	<div class ="row">
+        
+		<div class="col-md-9">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">Calendar</h3>
+            </div>
+            <div class="box-body">
+              <div id="calendar">
+			  </div>
+			  
+			  
+            </div>
+          </div>
+        </div>
+		
+
+		{% if user.is_superuser %}
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">RSE</h3>
+				</div>
+				<div class="box-body">		
+					<p>Select an RSE</p>
+
+					<select name="select_rse" class="form-control pull-right" id="id_select_rse">
+						<option value="-1">-----</option>
+						{% for rse in rses %}
+						<option value="{{rse.id}}">{{rse}}</option>
+						{% endfor %}
+					</select>
+					
+				</div>
+			</div>
+		  
+        </div>
+		{% endif %}
+
+		<div class="col-md-3">
+          
+			 <div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Projects</h3>
+				</div>
+				<div class="box-body">
+					<p>Select which projects can be entered into time sheet.</p>
+
+					<select name="select_projects" class="form-control pull-right" id="id_project_type">
+						<option value="R">Projects Allocated to RSE</option>
+						<option value="A">All Active Projects</option>
+					</select>
+					
+					<br><br>
+
+					<p><i>Projects available can be dragged onto the calendar.</i></p>
+
+					<!-- the events -->
+					<div id="external-events">
+					</div>
+				</div>
+			</div>
+		  
+        </div>
+		
+		
+		
+    </div>
+
+
+	<!-- Ajax error modal -->
+	<div class="modal modal-danger fade" id="error_modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">There was an Error!</h4>
+				</div>
+				<div class="modal-body">
+				<p id="id_error_modal_msg">Error Message</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Ok</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Event selection and deletion modal -->
+	<div class="modal fade" id="info_modal" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" ><span>&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">Time Sheet Entry Information</h4>
+				</div>
+				<div class="modal-body">
+				<p id="id_info_modal_msg">Some information...</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary pull-left" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-danger pull-right" id="id_delete_event_btn" data-dismiss="modal">Delete</button>
+					
+				</div>
+			</div>
+		</div>
+	</div>
+    
+    
+    
+{% endblock %}
+
+{% block javascript %}
+{{ block.super}}
+
+<script type="text/javascript" src="{% static 'timetracking/moment/moment.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/fullcalendar/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/interaction/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/daygrid/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/timegrid/main.js' %}"></script>
+<script type="text/javascript" src="{% static 'timetracking/list/main.js' %}"></script>
+
+
+<script type="text/javascript">
+
+	var Calendar = FullCalendar.Calendar;
+	var Draggable = FullCalendarInteraction.Draggable
+
+
+	// RSE selection function
+	{% if user.is_superuser %}
+		function get_rse_id(){
+			return $('#id_select_rse').val();
+		}
+	{% else %}
+		function get_rse_id(){
+			return {{rse.id}};
+		}
+	{% endif %}
+
+	function handleError(message){
+		//alert("Error:" + message);
+		$("#id_error_modal_msg").text(message);
+		$("#error_modal").modal();
+	}
+
+	/**
+	 * Used in eventReceive slot for handling any new events dropped onto the calendar
+	 */
+	function receiveEvent(info) {
+		
+		//console.log("Received new calendar event");
+
+		var default_timed_duration = moment.duration(calendar.getOption("defaultTimedEventDuration")).hours(); //default timed duration
+
+		$.ajax({
+			type: "POST",
+			url: "{% url 'timesheet_add' %}",
+			headers: {'X-CSRFToken': '{{ csrf_token }}'},
+			data : {
+				project : info.event.extendedProps["project_id"],
+				rse: info.event.extendedProps["rse_id"],
+				all_day: info.event.allDay,
+				date: moment(info.event.start).format("YYYY-MM-DD"),
+				start_time:  moment(info.event.start).format("HH:mm"),
+				end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
+			},
+			success: function(data) {
+				//check for non fatal error
+				if ("Error" in data){
+					handleError(data.Error);
+					info.event.remove();
+				}
+				else{ //No error so proceed
+					//remove event and reload view from database
+					info.event.remove();
+					calendar.refetchEvents();
+				}
+			},
+			error: function(data) {
+				handleError(data.responseJSON.Error);
+				info.event.remove();
+			}       
+		});
+		
+	}
+
+	/**
+	* Used in eventReceive and dropEvent slots for handling any event moves or resizes
+	*/
+	function eventEdit(info){
+		//console.log("move or resize");
+
+		$.ajax({
+			type: "POST",
+			url: "{% url 'timesheet_edit' %}",
+			headers: {'X-CSRFToken': '{{ csrf_token }}'},
+			data : {
+				id : info.event.extendedProps["db_id"],
+				project : info.event.extendedProps["project_id"],
+				rse: info.event.extendedProps["rse_id"],
+				all_day: info.event.allDay,
+				date: moment(info.event.start).format("YYYY-MM-DD"),
+				start_time:  moment(info.event.start).format("HH:mm"),
+				end_time: (info.event.allDay ? null : moment(info.event.end).format("HH:mm"))
+			},
+			success: function(data) {
+				//check for non fatal error
+				if ("Error" in data){
+					handleError(data.Error);
+					info.revert();
+				}
+				
+			},
+			error: function(data) {
+				handleError(data.responseJSON.Error);
+				info.revert();
+			}       
+		});
+	}
+
+
+	/**
+	 * Updates the draggable events which can be added to the calendar based off the available projects
+	 */
+	function updateAvailableEvents(info){
+		// function is called when dates in view change so can be used to update available projects
+		$.ajax({
+			type: "GET",
+			url: "{% url 'timesheet_projects' %}",
+			data : {
+				start: moment(info.view.activeStart).format("YYYY-MM-DD"),
+				end: moment(info.view.activeEnd).format("YYYY-MM-DD"),
+				rse_id: get_rse_id(),
+				filter: $("#id_project_type").val()
+			},
+			success: function(data) {
+				//clear existing projects
+				$('#external-events').html("");
+				//append new draggable projects
+				$.each(data,function(i,v) {
+					var rgb_str = 'rgb('+v.r+','+v.g+','+v.b+')'
+					var p_id_str = "project-" + v.id;
+					$('#external-events').append('<div id="project-'+v.id+'"></div>');
+					$('#'+p_id_str).addClass("external-event");
+					$('#'+p_id_str).css("background-color", rgb_str);
+					$('#'+p_id_str).html(v.name);
+					// set event data attributes
+					extendedProperties = {
+						"project_id": v.id,
+						"rse_id": get_rse_id()
+					};
+					event = {
+						"title": v.name,
+						"backgroundColor": rgb_str,
+						"extendedProps": extendedProperties
+					};
+					$('#'+p_id_str).attr("data-event", JSON.stringify(event));
+					//set as draggable
+					new Draggable($('#'+p_id_str)[0])
+
+				})
+
+			},
+			error: function(data) {
+				handleError(data.responseJSON.Error);
+			}       
+		});
+	}
+
+	/*
+	 * Event click function (for debugging)
+	 */
+	function eventClick(info){
+		//console.log(info.event);
+
+		// provide some useful information to the info modal
+		if (info.event.allDay)
+			info_msg = "All day time sheet entry for '" + info.event.title + "' on the" + moment(info.event.start).format("YYYY-MM-DD");
+		else
+			info_msg = "Time sheet entry for '" + info.event.title + "' starting at " + moment(info.event.start).format("YYYY-MM-DD HH:mm") + " and ending at " + moment(info.event.end).format("YYYY-MM-DD HH:mm");
+		$("#id_info_modal_msg").text(info_msg);
+
+		//show modal
+		$("#info_modal").modal();
+
+		// Delete handle for the remove button
+		$("#id_delete_event_btn").off('click').on('click', function(e) {
+
+			// ajax post submission to delete the time sheet entry event
+			$.ajax({
+				type: "POST",
+				url: "{% url 'timesheet_delete' %}",
+				headers: {'X-CSRFToken': '{{ csrf_token }}'},
+				data : {
+					id : info.event.extendedProps["db_id"],
+				},
+				success: function(data) {
+					// delete the event
+					info.event.remove();
+				},
+				error: function(data) {
+					// view does not return JSON Error
+					handleError("Unable to delete time sheet entry!");
+				}       
+			});
+			
+		});
+	}
+
+	document.addEventListener('DOMContentLoaded', function() {
+
+		// initialize the calendar
+		var calendarEl = document.getElementById('calendar');
+
+		calendar = new Calendar(calendarEl, {
+			plugins: [ 'interaction', 'dayGrid', 'timeGrid', 'list' ],
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+			},
+			views: {
+				timeGridWeek: { 
+					columnHeaderFormat: { month: 'short', day: '2-digit' }
+				}
+			},
+			editable: true,
+			droppable: true, // this allows things to be dropped onto the calendar
+			businessHours: true,
+			//eventConstraint: "businessHours", // Prevents all day events so currently disabled does allow events to be created out of hours
+			allDaySlot: true,
+			eventOverlap: false,
+			events: {
+				// events from DB called whenever view changes and includes a start and end parameter
+				url: '{% url "timesheet_events" %}',
+				method: 'GET',
+				extraParams: function(){
+					return {
+						rse_id: get_rse_id()
+					}
+				},
+				failure: function(data) {
+					handleError(data.responseJSON.Error);
+				},
+				textColor: 'black' // a non-ajax option	
+			},
+			eventReceive: receiveEvent,
+			eventResize: eventEdit,
+			datesRender: updateAvailableEvents,
+			eventDrop: eventEdit,
+			eventClick: eventClick
+		});
+
+
+		// RSE selection
+		{% if user.is_superuser %}
+			//update calendar and events on RSE drop down change
+			$('#id_select_rse').on('change', function(){
+				//console.log($('#id_select_rse').val())
+				calendar.refetchEvents();
+				calendar.render();
+			});
+		{% endif %}
+
+		// project filter change
+		$('#id_project_type').on('change', function(){
+			calendar.refetchEvents();
+			calendar.render();
+		});
+
+		//render calendar
+		calendar.render();
+
+	});
+	
+</script>
+	
+{% endblock %}

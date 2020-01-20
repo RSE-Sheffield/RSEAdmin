@@ -14,6 +14,7 @@ from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
 import itertools as it
 from copy import deepcopy
+from django.conf import settings
 
 # import the logging library for debugging
 import logging
@@ -691,8 +692,30 @@ class Project(PolymorphicModel):
 
     @property
     def duration(self) -> Optional[int]:
+        """ Number of calendar days required to complete the project """
         """ Implemented by concrete classes """
         pass
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of workings days in the project """
+        """ Implemented by concrete classes """
+        pass
+    
+    def scheduled_working_days_to_today(self, rse = None) -> float:
+        """ Returns the total working days of the project upto today """
+        now = timezone.now().date()
+        allocated_days_sum = 0
+        # get allocations (all or by RSE if specified)
+        if not rse:
+            active = RSEAllocation.objects.filter(project=self, start__lte=now)
+        else:
+            active = RSEAllocation.objects.filter(project=self, rse=rse, start__lte=now)
+        for a in active:
+            # allocated day need to be converted into equivalent working days
+            allocated_days_sum += a.working_days(self.start, now)
+        
+        return allocated_days_sum
 
     def value(self) -> Optional[int]:
         """ Implemented by concrete classes."""
@@ -793,6 +816,13 @@ class Project(PolymorphicModel):
         except (OperationalError, ProgrammingError):
             return timezone.now().date()
 
+    @staticmethod
+    def fte_days_to_working_days(fte_days: int) -> int:
+        """
+        This maps FTE days into a number of working days
+        """
+        return fte_days * settings.WORKING_DAYS_PER_YEAR / 365.0
+
     def staff_cost(self, from_date: date = None, until_date: date = None, rse: RSE = None, consider_internal: bool = False) -> SalaryValue:
         """
         Returns the accumulated staff costs (from allocations) over a duration (if provided) or for the full project if not
@@ -858,6 +888,12 @@ class AllocatedProject(Project):
         if self.end and self.start:
             dur = (self.end - self.start).days
         return dur
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of workings days in the project """
+        """ Calculated by adjusting duration by TRAC """
+        return Project.fte_days_to_working_days(self.duration)* self.fte / 100.0
 
     def value(self) -> float:
         """
@@ -935,9 +971,10 @@ class ServiceProject(Project):
     def days_to_fte_days(days: int) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
-        This maps service days (of which there are 220 TRAC working days) to a FTE duration
+        This maps service days (of which there are a fixed number if working days which are in settings file) to a FTE duration
         """
-        return floor(days * (365.0 / 220.0))
+        return floor(days * (365.0 / settings.WORKING_DAYS_PER_YEAR))
+
     
     @property
     def duration(self) -> int:
@@ -945,6 +982,11 @@ class ServiceProject(Project):
         Use the avilable static method to convert days to FTE days
         """
         return ServiceProject.days_to_fte_days(self.days)
+
+    @property
+    def working_days(self) -> Optional[int]:
+        """ Number of paid service days """
+        return self.days
 
     def value(self) -> float:
         """
@@ -1069,6 +1111,21 @@ class RSEAllocation(models.Model):
         salary_cost = self.rse.staff_cost(start, end, self.percentage)
 
         return salary_cost
+
+    def working_days(self, start: None, end: None) -> Optional[int]:
+        """ Number of workings days in the allocation """
+
+        # If no time period then use defaults for project
+        # then limit specified time period to allocation
+        if start is None or start < self.start:
+            start = self.start
+        if end is None or end > self.end:
+            end = self.end
+
+        # calculate timedelta in days
+        duration = (end - start).days
+
+        return Project.fte_days_to_working_days(duration) * self.percentage / 100.0
 
     @staticmethod
     def min_allocation_start() -> date:
