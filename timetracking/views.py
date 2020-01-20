@@ -36,10 +36,11 @@ def timesheetentry_json(timesheetentry) -> dict:
 
     return data
 
-def json_error_response(message:str) -> JsonResponse:
+def json_error_response(message:str, raise_server_error: bool = True) -> JsonResponse:
     """ Helper function for generating a json response with an error code"""
     response = JsonResponse({"Error": message})
-    response.status_code = 400
+    if raise_server_error:
+        response.status_code = 400
     return response
 
 def daterange(start_date, end_date, delta: str ='days'):
@@ -212,7 +213,6 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
     Adds a timesheet entry (e.g. as a result of external drag drop in JS FulCalendar library)
     Returns a JSON response of object and raises an error code if the edit fails.
     """
-
     if request.method == 'POST':
         form = TimesheetForm(request.POST)
         if form.is_valid():
@@ -222,7 +222,7 @@ def timesheet_add(request: HttpRequest) -> HttpResponse:
             # construct an error string based off validation field values
             # requires double join as each field may have multiple error strings
             error_str = ". ".join(". ".join(error) for error in form.errors.values())
-            return json_error_response(error_str)
+            return json_error_response(error_str, raise_server_error=False) # not a server side error
     
     return json_error_response("Unable to create new Timesheet Entry")
 
@@ -250,7 +250,10 @@ def timesheet_edit(request: HttpRequest) -> HttpResponse:
             entry = form.save()
             return JsonResponse(json.dumps(timesheetentry_json(entry)), safe=False)
         else:
-            return json_error_response("Timesheet Entry could not be edited")
+            # construct an error string based off validation field values
+            # requires double join as each field may have multiple error strings
+            error_str = ". ".join(". ".join(error) for error in form.errors.values())
+            return json_error_response("Timesheet entry could not be edited. " + error_str, raise_server_error=False) # not a server side error
     
     return json_error_response("Unable to edit Timesheet Entry")
 

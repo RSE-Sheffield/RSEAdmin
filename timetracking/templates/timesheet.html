@@ -184,10 +184,16 @@
 				end_time: (info.event.allDay ? null : moment(info.event.start).add(default_timed_duration, "hours").format("HH:mm") )
 			},
 			success: function(data) {
-				//remove event and reload view from database
-				info.event.remove();
-				calendar.refetchEvents();
-				//console.log(data);
+				//check for non fatal error
+				if ("Error" in data){
+					handleError(data.Error);
+					info.event.remove();
+				}
+				else{ //No error so proceed
+					//remove event and reload view from database
+					info.event.remove();
+					calendar.refetchEvents();
+				}
 			},
 			error: function(data) {
 				handleError(data.responseJSON.Error);
@@ -217,7 +223,11 @@
 				end_time: (info.event.allDay ? null : moment(info.event.end).format("HH:mm"))
 			},
 			success: function(data) {
-				//nothing to do
+				//check for non fatal error
+				if ("Error" in data){
+					handleError(data.Error);
+					info.revert();
+				}
 				
 			},
 			error: function(data) {
@@ -349,7 +359,7 @@
 					}
 				},
 				failure: function(data) {
-					handleError(data.Error);
+					handleError(data.responseJSON.Error);
 				},
 				textColor: 'black' // a non-ajax option	
 			},
