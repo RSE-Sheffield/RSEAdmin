@@ -185,7 +185,7 @@
 			},
 			success: function(data) {
 				//check for non fatal error
-				if ("Error" in data){
+				if ("Error" in $.parseJSON(data)){
 					handleError(data.Error);
 					info.event.remove();
 				}
@@ -193,6 +193,7 @@
 					//remove event and reload view from database
 					info.event.remove();
 					calendar.refetchEvents();
+					console.log("added");
 				}
 			},
 			error: function(data) {
