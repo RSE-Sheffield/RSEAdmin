@@ -294,7 +294,7 @@
 
 		// provide some useful information to the info modal
 		if (info.event.allDay)
-			info_msg = "All day time sheet entry for '" + info.event.title + "' on the" + moment(info.event.start).format("YYYY-MM-DD");
+			info_msg = "All day time sheet entry for '" + info.event.title + "' on the " + moment(info.event.start).format("YYYY-MM-DD");
 		else
 			info_msg = "Time sheet entry for '" + info.event.title + "' starting at " + moment(info.event.start).format("YYYY-MM-DD HH:mm") + " and ending at " + moment(info.event.end).format("YYYY-MM-DD HH:mm");
 		$("#id_info_modal_msg").text(info_msg);
