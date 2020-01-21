@@ -208,7 +208,12 @@
 	* Used in eventReceive and dropEvent slots for handling any event moves or resizes
 	*/
 	function eventEdit(info){
-		//console.log("move or resize");
+		//events can not span multiple days
+		if (moment(info.event.start).format("YYYY-MM-DD") != moment(info.event.end).format("YYYY-MM-DD")){
+			handleError("Events can not span multiple days.");
+			info.revert();
+			return;
+		}
 
 		$.ajax({
 			type: "POST",
@@ -225,7 +230,7 @@
 			},
 			success: function(data) {
 				//check for non fatal error
-				if ("Error" in data){
+				if ("Error" in $.parseJSON(data)){
 					handleError(data.Error);
 					info.revert();
 				}

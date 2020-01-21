@@ -22,10 +22,14 @@ class TimesheetForm(forms.ModelForm):
         cleaned_data=super(TimesheetForm, self).clean()
         errors = {}
 
-        # Check that the end time is not before the start time
-        if 'end_time' in cleaned_data and 'start_time' in cleaned_data and cleaned_data['end_time'] is not None:
+        
+        if 'end_time' in cleaned_data and cleaned_data['end_time'] is not None and \
+           'start_time' in cleaned_data and cleaned_data['start_time'] is not None :
+
+            # Check that the end time is not before the start time
             if cleaned_data['end_time'] <= cleaned_data['start_time']:
                 errors['end_time'] = ("The end time can not be before the start time")
+
 
         # time sheet entry can not be outside project period (but may be outside allocation)
         if 'project' in cleaned_data and cleaned_data['project'] is not None and \
