@@ -3,10 +3,10 @@
 <script type="text/javascript">
     var g = new JSGantt.GanttChart(document.getElementById('GanttChartDIV'), 'month');
     if( g.getDivId() != null ) {
-        g.AddTaskItem(new JSGantt.TaskItem({{project.id}}, '{{project.name}}', '{{ project.start | date:'Y-m-d'}}', '{{ project.end | date:'Y-m-d' }}', 'ggroupblack', '{% url "project" project.id %}', 0, '', {{ project.fte }}, 1, 0,  1, '', '', '', g));
+        g.AddTaskItem(new JSGantt.TaskItem({{project.id}}, '{{project.name}}', '{{ project.start | date:'Y-m-d'}} 00:00', '{{ project.end | date:'Y-m-d' }} 00:00', 'ggroupblack', '{% url "project" project.id %}', 0, '', {{ project.fte }}, 1, 0,  1, '', '', '', g));
         
         {% for a in allocations %}
-            g.AddTaskItem(new JSGantt.TaskItem({{project.id}}{{a.id}}, '{{a.rse}}', '{{ a.start | date:'Y-m-d'}}', '{{ a.end | date:'Y-m-d' }}', 'gtaskblue', '{% url "rse" a.rse.user.username %}', 0, '', {{ a.percentage }}, 0, {{ project.id }},  1, '', '', '', g));
+            g.AddTaskItem(new JSGantt.TaskItem({{project.id}}{{a.id}}, '{{a.rse}}', '{{ a.start | date:'Y-m-d'}} 00:00', '{{ a.end | date:'Y-m-d' }} 00:00', 'gtaskblue', '{% url "rse" a.rse.user.username %}', 0, '', {{ a.percentage }}, 0, {{ project.id }},  1, '', '', '', g));
         {% endfor %}
         
         //add new language to display FTE rather than complete

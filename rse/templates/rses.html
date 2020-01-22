@@ -5,6 +5,13 @@
 {% block stylesheets %}
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'DataTables/datatables.min.css' %}"/>
+<style>
+	.grade{}
+	.blurred {
+		color: transparent;
+   		text-shadow: 0 0 7px rgba(0,0,0,0.5);
+	}
+</style>
 {% endblock %}
 
 
@@ -26,7 +33,7 @@
 							<th id="department">Employed From</th>
 							<th id="description">Employed Until</th>
 							<th id="description">Currently Employment</th>
-							{% if user.is_superuser %} <th id="description">Current Grade Point</th> {% endif %}
+							{% if user.is_superuser %} <th id="description">Current Grade Point </th> {% endif %}
 							<th id="num_active_projects">Current Capacity</th>
 							<th id="num_active_projects_label"></th>
 							<th id="more"></th>
@@ -48,7 +55,7 @@
 							</td>
 							{% if user.is_superuser %} 
 								<td>
-									{{rse.grade}}
+									<span class="grade blurred">{{rse.grade}}</span>
 									<a href="{% url 'rse_salary' rse.user.username %}" class="text-muted pull-right" data-toggle="tooltip" title="" data-original-title="Edit Salary Data"><i class="fa fa-edit"></i></a>
 								</td> 
 							{% endif %}
@@ -68,6 +75,22 @@
 		</div>
 	</div>
 
+	<div class="col-md-3">
+		<div class="box box-default">
+            <div class="box-header with-border">
+              	<h3 class="box-title">Options</h3>
+            </div>
+            <div class="box-body">
+              	<p><i>Toggle the visibility of grade points in this view. </i></p>
+			  	<div class="checkbox">
+                    <label>
+                      	<input type="checkbox" id="id_show_grade"> Show grade points
+					</label>
+                </div>
+            </div>
+        </div>
+	</div>
+
 	
 
 
@@ -83,10 +106,28 @@
 	<!-- https://datatables.net/examples/basic_init/zero_configuration.html -->
 	<script type="text/javascript">
 		$(document).ready(function() {
+
+			//create data table
 			$('#rses').DataTable({
 				pageLength: 25,
 				scrollX: false,
 			} );
+
+
+			//toggle grade
+			$('#id_show_grade').change(function(){
+				//get all tds which have grade class
+				var items = document.getElementsByClassName("grade");
+				for (var i=0; i < items.length; i++) {
+					//toggle the blurring class
+					if($('#id_show_grade').is(':checked')){
+						items[i].classList.remove("blurred");
+					} else {
+						items[i].classList.add("blurred");
+					}
+				}
+				
+			});
 		} );
 		
 	</script>

@@ -185,7 +185,7 @@
 			},
 			success: function(data) {
 				//check for non fatal error
-				if ("Error" in data){
+				if ("Error" in $.parseJSON(data)){
 					handleError(data.Error);
 					info.event.remove();
 				}
@@ -193,6 +193,7 @@
 					//remove event and reload view from database
 					info.event.remove();
 					calendar.refetchEvents();
+					console.log("added");
 				}
 			},
 			error: function(data) {
@@ -207,7 +208,12 @@
 	* Used in eventReceive and dropEvent slots for handling any event moves or resizes
 	*/
 	function eventEdit(info){
-		//console.log("move or resize");
+		//events can not span multiple days
+		if (moment(info.event.start).format("YYYY-MM-DD") != moment(info.event.end).format("YYYY-MM-DD")){
+			handleError("Events can not span multiple days.");
+			info.revert();
+			return;
+		}
 
 		$.ajax({
 			type: "POST",
@@ -224,7 +230,7 @@
 			},
 			success: function(data) {
 				//check for non fatal error
-				if ("Error" in data){
+				if ("Error" in $.parseJSON(data)){
 					handleError(data.Error);
 					info.revert();
 				}
@@ -294,7 +300,7 @@
 
 		// provide some useful information to the info modal
 		if (info.event.allDay)
-			info_msg = "All day time sheet entry for '" + info.event.title + "' on the" + moment(info.event.start).format("YYYY-MM-DD");
+			info_msg = "All day time sheet entry for '" + info.event.title + "' on the " + moment(info.event.start).format("YYYY-MM-DD");
 		else
 			info_msg = "Time sheet entry for '" + info.event.title + "' starting at " + moment(info.event.start).format("YYYY-MM-DD HH:mm") + " and ending at " + moment(info.event.end).format("YYYY-MM-DD HH:mm");
 		$("#id_info_modal_msg").text(info_msg);
