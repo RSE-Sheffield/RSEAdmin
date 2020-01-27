@@ -68,7 +68,7 @@ def costdistributions(request: HttpRequest) -> HttpResponse:
 
     # filter to only include chargable service projects (or allocated projects)
     # additional query on status is required to include any elidible allocated projects (as is_instance can not be used on member)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__status='F')
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
     # filter by funded only projects
     q &= Q(project__status='F')
 
@@ -130,9 +130,9 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
 
     # internal project are included
-    # filter to only include chargable service projects (or allocated projects)
-    # additional query (end__gte) is duplicated form above but required to include any eligible allocated projects (as is_instance can not be used on member)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__end__gte=from_date)
+    # filter to only include chargable service projects (or any allocated projects)
+    # additional query (isnull) is required to include any eligible allocated projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)

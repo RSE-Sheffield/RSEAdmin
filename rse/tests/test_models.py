@@ -497,6 +497,8 @@ class SalaryCalculationTests(TestCase):
         self.assertFalse(fy.date_in_financial_year(date(2018, 8, 1)))
         
 
+    # Remove Oncosts in settings
+    @override_settings(ONCOSTS_SALARY_MULTIPLIER=1.0)
     def test_staff_costs(self):
         """
         Test the true cost of staff accounting for grade changes and inflation with a given salary band
@@ -539,6 +541,8 @@ class SalaryCalculationTests(TestCase):
         self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, 3581.82, places=2)
 
 
+    # Remove Oncosts in settings
+    @override_settings(ONCOSTS_SALARY_MULTIPLIER=1.0)
     def test_staff_cost_employment_range(self):
         """
         Test the staff cost function to ensure no time is costed outside of an RSEs employment period
@@ -605,6 +609,8 @@ class ProjectAllocationTests(TestCase):
         p = Project.objects.all()[1]
         self.assertEqual(p.duration, 49)
         
+    # Remove Oncosts in settings
+    @override_settings(ONCOSTS_SALARY_MULTIPLIER=1.0)
     def test_project_value(self):
         """
         Tests polymorphic function value which differs depending on project type

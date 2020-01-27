@@ -764,6 +764,7 @@ class ReportingTemplateTests(SeleniumTemplateTest):
 
             # test admin view
             self.get_url_as_admin(url)
+            logger.error(f"RSE NAME is {self.first_rse}")
             expected = f"RSE Group Administration Tool: {self.first_rse} Cost Distribution"
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
