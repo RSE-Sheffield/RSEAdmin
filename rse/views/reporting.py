@@ -58,19 +58,19 @@ def costdistributions(request: HttpRequest) -> HttpResponse:
 
     # Construct q query for allocation query
     q = Q()
-    # filter to exclude internal projects (these dont have a cost distrubution)
-    # filter to only include chargable service projects (or allocated projects)
-    # additional query on allocatedproject_internal is required to include any elibable allocated projects (is_instance can be used on member)
-    q &= Q(project__internal=False)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
-    # filter by funded only projects
-    q &= Q(project__status='F')
+
 
     # filter to include allocations active today
     from_date = timezone.now().date()
     until_date = from_date + timedelta(days=1)
     q &= Q(end__gte=from_date)
     q &= Q(start__lte=until_date)
+
+    # filter to only include chargable service projects (or allocated projects)
+    # additional query on status is required to include any elidible allocated projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__status='F')
+    # filter by funded only projects
+    q &= Q(project__status='F')
 
     # save date range
     view_dict['from_date'] = from_date
@@ -129,11 +129,10 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
 
-    # filter to exclude internal projects (these dont have a cost distribution)
+    # internal project are included
     # filter to only include chargable service projects (or allocated projects)
-    # additional query on allocatedproject_internal is required to include any eligible allocated projects (is_instance can be used on member)
-    q &= Q(project__internal=False)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
+    # additional query (end__gte) is duplicated form above but required to include any eligible allocated projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__end__gte=from_date)
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
