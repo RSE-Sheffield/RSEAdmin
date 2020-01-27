@@ -2,7 +2,7 @@ from datetime import date, datetime
 from django.utils import timezone
 
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from rse.models import *
 import random

@@ -2,7 +2,7 @@ from datetime import date, datetime
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test import LiveServerTestCase
 import time
 from rse.models import *
@@ -764,7 +764,6 @@ class ReportingTemplateTests(SeleniumTemplateTest):
 
             # test admin view
             self.get_url_as_admin(url)
-            logger.error(f"RSE NAME is {self.first_rse}")
             expected = f"RSE Group Administration Tool: {self.first_rse} Cost Distribution"
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
