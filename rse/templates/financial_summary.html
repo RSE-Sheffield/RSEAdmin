@@ -61,7 +61,7 @@
 							</tr>
 							<tr>
 								<td></td>
-								<td>Service Income Received</td>
+								<td>Service Account Balance</td>
 								<td>£{{service_income|floatformat:2|intcomma}}</td>
 								<td><span class="pull-right"><a href="{% url 'serviceincome' %}{% if request.GET.filter_range and request.GET.status %}?filter_range={{request.GET.filter_range}}&status={{request.GET.status}}{% endif %}" class="text-muted" data-toggle="tooltip" title="" data-original-title="View Service Income Summary"><i class="fa fa-calculator"></i></a></span></td>
 							</tr>

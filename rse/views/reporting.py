@@ -692,9 +692,15 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
             # accumulate overheads
             overheads += p.overhead_value(from_date=from_date, until_date=until_date)
         # Service income
-        if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
+        if isinstance(p, ServiceProject):
+            # value of project if invoice received in account period
+            value = 0
+            if p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:
+                value = p.value()
+            # surplus is value less any recovered (i.e. staff costs)
+            surplus = value - project_recovered_costs
             # income from service project less any recovered staff cost
-            service_income += float(p.value() - project_recovered_costs)
+            service_income += surplus
     
     # Liability
     non_recovered_cost = salary_costs - recovered_staff_costs
