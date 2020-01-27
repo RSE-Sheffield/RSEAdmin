@@ -57,7 +57,7 @@ class SalaryValue():
 
     @property
     def value(self) -> float:
-        return self.staff_cost
+        return self.staff_cost * self.oncosts_multiplier
 
 
 # Start of the models
@@ -209,8 +209,9 @@ class SalaryBand(models.Model):
     def salaryCost(days, salary, percentage: float = 100.0) -> float:
         """
         Returns the salary cost for a number of days given a salary and FTE percentage
+        Multiples by the ON COSTS value
         """
-        return (days / 365.0) * float(salary) * (float(percentage) / 100.0)
+        return (days / 365.0) * float(salary) * (float(percentage) / 100.0) * settings.ONCOSTS_SALARY_MULTIPLIER
 
     def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> SalaryValue:
         """

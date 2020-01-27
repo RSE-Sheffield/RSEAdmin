@@ -58,19 +58,19 @@ def costdistributions(request: HttpRequest) -> HttpResponse:
 
     # Construct q query for allocation query
     q = Q()
-    # filter to exclude internal projects (these dont have a cost distrubution)
-    # filter to only include chargable service projects (or allocated projects)
-    # additional query on allocatedproject_internal is required to include any elibable allocated projects (is_instance can be used on member)
-    q &= Q(project__internal=False)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
-    # filter by funded only projects
-    q &= Q(project__status='F')
+
 
     # filter to include allocations active today
     from_date = timezone.now().date()
     until_date = from_date + timedelta(days=1)
     q &= Q(end__gte=from_date)
     q &= Q(start__lte=until_date)
+
+    # filter to only include chargable service projects (or allocated projects)
+    # additional query on status is required to include any elidible allocated projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
+    # filter by funded only projects
+    q &= Q(project__status='F')
 
     # save date range
     view_dict['from_date'] = from_date
@@ -129,11 +129,10 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
 
-    # filter to exclude internal projects (these dont have a cost distribution)
-    # filter to only include chargable service projects (or allocated projects)
-    # additional query on allocatedproject_internal is required to include any eligible allocated projects (is_instance can be used on member)
-    q &= Q(project__internal=False)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__internal=False)
+    # internal project are included
+    # filter to only include chargable service projects (or any allocated projects)
+    # additional query (isnull) is required to include any eligible allocated projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
@@ -693,9 +692,15 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
             # accumulate overheads
             overheads += p.overhead_value(from_date=from_date, until_date=until_date)
         # Service income
-        if isinstance(p, ServiceProject) and p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:  # test if the invoice received was within specified period
+        if isinstance(p, ServiceProject):
+            # value of project if invoice received in account period
+            value = 0
+            if p.invoice_received and p.invoice_received > from_date and p.invoice_received <= until_date:
+                value = p.value()
+            # surplus is value less any recovered (i.e. staff costs)
+            surplus = value - project_recovered_costs
             # income from service project less any recovered staff cost
-            service_income += float(p.value() - project_recovered_costs)
+            service_income += surplus
     
     # Liability
     non_recovered_cost = salary_costs - recovered_staff_costs

@@ -57,7 +57,7 @@
 										<td>{{item.from_date}}</td>
 										<td>{{item.until_date}}</td>
 										<td>{{item.percentage}}%</td>
-										<td>{{item.salary_band}} {% if item.salary_band.estimated %}<i>(estimated)</i>{% endif %}</td>
+										<td>{{item.salary_band}} {% if item.salary_band.estimated %}<i>(estimated)</i>{% endif %} + Oncosts</td>
 										<td>£{{item.staff_cost|floatformat:2|intcomma}}</td>
 										<td></td>
 									</tr>

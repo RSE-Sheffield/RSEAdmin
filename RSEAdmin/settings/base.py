@@ -120,6 +120,9 @@ USE_TZ = True
 # Working hours per day (37 hour work week)
 WORKING_HOURS_PER_DAY = 7.4
 
+# 1.35 is 35% which is estimated (as 12% NI, 22.5% pension contribution and 0.5% appreticeship levy)
+ONCOSTS_SALARY_MULTIPLIER = 1.35
+
 
 ###############################
 # RSEAdmin required setttings #
