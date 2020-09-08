@@ -7,14 +7,13 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.6"
-Django = "^3"
+Django = "~3.0"
 django-adminlte2 = "~0.4.1"
 django-polymorphic = "~2.1"
 gunicorn = {version = "^19.9", optional = true}
 psycopg2 = {version = "^2.8", optional = true}
 mysqlclient = {version = "~1.4.4", optional = true}
 python-dateutil = "~2.8.1"
-django = ">=3.0.4"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^2.7"
