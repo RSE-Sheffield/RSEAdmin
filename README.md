@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/RSE-Sheffield/RSEAdmin.svg?branch=master)](https://travis-ci.org/RSE-Sheffield/RSEAdmin)
-[![Coverage Status](https://codecov.io/gh/RSE-Sheffield/RSEAdmin/branch/master/graph/badge.svg)](https://codecov.io/gh/RSE-Sheffield/RSEAdmin)
+[![Build Status](https://travis-ci.org/RSE-Sheffield/RSEAdmin.svg?branch=main)](https://travis-ci.org/RSE-Sheffield/RSEAdmin)
+[![Coverage Status](https://codecov.io/gh/RSE-Sheffield/RSEAdmin/branch/main/graph/badge.svg)](https://codecov.io/gh/RSE-Sheffield/RSEAdmin)
 [![Documentation Status](https://readthedocs.org/projects/rseadmin/badge/?version=latest)](https://rseadmin.readthedocs.io/en/latest/?badge=latest)
     
 
@@ -181,7 +181,7 @@ Turn on `Force HTTPS` and then restart the app from the top of the page. Your si
 
 ### Updating the site
 
-If you want to update the site to include new features from master then simply call the following commands from your install directory on your web host
+If you want to update the site to include new features from `main` then simply call the following commands from your install directory on your web host
 
 ```sh
 git pull
