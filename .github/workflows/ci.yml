@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.9]
+        os: [ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install libpq, poetry and geckodriver
+        run: |
+          sudo apt-get install -y libpq-dev
+          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
+          python get-poetry.py --yes
+          source $HOME/.poetry/env
+          poetry install -E pgsql -E gunicorn
+          curl -sSL 'https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz' -o /tmp/gd.tgz
+          sudo tar -zxf /tmp/gd.tgz -C /usr/local/share
+          sudo chmod +x /usr/local/share/geckodriver
+          sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
+
+      - name: Run tests and capture coverage stats
+        run: |
+          source $HOME/.poetry/env
+          poetry run coverage run manage.py test
+        env:
+          MOZ_HEADLESS: 1
+
+      - uses: codecov/codecov-action@v1
+
