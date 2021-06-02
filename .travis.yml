@@ -22,7 +22,6 @@ before_install:
 install:
   - wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
   - python get-poetry.py --yes
-  - ls $HOME/.poetry
   - source $HOME/.poetry/env
   - poetry install -E pgsql -E gunicorn
   # Install GeckoDriver (for firefox)
