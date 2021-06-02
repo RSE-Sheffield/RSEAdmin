@@ -143,4 +143,4 @@ HOME_PAGE_DAYS_SOON = 365
 # Days to consider as recent on home page
 HOME_PAGE_DAYS_RECENT = 30
 
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
