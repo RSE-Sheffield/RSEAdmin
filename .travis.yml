@@ -21,7 +21,7 @@ before_install:
 # Install dependencies
 install:
   - wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
-  - python get-poetry.py --preview --yes
+  - python get-poetry.py --yes
   - ls $HOME/.poetry
   - source $HOME/.poetry/env
   - poetry install -E pgsql -E gunicorn
