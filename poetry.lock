@@ -102,14 +102,14 @@ toml = ["toml"]
 
 [[package]]
 name = "django"
-version = "3.0.14"
+version = "3.1.9"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-asgiref = ">=3.2,<4.0"
+asgiref = ">=3.2.10,<4"
 pytz = "*"
 sqlparse = ">=0.2.2"
 
@@ -559,7 +559,7 @@ pgsql = ["psycopg2"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6,<4"
-content-hash = "71621ba74e297e9561fde9341b2882df05dee88cb8b69b339fee52e19b0a1c1b"
+content-hash = "f4c408b6283ce2c94c6d969fd2068fae47f0c31fe69ca3358d249638d3a4da9d"
 
 [metadata.files]
 alabaster = [
@@ -654,8 +654,8 @@ coverage = [
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
 django = [
-    {file = "Django-3.0.14-py3-none-any.whl", hash = "sha256:9bc7aa619ed878fedba62ce139abe663a147dccfd20e907725ec11e02a1ca225"},
-    {file = "Django-3.0.14.tar.gz", hash = "sha256:d58d8394036db75a81896037d757357e79406e8f68816c3e8a28721c1d9d4c11"},
+    {file = "Django-3.1.9-py3-none-any.whl", hash = "sha256:f5c3f1ce2473abf2f35d992c46d5534e53bd3397867689bde28fd29e856b46b7"},
+    {file = "Django-3.1.9.tar.gz", hash = "sha256:296d10092561a1cf16100885b935dc56cf09c8ccb114e64004554941677c6342"},
 ]
 django-adminlte2 = [
     {file = "django-adminlte2-0.4.3.tar.gz", hash = "sha256:60c1c049ce66081c1a67669686ffbde2f530544ddfe9e681395197973050f614"},
