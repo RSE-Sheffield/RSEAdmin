@@ -7,9 +7,9 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.6,<4"
-Django = "~3.0"
+Django = "~3.2"
 django-adminlte2 = "~0.4.1"
-django-polymorphic = "~2.1"
+django-polymorphic = "~3.0"
 gunicorn = {version = "^19.9", optional = true}
 psycopg2 = {version = "^2.8", optional = true}
 mysqlclient = {version = "~1.4.4", optional = true}
