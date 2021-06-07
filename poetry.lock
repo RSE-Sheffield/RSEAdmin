@@ -568,7 +568,7 @@ pgsql = ["psycopg2"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6,<4"
-content-hash = "a1e30085d14684d6501ccacc98f23c1aa49f0e617660d1c9a3e53bf9744b3a3a"
+content-hash = "769305e47910ca8563698c3f934d5684ce9e0cf7b4627756932c19257f56612e"
 
 [metadata.files]
 alabaster = [
