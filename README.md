@@ -27,7 +27,7 @@ The site is populated with random demo data which is reset at midnight every nig
 To develop or test the site locally Poetry is used for dependency management. The ideal is that Poetry is simpler than using [conda][conda] and avoids manually creating a [virtualenv][virtualenv]. To configure Poetry;
 
  1. Ensure you have Python >= 3.6 installed
- 1. Install [Poetry][poetry], a tool for Python project management (this currently requires preview edition 1.0.0 beta) - see [notes on how to install](https://pypi.org/project/poetry/)
+ 1. Install [Poetry][poetry], a tool for Python project management - see [notes on how to install](https://pypi.org/project/poetry/)
  1. Clone this repo
  1. From the repo directory call `poetry install` to install project dependencies in an isolated hidden virtualenv 
     Dependencies are determined using info from `pyproject.toml`
@@ -128,7 +128,7 @@ mkvirtualenv --python=/usr/bin/python3.6 rseadmin-virtualenv
 (rseadmin-virtualenv)$ pip install -r requirements.txt
 ```
 
-Note: The above assumes that a upto date `requirements.txt` file exists within the repo which matches the poetry dependencies. This should always be the case however if you change any poetry dependencies the requirements file should be updated by calling (requires peotry v1+);
+Note: The above assumes that a up-to-date `requirements.txt` file exists within the repo which matches the poetry dependencies. This should always be the case however if you change any poetry dependencies the requirements file should be updated by calling (requires Poetry >= 1.x);
 
 ```
 poetry export -f requirements.txt -o requirements.txt
