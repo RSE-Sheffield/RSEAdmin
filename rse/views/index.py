@@ -85,7 +85,7 @@ def index_admin(request: HttpRequest) -> HttpResponse:
     # DANGERS
     danger_started_not_funded =  Project.objects.filter(Q(status=Project.PREPARATION) | Q(status=Project.REVIEW)).filter(start__lte=now, end__gte=now).count()
     view_dict['danger_started_not_funded'] = danger_started_not_funded
-    danger_service_ended_not_invoiced =  ServiceProject.objects.filter(internal=False, end__lt=now, invoice_received=None).count()
+    danger_service_ended_not_invoiced =  ServiceProject.objects.filter(status=Project.FUNDED, internal=False, end__lt=now, invoice_received=None).count()
     view_dict['danger_service_ended_not_invoiced'] = danger_service_ended_not_invoiced
 
     return render(request, 'index_admin.html', view_dict)

@@ -186,7 +186,7 @@
                 <h4>Service Projects Completed but Not Invoiced!</h4>
 
                 <p>There are {{danger_service_ended_not_invoiced}} service projects which have completed but have not had the received invoice date completed.</p>
-                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Completed" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
+                <a href="{% url 'serviceoutstanding' %}?schedule_filter=Completed&status_filter=Funded" class="small-box-footer">View Invoices and Fix <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         {% endif %}
 
