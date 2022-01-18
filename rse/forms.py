@@ -394,9 +394,22 @@ class ServiceProjectForm(forms.ModelForm):
                     raise ValidationError('There are current allocations on this project which end after the proposed end date')
 
         return cleaned_end
+        
+    def clean_rate(self):
+        """
+        Check the service rate is greater than 0
+        """
+        cleaned_rate=self.cleaned_data['rate']
 
+        # Service rate must be greater than 0
+        if cleaned_rate <= 0:
+            raise ValidationError('The service rate must be greater than 0')
 
-class ClientForm(forms.ModelForm):
+        return cleaned_rate
+               
+            
+class ClientForm(forms.ModelForm):    
+
     """
     Class for creation and editing of a client
     """
