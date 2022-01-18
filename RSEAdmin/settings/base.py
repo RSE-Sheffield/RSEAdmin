@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+# Default primary key field (required for Djano 3.2+)
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 #BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
