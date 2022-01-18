@@ -285,7 +285,7 @@ class Client(models.Model):
     def funded_projects_percent(self) -> float:
         """ Returns the number percentage of active projects associated with this client """
         if self.total_projects > 0:
-            return self.funded_projects / self.total_projects * 100.0
+            return self.funded_projects / self.total_projects * 100.0 if self.total_projects != 0 else 100
         else:
             return 0
 
@@ -762,13 +762,19 @@ class Project(PolymorphicModel):
 
     @property
     def remaining_days_at_fte(self) -> float:
-        """ Return the number of unallocated (i.e. remaining) days for project at the projects standard fte percentage"""
-        return self.remaining_days / self.fte * 100
+        """ 
+        Return the number of unallocated (i.e. remaining) days for project at the projects standard fte percentage
+        If FTE is 0 then remaining days is 0
+        """
+        return self.remaining_days / self.fte * 100 if self.fte != 0 else 0
 
     @property
     def percent_allocated(self) -> float:
-        """ Gets all allocations for this project and sums FTE*days to calculate committed effort """
-        return round(self.committed_days / self.project_days * 100, 2)
+        """ 
+        Gets all allocations for this project and sums FTE*days to calculate committed effort 
+        If project duration is 0 then percent is 100
+        """
+        return round(self.committed_days / self.project_days * 100, 2) if self.project_days != 0 else 100
 
     @property
     def get_schedule_display(self) -> str:
@@ -973,6 +979,7 @@ class ServiceProject(Project):
         """
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are a fixed number if working days which are in settings file) to a FTE duration
+        Assumes WORKING_DAYS_PER_YEAR > 0. If you set this as zero your an idiot. 
         """
         return floor(days * (365.0 / settings.WORKING_DAYS_PER_YEAR))
 
@@ -1077,7 +1084,7 @@ class RSEAllocation(models.Model):
     @property
     def project_allocation_percentage(self) -> float:
         """ Returns the percentage of this allocation from project total """
-        return self.effort / self.project.project_days * 100.0
+        return self.effort / self.project.project_days * 100.0 if self.project.project_days != 0 else 100
 
     @property
     def current_progress(self) -> float:
@@ -1095,7 +1102,7 @@ class RSEAllocation(models.Model):
         total_days = (self.end - self.start).days
         current_days = (now - self.start).days
 
-        return float(current_days) / float(total_days) * 100
+        return float(current_days) / float(total_days) * 100 if total_days != 0 else 100
 
     def staff_cost(self, start=None, end=None) -> SalaryValue:
         """
