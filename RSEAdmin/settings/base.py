@@ -147,3 +147,7 @@ HOME_PAGE_DAYS_SOON = 365
 HOME_PAGE_DAYS_RECENT = 30
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# When true allocations can only be made within the projects start and end date
+# When false allocations can be at any point in time against the project
+STRICT_ALLOCATIONS = False
