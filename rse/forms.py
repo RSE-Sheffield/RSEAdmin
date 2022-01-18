@@ -237,8 +237,8 @@ class AllocatedProjectForm(forms.ModelForm):
     """
 
     # Fields are created manually to set the date input format
-    start = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'), attrs={'class': 'form-control'}), input_formats=('%d/%m/%Y',))
-    end = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'), attrs={'class': 'form-control'}), input_formats=('%d/%m/%Y',))
+    start = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
     class Meta:
         model = AllocatedProject

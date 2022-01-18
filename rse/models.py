@@ -98,6 +98,7 @@ class SalaryBand(models.Model):
     year = models.ForeignKey(FinancialYear, on_delete=models.PROTECT)       # Don't allow a year to be removed if there are salary bands associated with it 
     increments = models.BooleanField(default=True)                          # Increments if in normal range
 
+
     def __str__(self) -> str:
         return f"{self.grade}.{self.grade_point} ({self.year}): £{self.salary}"
 
