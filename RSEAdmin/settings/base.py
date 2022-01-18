@@ -138,10 +138,10 @@ WORKING_DAYS_PER_YEAR = 220
 HOME_PAGE_NUMBER_ITEMS = 7
 
 # Warning level for RSE capacity (in percent)
-HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
+HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 70
 
 # Days to consider as soon
-HOME_PAGE_DAYS_SOON = 365
+HOME_PAGE_DAYS_SOON = 90
 
 # Days to consider as recent on home page
 HOME_PAGE_DAYS_RECENT = 30
