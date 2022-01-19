@@ -216,16 +216,19 @@ class ProjectAllocationForm(forms.ModelForm):
             if cleaned_data['start'] > cleaned_data['end']:
                 errors['end'] = ('Allocation end date can not be before start date')
 
-        # Check that the dates are within the current project
-        if cleaned_data['start'] < self.project.start:
-            errors['start'] = ('Allocation start date can not be before the start date of the project')
-        if cleaned_data['start'] > self.project.end:
-            errors['start'] = ('Allocation start date can not be after the end date of the project')
 
-        if cleaned_data['end'] > self.project.end:
-            errors['end'] = ('Allocation end date can not be after the end date of the project')
-        if cleaned_data['end'] < self.project.start:
-            errors['end'] = ('Allocation end date can not be before the start date of the project')
+        # strict allocations checks
+        if settings.STRICT_ALLOCATIONS:
+            # Check that the dates are within the current project
+            if cleaned_data['start'] < self.project.start:
+                errors['start'] = ('Allocation start date can not be before the start date of the project')
+            if cleaned_data['start'] > self.project.end:
+                errors['start'] = ('Allocation start date can not be after the end date of the project')
+
+            if cleaned_data['end'] > self.project.end:
+                errors['end'] = ('Allocation end date can not be after the end date of the project')
+            if cleaned_data['end'] < self.project.start:
+                errors['end'] = ('Allocation end date can not be before the start date of the project')
 
         if errors:
             raise ValidationError(errors)
@@ -237,8 +240,8 @@ class AllocatedProjectForm(forms.ModelForm):
     """
 
     # Fields are created manually to set the date input format
-    start = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'), attrs={'class': 'form-control'}), input_formats=('%d/%m/%Y',))
-    end = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'), attrs={'class': 'form-control'}), input_formats=('%d/%m/%Y',))
+    start = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
     class Meta:
         model = AllocatedProject
@@ -277,10 +280,12 @@ class AllocatedProjectForm(forms.ModelForm):
 
         # Cant change start and end date if there are existing allocations outside of the period
         if self.instance:
-            # check for allocations on project which end after the proposed start date
-            should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
-            if should_be_empty:
-                raise ValidationError('There are current allocations on this project which start before the proposed start date')
+            # Check validation if using strict allocations
+            if settings.STRICT_ALLOCATIONS:
+                # check for allocations on project which end after the proposed start date
+                should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
+                if should_be_empty:
+                    raise ValidationError('There are current allocations on this project which start before the proposed start date')
 
         return cleaned_start
 
@@ -292,10 +297,12 @@ class AllocatedProjectForm(forms.ModelForm):
 
         # Cant change start and end date if there are existing allocations outside of the period
         if self.instance:
-            # check for allocations on project which end after the proposed start date
-            should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
-            if should_be_empty:
-                raise ValidationError('There are current allocations on this project which end after the proposed end date')
+            # Check validation if using strict allocations
+            if settings.STRICT_ALLOCATIONS:
+                # check for allocations on project which end after the proposed start date
+                should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
+                if should_be_empty:
+                    raise ValidationError('There are current allocations on this project which end after the proposed end date')
 
         return cleaned_end
 
@@ -362,10 +369,12 @@ class ServiceProjectForm(forms.ModelForm):
 
         # Cant change start and end date if there are existing allocations outside of the period
         if self.instance:
-            # check for allocations on project which end after the proposed start date
-            should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
-            if should_be_empty:
-                raise ValidationError('There are current allocations on this project which start before the proposed start date')
+            # Check validation if using strict allocations
+            if settings.STRICT_ALLOCATIONS:
+                # check for allocations on project which end after the proposed start date
+                should_be_empty = RSEAllocation.objects.filter(project=self.instance, start__lt=cleaned_start)
+                if should_be_empty:
+                    raise ValidationError('There are current allocations on this project which start before the proposed start date')
 
         return cleaned_start
 
@@ -377,15 +386,30 @@ class ServiceProjectForm(forms.ModelForm):
 
         # Cant change start and end date if there are existing allocations outside of the period
         if self.instance:
-            # check for allocations on project which end after the proposed start date
-            should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
-            if should_be_empty:
-                raise ValidationError('There are current allocations on this project which end after the proposed end date')
+            # Check validation if using strict allocations
+            if settings.STRICT_ALLOCATIONS:
+                # check for allocations on project which end after the proposed start date
+                should_be_empty = RSEAllocation.objects.filter(project=self.instance, end__gt=cleaned_end)
+                if should_be_empty:
+                    raise ValidationError('There are current allocations on this project which end after the proposed end date')
 
         return cleaned_end
+        
+    def clean_rate(self):
+        """
+        Check the service rate is greater than 0
+        """
+        cleaned_rate=self.cleaned_data['rate']
 
+        # Service rate must be greater than 0
+        if cleaned_rate <= 0:
+            raise ValidationError('The service rate must be greater than 0')
 
-class ClientForm(forms.ModelForm):
+        return cleaned_rate
+               
+            
+class ClientForm(forms.ModelForm):    
+
     """
     Class for creation and editing of a client
     """

@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
+# Default primary key field (required for Djano 3.2+)
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 #BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -135,12 +138,16 @@ WORKING_DAYS_PER_YEAR = 220
 HOME_PAGE_NUMBER_ITEMS = 7
 
 # Warning level for RSE capacity (in percent)
-HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 80
+HOME_PAGE_RSE_MIN_CAPACITY_WARNING_LEVEL = 70
 
 # Days to consider as soon
-HOME_PAGE_DAYS_SOON = 365
+HOME_PAGE_DAYS_SOON = 90
 
 # Days to consider as recent on home page
 HOME_PAGE_DAYS_RECENT = 30
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# When true allocations can only be made within the projects start and end date
+# When false allocations can be at any point in time against the project
+STRICT_ALLOCATIONS = False

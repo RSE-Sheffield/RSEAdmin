@@ -87,7 +87,7 @@ The site has a self explanatory navigation menu which varies depending on the pe
 
 ## Testing
 
-The site uses continuous integration. You can run all tests locally as follows. This requires the installation of [https://github.com/mozilla/geckodriver](GeckoDriver (Firefox web driver)):
+The site uses continuous integration. You can run all tests locally as follows. This requires the installation of [https://github.com/mozilla/geckodriver](GeckoDriver (Firefox web driver)) which must be available on your `$PATH`:
 
 ```sh
 poetry run python manage.py test
