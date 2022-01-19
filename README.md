@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/RSE-Sheffield/RSEAdmin/workflows/.github/workflows/ci.yml/badge.svg)](https://github.com/RSE-Sheffield/RSEAdmin/actions)
+[![Build Status](https://github.com/RSE-Sheffield/RSEAdmin/actions/workflows/ci.yml/badge.svg)](https://github.com/RSE-Sheffield/RSEAdmin/actions)
 [![Coverage Status](https://codecov.io/gh/RSE-Sheffield/RSEAdmin/branch/master/graph/badge.svg)](https://codecov.io/gh/RSE-Sheffield/RSEAdmin)
 [![Documentation Status](https://readthedocs.org/projects/rseadmin/badge/?version=latest)](https://rseadmin.readthedocs.io/en/latest/?badge=latest)
     
