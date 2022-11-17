@@ -21,8 +21,7 @@ jobs:
       - name: Install libpq, poetry and geckodriver
         run: |
           sudo apt-get install -y libpq-dev
-          wget https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py
-          python get-poetry.py --yes
+          curl -sSL https://install.python-poetry.org | python3 -
           source $HOME/.poetry/env
           poetry install -E pgsql -E gunicorn
           curl -sSL 'https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz' -o /tmp/gd.tgz
