@@ -22,6 +22,7 @@ jobs:
         run: |
           sudo apt-get install -y libpq-dev
           curl -sSL https://install.python-poetry.org | python3 -
+          export PATH=$HOME/.local/bin:$PATH
           source $HOME/.poetry/env
           poetry install -E pgsql -E gunicorn
           curl -sSL 'https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz' -o /tmp/gd.tgz
