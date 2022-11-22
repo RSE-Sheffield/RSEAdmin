@@ -10,3 +10,6 @@ docs/_build/
 geckodriver.log
 debug.log
 secrets.json
+
+#pyenv version
+.python-version 
