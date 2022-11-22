@@ -38,4 +38,6 @@ jobs:
           MOZ_HEADLESS: 1
 
       - uses: codecov/codecov-action@v3
+        with:
+          files: ./.coverage
 
