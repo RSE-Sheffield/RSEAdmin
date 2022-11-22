@@ -32,6 +32,7 @@ jobs:
       - name: Run tests and capture coverage stats
         run: |
           poetry run coverage run manage.py test
+          ls -lh
         env:
           MOZ_HEADLESS: 1
 
