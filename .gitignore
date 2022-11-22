@@ -13,3 +13,9 @@ secrets.json
 
 #pyenv version
 .python-version 
+
+#anything with a dot
+.*
+#that isn't
+!.gitignore
+!.github
