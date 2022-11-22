@@ -5,6 +5,7 @@ on:
 
 jobs:
   ci:
+    name: Automated tests
     strategy:
       fail-fast: false
       matrix:
