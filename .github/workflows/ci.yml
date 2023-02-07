@@ -1,7 +1,6 @@
 name: CI
 
-on:
-  pull_request
+on: pull_request
 
 jobs:
   ci:
@@ -28,6 +27,7 @@ jobs:
           sudo tar -zxf /tmp/gd.tgz -C /usr/local/share
           sudo chmod +x /usr/local/share/geckodriver
           sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
+          pip freeze
 
       - name: Run tests and capture coverage stats
         run: |
@@ -38,4 +38,3 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           files: ./.coverage
-
