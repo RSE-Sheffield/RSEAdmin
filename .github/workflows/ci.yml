@@ -27,7 +27,6 @@ jobs:
           sudo tar -zxf /tmp/gd.tgz -C /usr/local/share
           sudo chmod +x /usr/local/share/geckodriver
           sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
-          pip freeze
 
       - name: Run tests and capture coverage stats
         run: |
