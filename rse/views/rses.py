@@ -111,7 +111,7 @@ def ajax_salary_band_by_year(request):
     """
     year = request.GET.get('year')
     selected = request.GET.get('selected')
-    sbs = SalaryBand.objects.filter(year=year).order_by('year')
+    sbs = SalaryBand.objects.filter(year=year).order_by('grade', 'grade_point')
     view_dict = {}
     view_dict['sbs'] = sbs
     if selected is not None and selected.isnumeric():

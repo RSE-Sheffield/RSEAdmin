@@ -61,7 +61,7 @@ class SeleniumTemplateTest(LiveServerTestCase):
         # setup firefox driver
         d = DesiredCapabilities.FIREFOX
         d['loggingPrefs'] = { 'browser':'ALL' }
-        self.selenium = webdriver.Firefox(firefox_options=driver_options, desired_capabilities=d)
+        self.selenium = webdriver.Firefox(options=driver_options, desired_capabilities=d)
 
         # create test data 
         if not self.blank_db:

@@ -632,3 +632,117 @@ class ProjectAllocationTests(TestCase):
         self.assertAlmostEqual(p.value(), 8250.00, places=2)
         
    
+class EdgeCasesDivByZeros(TestCase):
+
+    def setUp(self):
+        setup_salary_and_banding_data()
+        
+        # get test user and rse from database
+        self.user = User.objects.get(username='testuser')
+        # get rse from database
+        self.rse = RSE.objects.get(user=self.user)
+        # store salary band for use in allocated project creation
+        # get expected salary band from database (doest matter which)
+        self.salary_band = SalaryBand.objects.get(grade=1, grade_point=5, year=2017)
+        
+        # create a client
+        c = Client(name="test_client")
+        c.department = "COM"
+        c.save() 
+        self.client = c
+
+
+    def test_project_zero_duration(self):
+        """
+        Expect that a zero duration project should not give a divide by zero error in various places where calculations occur
+        """
+        
+        # Create an allocated project with no duration
+        p = AllocatedProject(
+            percentage=50,
+            overheads=250.00,
+            salary_band=self.salary_band,
+            # base class values
+            creator=self.user,
+            created=timezone.now(),
+            proj_costing_id="12345",
+            name="test_project_1",
+            description="none",
+            client=self.client,
+            start=date(2019, 1, 1),
+            end=date(2019, 1, 1),
+            status='F')
+        p.save()
+        
+        # No allocations but duration is 0 so expect 100
+        self.assertEqual(p.percent_allocated, 100)
+        
+    def test_project_zero_fte(self):
+        """
+        Expect that a zero fte project should not give a divide by zero error in various places where calculations occur
+        """
+        
+        # Create an allocated project with no duration
+        p = AllocatedProject(
+            percentage=0,
+            overheads=250.00,
+            salary_band=self.salary_band,
+            # base class values
+            creator=self.user,
+            created=timezone.now(),
+            proj_costing_id="12345",
+            name="test_project_1",
+            description="none",
+            client=self.client,
+            start=date(2018, 1, 1),
+            end=date(2019, 1, 1),
+            status='F')
+        p.save()
+        
+        # No fte so expected days at fte should be 0
+        self.assertEqual(p.remaining_days_at_fte, 0)
+        
+    def test_project_zero_fte_zero_duration(self):
+        """
+        Expect that a zero fte and zero duration project should not give a divide by zero error in various places where calculations occur
+        """
+        
+        # Create an allocated project with no duration
+        p = AllocatedProject(
+            percentage=0,
+            overheads=250.00,
+            salary_band=self.salary_band,
+            # base class values
+            creator=self.user,
+            created=timezone.now(),
+            proj_costing_id="12345",
+            name="test_project_1",
+            description="none",
+            client=self.client,
+            start=date(2018, 1, 1),
+            end=date(2019, 1, 1),
+            status='F')
+        p.save()
+        
+        # No fte so expected days at fte should be 0
+        self.assertEqual(p.remaining_days_at_fte, 0)
+        
+        # No allocations but duration is 0 so expect 100
+        self.assertEqual(p.percent_allocated, 100)
+
+        
+        
+    def test_client_funded_projects_percent(self):
+        """
+        Expect that a new client should not raise a div by zero when calculating project completion percentage with no projects
+        """
+        
+        # Create an new client
+        c = Client(name="test_client2")
+        c.department = "COM"
+        
+        # If no projects then percent should be 0
+        self.assertEqual(c.funded_projects_percent, 0)
+        
+        
+        
