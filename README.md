@@ -28,10 +28,11 @@ For any new code you should create a new branch from the `dev` branch and create
 ```mermaid
 graph LR
 
-fb1[feat/new-shiny-feature] --> dev
-fixb1[fix/project-problem] --> dev
-fb2[feat/another-feature] --> dev
-dev --> main
+fb1[feat/new-shiny-feature] --PR--> dev
+fixb1[fix/project-problem] --PR--> dev
+fb2[feat/another-feature] --PR--> dev
+dev --stable release--> main
+main --deploy--> SERVER
 ```
 
 ## Development using docker containers
