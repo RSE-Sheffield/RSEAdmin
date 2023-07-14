@@ -1,2 +1,0 @@
-# Load the django pylint module (useful for VS Code)
-load-plugins=pylint_django

@@ -19,3 +19,5 @@ secrets.json
 #that isn't
 !.gitignore
 !.github
+
+dist/
