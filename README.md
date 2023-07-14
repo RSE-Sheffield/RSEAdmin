@@ -11,7 +11,7 @@ The tool is a web app written using the [Django][django] web framework (Python) 
 
 This readme covers installation, getting started and access to the demo site. Please refer to the [User Guide][userguide] documentation for a description of features.
 
-# Demo site
+## Demo site
 
 A live version of the tool is available online at:
 
@@ -20,6 +20,19 @@ A live version of the tool is available online at:
 You can log in as either an RSE user (username of `user[0-9]` with password `12345`) or as an admin (username of `rseadmin` with password `demosite`).
 
 The site is populated with random demo data which is reset at midnight every night.
+
+## Contributing
+
+For any new code you should create a new branch from the `dev` branch and create a pull request to merge into it. The `main` branch will be the default branch for deployment and should only have pull requests from the `dev` branch. Only stable changes can merge into the `main` branch.
+
+```mermaid
+graph LR
+
+fb1[Feature branch 1] --> dev
+fixb1[Fix branch] --> dev
+fb2[Feature branch 2] --> dev
+dev --> main
+```
 
 ## Development using docker containers
 
