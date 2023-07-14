@@ -21,6 +21,30 @@ You can log in as either an RSE user (username of `user[0-9]` with password `123
 
 The site is populated with random demo data which is reset at midnight every night.
 
+## Development using docker containers
+
+You'll need to install [Docker](https://www.docker.com/), this can be done by either install Docker Desktop, or just the Docker Engine.
+
+Use the following command to build images:
+
+```bash
+docker compose build --pull
+```
+
+Run containers:
+
+```bash
+docker compose up -d
+```
+
+Then use the commands from the [next section](#development-install-using-poetry) to build the database, collect static files etc. For example:
+
+```bash
+docker compose exec app poetry run python manage.py migrate
+```
+
+You do not need to run the command for running the server, as it will be handled via the commands in the container image and in the docker-compose file.
+
 ## Development install using Poetry
 
 
