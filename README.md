@@ -28,9 +28,9 @@ For any new code you should create a new branch from the `dev` branch and create
 ```mermaid
 graph LR
 
-fb1[Feature branch 1] --> dev
-fixb1[Fix branch] --> dev
-fb2[Feature branch 2] --> dev
+fb1[feat/new-shiny-feature] --> dev
+fixb1[fix/project-problem] --> dev
+fb2[feat/another-feature] --> dev
 dev --> main
 ```
 
