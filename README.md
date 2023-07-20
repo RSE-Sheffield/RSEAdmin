@@ -31,8 +31,9 @@ graph LR
 fb1[feat/new-shiny-feature] --PR--> dev
 fixb1[fix/project-problem] --PR--> dev
 fb2[feat/another-feature] --PR--> dev
-dev --stable release--> main
-main --deploy--> SERVER
+dev --PR, merge if tested and stable--> main
+dev --deploy--> ds[DEV server]
+main --deploy--> ps[PROD server]
 ```
 
 ## Development using docker containers
