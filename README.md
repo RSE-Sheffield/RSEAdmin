@@ -51,7 +51,29 @@ Run containers:
 docker compose up -d
 ```
 
-Then use the commands from the [next section](#development-install-using-poetry) to build the database, collect static files etc. For example:
+Setup Postgres database using the script:
+
+```bash
+docker-compose exec --user postgres db sh /tmp/db_init.sh
+```
+
+This script will create a user `django` with password `django_postgres` with an associated database called `django`.
+
+You can also setup the database manually using the following commands:
+
+```bash
+# Create the user, you'll need to enter the password
+# https://www.postgresql.org/docs/current/app-createuser.html
+docker-compose exec --user postgres db createuser --pwprompt django
+```
+
+And create their database:
+
+```bash
+docker-compose exec --user postgres db createdb --owner=django django
+```
+
+Then use the commands from the [next section](#development-install-using-poetry) to build the database, collect static files, create an admin user etc. For example:
 
 ```bash
 docker compose exec app poetry run python manage.py migrate
