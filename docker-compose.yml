@@ -22,4 +22,16 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - ./scripts/db_init.sh:/tmp/db_init.sh
+      # persist database
       - "./volumes/postgresql/data:/var/lib/postgresql/data"
+
+  # selenium firefox driver
+  selenium-firefox:
+    image: selenium/standalone-firefox
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    restart: "no"
+
+  
