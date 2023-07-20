@@ -21,3 +21,6 @@ secrets.json
 !.github
 
 dist/
+
+# Docker container volumes
+volumes
