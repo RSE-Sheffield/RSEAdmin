@@ -3,8 +3,35 @@ services:
   app:
     build: .
     command: python manage.py runserver 0.0.0.0:8080
+    env_file:
+      - ./dev.env
     volumes:
       - .:/var/www
     ports:
       - "8080:8080"
     
+  
+  # PostgreSQL docs https://www.postgresql.org/docs/14/index.html
+  # https://hub.docker.com/_/postgres
+  db:
+    image: postgres:14-bullseye
+    environment:
+      # postgres superuser
+      POSTGRES_PASSWORD: django_postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./scripts/db_init.sh:/tmp/db_init.sh
+      # persist database
+      - "./volumes/postgresql/data:/var/lib/postgresql/data"
+
+  # selenium firefox driver
+  selenium-firefox:
+    image: selenium/standalone-firefox
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    restart: "no"
+
+  
