@@ -237,8 +237,8 @@ class ProjectTemplateTests(SeleniumTemplateTest):
 
             if ServiceProject.objects.all():
                 self.first_service_project = ServiceProject.objects.all()[0]
-            if AllocatedProject.objects.all():
-                self.first_allocated_project = AllocatedProject.objects.all()[0]
+            if DirectlyIncurredProject.objects.all():
+                self.first_allocated_project = DirectlyIncurredProject.objects.all()[0]
             if Project.objects.all():
                 self.first_project = Project.objects.all()[0]
 
@@ -278,21 +278,21 @@ class ProjectTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()  
 
-    def test_project_new_allocated(self):
-        """ Tests the project_new_allocated page """
+    def test_project_new_directly_incurred(self):
+        """ Tests the project_new_directly_incurred page """
 
         # test url
-        url = f"{self.live_server_url}{reverse_lazy('project_new_allocated')}"
+        url = f"{self.live_server_url}{reverse_lazy('project_new_directly_incurred')}"
 
         # test admin view
         self.get_url_as_admin(url)
-        expected = "RSE Group Administration Tool: New Allocated Project"
+        expected = "RSE Group Administration Tool: New Directly Incurred Project"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = "RSE Group Administration Tool: New Allocated Project"
+        expected = "RSE Group Administration Tool: New Directly Incurred Project"
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors() 
 
@@ -355,18 +355,18 @@ class ProjectTemplateTests(SeleniumTemplateTest):
             self.check_for_log_errors() 
 
         # test url
-        if hasattr(self, 'first_allocated_project'):
-            url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_allocated_project.id})}"
+        if hasattr(self, 'first_directly_incurred_project'):
+            url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_directly_incurred_project.id})}"
 
             # test admin view
             self.get_url_as_admin(url)
-            expected = "RSE Group Administration Tool: Edit Allocated Project"
+            expected = "RSE Group Administration Tool: Edit Directly Incurred Project"
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
             
             # test rse view (login should be required)
             self.get_url_as_rse(url)
-            expected = "RSE Group Administration Tool: Edit Allocated Project"
+            expected = "RSE Group Administration Tool: Edit Directly Incurred Project"
             self.assertEqual(self.selenium.title, expected)  
             self.check_for_log_errors() 
 

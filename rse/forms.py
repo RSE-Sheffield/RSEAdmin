@@ -95,7 +95,7 @@ class ProjectTypeForm(forms.Form):
     Extends the filter range form by adding type and status fields
     """
 
-    type = forms.ChoiceField(choices=(('S', 'Service'), ('A', 'Allocated')),
+    type = forms.ChoiceField(choices=(('S', 'Service'), ('D', 'DirectlyIncurred')),
                              widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 
 
@@ -124,7 +124,7 @@ class ProjectsFilterForm(forms.Form):
     Values for options doe not use database character keys as tables are filtered directly at client side (in the data table)
     """
 
-    type_filter = forms.ChoiceField(choices=(('', 'All'), ('Allocated', 'Allocated Only'), ('Service', 'Service Only')),
+    type_filter = forms.ChoiceField(choices=(('', 'All'), ('DirectlyIncurred', 'Directly Incurred Only'), ('Service', 'Service Only')),
                                     widget=forms.Select(attrs={'class': 'form-control'}))
     status_filter = forms.ChoiceField(choices= (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS,
                                       widget=forms.Select(attrs={'class': 'form-control'}))
@@ -234,7 +234,7 @@ class ProjectAllocationForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class AllocatedProjectForm(forms.ModelForm):
+class DirectlyIncurredProjectForm(forms.ModelForm):
     """
     Class for creation and editing of a project
     """
@@ -244,7 +244,7 @@ class AllocatedProjectForm(forms.ModelForm):
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
     class Meta:
-        model = AllocatedProject
+        model = DirectlyIncurredProject
         fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band', 'created', 'creator']
         widgets = {
             'proj_costing_id': forms.TextInput(attrs={'class': 'form-control'}),
@@ -261,7 +261,7 @@ class AllocatedProjectForm(forms.ModelForm):
         }
 
     def clean(self):
-        cleaned_data = super(AllocatedProjectForm, self).clean()
+        cleaned_data = super(DirectlyIncurredProjectForm, self).clean()
         errors = {}
 
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)

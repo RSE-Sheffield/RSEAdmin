@@ -640,7 +640,7 @@ class SalaryGradeChange(models.Model):
 class Project(PolymorphicModel):
     """
     Project represents a project undertaken by RSE team.
-    Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
+    Projects are not abstract but should not be initialised without using either a DirectlyIncurredProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
     See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
     creator = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -873,9 +873,9 @@ class Project(PolymorphicModel):
         return {"r": r, "g": g, "b": b}
 
 
-class AllocatedProject(Project):
+class DirectlyIncurredProject(Project):
     """
-    AllocatedProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
+    DirectlyIncurredProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
     Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
@@ -948,7 +948,7 @@ class AllocatedProject(Project):
         """
         Returns a plain string representation of the project type
         """
-        return "Allocated"
+        return "Directly Incurred"
 
     @property
     def is_service(self) -> bool:

@@ -7,8 +7,8 @@
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
 {% endblock %}
 
-{% block title %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Allocated Project{% endblock %}
-{% block page_name %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Allocated Project{% endblock %}
+{% block title %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project{% endblock %}
+{% block page_name %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project{% endblock %}
 {% block content %}
 
 	<div class ="row">
@@ -16,10 +16,10 @@
         <div class="col-md-8">
           <div class="box box-default">
             <div class="box-header with-border">
-              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Allocated Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
+              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
             </div>
             
-			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_allocated' %}{% endif %}">
+			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_directly_incurred' %}{% endif %}">
 				{% csrf_token %} 
 											
 				<div class="box-body no-padding">
@@ -32,7 +32,7 @@
 										<div class="input-group">
 											{{ form.client}}
 											<div class="input-group-addon">
-												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_allocated' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
+												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_directly_incurred' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
 											</div>
 										</div>
 									</td></tr>
