@@ -22,4 +22,5 @@ secrets.json
 
 dist/
 
+# Docker container volumes
 volumes
