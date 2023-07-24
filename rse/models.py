@@ -139,8 +139,8 @@ class SalaryBand(models.Model):
 
     def salary_band_next_financial_year(self):
         """
-        Provides the salary and for the next financial year
-        Normal behavior is to use the next years financial data. If there is no next year financial data then the current years financial data is used.
+        Provides the salary band for the next financial year
+        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used.
         Grade point should not change as this represents just the salary change in August which is the inflation adjustment.
         """
         # Query database to find a salary band for next years financial data
@@ -879,7 +879,7 @@ class AllocatedProject(Project):
     Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
-    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rata amount per year
+    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rota amount per year
     salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
 
     @property
