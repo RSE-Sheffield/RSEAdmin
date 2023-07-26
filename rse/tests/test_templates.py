@@ -10,6 +10,9 @@ from rse.tests.test_random_data import random_project_and_allocation_data
 from django.conf import settings
 from rse.tests.selenium_template_test import *
 
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+
 ########################
 ### Index (homepage) ###
 ########################
@@ -272,11 +275,20 @@ class ProjectTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
+        # test admin view dropdown option
+        # https://selenium-python.readthedocs.io/api.html?highlight=select#module-selenium.webdriver.support.select
+        dropdown = Select(self.selenium.find_element(By.ID, 'id_type'))
+        dropdown.select_by_visible_text('Service')
+        dropdown.select_by_visible_text('Directly Incurred')
+        
         # test rse view (login should be required)
         self.get_url_as_rse(url)
         expected = "RSE Group Administration Tool: New Project"
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()  
+        dropdown = Select(self.selenium.find_element(By.ID, 'id_type'))
+        dropdown.select_by_visible_text('Service')
+        dropdown.select_by_visible_text('Directly Incurred')
 
     def test_project_new_directly_incurred(self):
         """ Tests the project_new_directly_incurred page """
