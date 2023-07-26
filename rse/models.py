@@ -881,9 +881,16 @@ class DirectlyIncurredProject(Project):
     Previously the 'Allocated' project, this model was renamed because it does not fit with terminology used at UoS. 
     Allocated is generally an academic member of staff rather than charged to the grant.
     """
-    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
-    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rota amount per year
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
+    
+    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1000)])
+    """
+    FTE percentage for the project. This was increased from 100 because sometimes
+    there are more than 100% FTE spent on the project.
+    """
+    overheads = models.DecimalField(max_digits=8, decimal_places=2)
+    """Overheads are a pro rota amount per year."""
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)
+    """Don't allow salary band deletion if there are allocations associated with it."""
 
     @property
     def chargable(self):
@@ -928,7 +935,7 @@ class DirectlyIncurredProject(Project):
     def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
         """
         Function calculates the value of any overheads generated.
-        For allocated projects this is based on duration and a fixed overhead rate.
+        For directly incurred projects this is based on duration and a fixed overhead rate.
         Cap the from and end dates according to the project as certain queries may have dates based on financial years rather than project dates
         """
 
@@ -968,15 +975,22 @@ class ServiceProject(Project):
     """
     ServiceProject is a number of service days in which work should be undertaken. The projects dates set parameters for which the work can be undertaken but do not define the exact dates in which the work will be conducted. An allocation will convert the service days into an FTE equivalent so that time can be scheduled including holidays.
     """
-    days = models.IntegerField(default=1)                           # duration in days
-    rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate
-    charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
+    days = models.IntegerField(default=1)
+    """ Duration of the project in days. """
+    rate = models.DecimalField(max_digits=8, decimal_places=2)
+    """ Service rate """
+    charged = models.BooleanField(default=True)
+    """ Should staff time be charged to service account """
     invoice_received = models.DateField(null=True, blank=True)
+    """ Whether the invoice is received, if yes, specifies the date. """
 
     @property
     def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
-        return not self.internal and charged
+        """ 
+        Indicates if the project is chargable in a cost distribution. 
+        I.e. Internal projects are not chargable and neither are non charged service projects. 
+        """
+        return not self.internal and self.charged
 
     @staticmethod
     def days_to_fte_days(days: int) -> int:
@@ -991,7 +1005,7 @@ class ServiceProject(Project):
     @property
     def duration(self) -> int:
         """
-        Use the avilable static method to convert days to FTE days
+        Use the available static method to convert days to FTE days
         """
         return ServiceProject.days_to_fte_days(self.days)
 
