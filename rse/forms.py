@@ -124,7 +124,7 @@ class ProjectsFilterForm(forms.Form):
     Values for options doe not use database character keys as tables are filtered directly at client side (in the data table)
     """
 
-    type_filter = forms.ChoiceField(choices=(('', 'All'), ('DirectlyIncurred', 'Directly Incurred Only'), ('Service', 'Service Only')),
+    type_filter = forms.ChoiceField(choices=(('', 'All'), ('Directly Incurred', 'Directly Incurred Only'), ('Service', 'Service Only')),
                                     widget=forms.Select(attrs={'class': 'form-control'}))
     status_filter = forms.ChoiceField(choices= (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS,
                                       widget=forms.Select(attrs={'class': 'form-control'}))
