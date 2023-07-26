@@ -95,7 +95,7 @@ class ProjectTypeForm(forms.Form):
     Extends the filter range form by adding type and status fields
     """
 
-    type = forms.ChoiceField(choices=(('S', 'Service'), ('D', 'DirectlyIncurred')),
+    type = forms.ChoiceField(choices=(('S', 'Service'), ('D', 'Directly Incurred')),
                              widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 
 
@@ -108,7 +108,7 @@ class FilterProjectForm(FilterDateRangeForm):
     """
     status = forms.ChoiceField(
         choices=(
-            ('U', 'Funded, Review and in Preperation'),
+            ('U', 'Funded, Review and in Preparation'),
             ('A', 'All'),
             ('L', 'Funded and Review')) +
             Project.STATUS_CHOICES,

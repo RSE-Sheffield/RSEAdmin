@@ -876,7 +876,7 @@ class Project(PolymorphicModel):
 class DirectlyIncurredProject(Project):
     """
     DirectlyIncurredProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
-    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
+    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project.
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
     overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rota amount per year
