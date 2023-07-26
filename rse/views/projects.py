@@ -96,6 +96,14 @@ def project_new(request: HttpRequest) -> HttpResponse:
 
     view_dict['form'] = form
     
+    messages.add_message(
+        request, 
+        level=30, 
+        message="'Allocated' project type is renamed to 'Directly Incurred' as" \
+                " 'Allocated' generally refer to an academic member of staff" \
+                " rather than charged to the grant."
+    )
+    
     return render(request, 'project_new.html', view_dict)
 
 
