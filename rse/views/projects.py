@@ -78,7 +78,15 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
 
 @login_required
 def project_new(request: HttpRequest) -> HttpResponse:
-
+    # Notify user of the new change
+    messages.add_message(
+        request, 
+        level=messages.WARNING, 
+        message="'Allocated' project type is renamed to 'Directly Incurred' as" \
+                " 'Allocated' generally refer to an academic member of staff" \
+                " rather than charged to the grant."
+    )
+        
     # Dict for view
     view_dict = {}  # type: Dict[str, object]
     
@@ -95,14 +103,6 @@ def project_new(request: HttpRequest) -> HttpResponse:
         form = ProjectTypeForm()
 
     view_dict['form'] = form
-    
-    messages.add_message(
-        request, 
-        level=30, 
-        message="'Allocated' project type is renamed to 'Directly Incurred' as" \
-                " 'Allocated' generally refer to an academic member of staff" \
-                " rather than charged to the grant."
-    )
     
     return render(request, 'project_new.html', view_dict)
 
