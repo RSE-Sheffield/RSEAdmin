@@ -38,12 +38,13 @@ class TypedQuerySet(Generic[T]):
 class SalaryValue():
     """
     Class to represent a salary calculation.
-    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargable period)
+    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargeable period)
     """
     def __init__(self):
         self.staff_cost = 0
         self.cost_breakdown = []
         self.allocation_breakdown = {}
+        self.oncosts_multiplier = settings.ONCOSTS_SALARY_MULTIPLIER
 
     def add_staff_cost(self, salary_band, from_date: date, until_date: date, percentage: float = 100.0):
         cost_in_period = SalaryBand.salaryCost(days=(until_date - from_date).days, salary=salary_band.salary, percentage=percentage)
@@ -225,7 +226,6 @@ class SalaryBand(models.Model):
         Note: Should only be used for costing project staff budget values (i.e. non allocated staff time) as 
         RSEs may have increments which need to be considered in the costing.
         """
-
         # Check for obvious stupid
         if end < start:
             raise ValueError('End date is before start date')
@@ -247,7 +247,6 @@ class SalaryBand(models.Model):
 
             # Update salary cost
             salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
-
             # Calculate the next salary band
             # This cant be done before cost calculation salary_band_next_financial_year may modify the next_sb object
             if next_increment.month < 8:  # If date is before financial year then date range spans financial year
@@ -257,10 +256,9 @@ class SalaryBand(models.Model):
 
             # update chargeable period date and band
             next_increment = temp_next_increment
-
+        
         # Final salary cost for period not spanning a salary change
         salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=end, percentage=percentage)
-
         return salary_value
 
 

@@ -7,6 +7,12 @@ from django.test import TestCase
 from rse.models import *
 import random
 
+#####
+MIN_PROJECT_PERCENTAGE = 5
+MAX_PROJECT_PERCENTAGE = 120
+PERCENTAGE_STEP = 5
+
+
 ###########################################
 # Helper functions for creating test data #
 ###########################################
@@ -139,7 +145,7 @@ def random_project_and_allocation_data():
         #random choice between allocated or service project
         if random.random()>0.5:
             # allocated
-            percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
+            percentage = random.randrange(MIN_PROJECT_PERCENTAGE, MAX_PROJECT_PERCENTAGE, PERCENTAGE_STEP) # 5% to 50% with 5% step
             p_temp = DirectlyIncurredProject(
                 percentage=percentage,
                 overheads=250.00,
@@ -181,12 +187,12 @@ def random_project_and_allocation_data():
     for p in Project.objects.all():
         allocated = 0
         # fill allocations on project until fully allocated
-        while allocated<p.fte:
+        while allocated < p.fte:
             r = random.choice(RSE.objects.all())
-            if p.fte-allocated == 5:
-                percentage = 5
+            if p.fte-allocated == MIN_PROJECT_PERCENTAGE:
+                percentage = MIN_PROJECT_PERCENTAGE
             else:
-                percentage = random.randrange(5, p.fte-allocated, 5) # 5% step
+                percentage = random.randrange(MIN_PROJECT_PERCENTAGE, p.fte-allocated, PERCENTAGE_STEP) # 5% step
                 # Create the allocation
             allocation = RSEAllocation(rse=r, 
                 project=p, 
@@ -226,9 +232,9 @@ class ProjectAllocationTests(TestCase):
             self.assertIn(p.status, Project.status_choice_keys())
         
             if isinstance(p, DirectlyIncurredProject):
-                # percentage should be between 5% and 50%
-                self.assertLessEqual(p.percentage, 50) 
-                self.assertGreaterEqual(p.percentage, 5)
+                # percentage should be between min% and max%
+                self.assertLessEqual(p.percentage, MAX_PROJECT_PERCENTAGE) 
+                self.assertGreaterEqual(p.percentage, MIN_PROJECT_PERCENTAGE)
                 
                 # start must be before end
                 self.assertLess(p.start, p.end)
@@ -244,7 +250,7 @@ class ProjectAllocationTests(TestCase):
         
         for p in Project.objects.all():
             # Ensure projects are 100 committed
-            self.assertAlmostEqual(p.percent_allocated, 100.0, places=2)
+            self.assertAlmostEqual(p.percent_allocated, MAX_PROJECT_PERCENTAGE, places=2)
             
       
     def test_allocation_dates(self):
