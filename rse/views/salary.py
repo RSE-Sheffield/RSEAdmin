@@ -54,7 +54,6 @@ def financialyears(request: HttpRequest) -> HttpResponse:
         year = years[0]
     view_dict['year'] = year
     
-
     
     # Get all salary bands for the financial year
     salary_bands = SalaryBand.objects.filter(year=year).order_by('-grade', '-grade_point')

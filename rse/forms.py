@@ -609,13 +609,15 @@ class NewFinancialYearForm(forms.ModelForm):
 
     class Meta:
         model = FinancialYear
-        fields = ['year']
+        fields = ['year', 'overheads_rate', 'service_day_rate']
         widgets = {
             'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'overheads_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'service_day_rate': forms.NumberInput(attrs={'class': 'form-control'})
         }
 
     def save(self, commit=True):
-        """ Override to copy salary band data from previous finanical year """
+        """ Override to copy salary band data from previous financial year """
         financial_year = super(NewFinancialYearForm, self).save(commit=False)
 
         if commit:
