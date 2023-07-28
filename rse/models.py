@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import date, timedelta
 from django.utils import timezone
 from math import floor
@@ -28,7 +29,7 @@ T = TypeVar("T")
 
 class TypedQuerySet(Generic[T]):
     """
-    Django type hints for query sets are not typed (not very usefull).
+    Django type hints for query sets are not typed (not very useful).
     The following class can eb used to provide type information (see: https://stackoverflow.com/a/54797356)
     """
     def __iter__(self) -> Iterator[Union[T, QuerySet]]:
@@ -395,7 +396,7 @@ class RSE(models.Model):
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
         """
         Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
-        year as well as any additional salary grade changes. It works by iterating through chargable periods looking for 
+        year as well as any additional salary grade changes. It works by iterating through chargeable periods looking for 
         changes in staff salary. 
 
         This is different to a salary bad staff cost as it also considers salary grade changes which may be the result of
@@ -617,7 +618,7 @@ class SalaryGradeChange(models.Model):
         else:
             return False
 
-    def next_salary_grade_change(self, start: date, end: date) -> bool:
+    def next_salary_grade_change(self, start: date, end: date) -> Union[SalaryGradeChange, None]:
         """
         Returns the next salary grade change if there is one or None
         """
@@ -681,8 +682,8 @@ class Project(PolymorphicModel):
     )
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable and neither are non charged service projects. """
         pass
 
     @staticmethod
@@ -891,8 +892,8 @@ class DirectlyIncurredProject(Project):
     """Don't allow salary band deletion if there are allocations associated with it."""
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable."""
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable."""
         return not self.internal
 
     @property
@@ -983,10 +984,10 @@ class ServiceProject(Project):
     """ Whether the invoice is received, if yes, specifies the date. """
 
     @property
-    def chargable(self):
+    def chargeable(self):
         """ 
-        Indicates if the project is chargable in a cost distribution. 
-        I.e. Internal projects are not chargable and neither are non charged service projects. 
+        Indicates if the project is chargeable in a cost distribution. 
+        I.e. Internal projects are not chargeable and neither are non charged service projects. 
         """
         return not self.internal and self.charged
 
