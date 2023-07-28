@@ -69,6 +69,10 @@ class FinancialYear(models.Model):
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
     year = models.IntegerField(primary_key=True)  # Must relate to a financial year
+    service_day_rate = models.DecimalField(max_digits=8, decimal_places=2, default=300)
+    """ Service day rate for the current financial year """
+    overheads_rate = models.DecimalField(max_digits=8, decimal_places=2, default=250)
+    """ Overheads rate pro rota for the current financial year """
     
     def start_date(self) -> date:
         """Get start date of the financial year."""
