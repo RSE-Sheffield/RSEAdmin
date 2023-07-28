@@ -598,6 +598,16 @@ class NewSalaryBandForm(forms.ModelForm):
         }
 
 
+class UpdateRatesForm(forms.ModelForm):        
+    class Meta:
+        model = FinancialYear
+        fields = ['overheads_rate', 'service_day_rate']
+        widgets = {
+            'overheads_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'service_day_rate': forms.NumberInput(attrs={'class': 'form-control'})
+        }
+
+
 class NewFinancialYearForm(forms.ModelForm):
     """
     Class represents a form for creating a new salary band with a given year
