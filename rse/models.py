@@ -748,7 +748,7 @@ class Project(PolymorphicModel):
     @property
     def project_days(self) -> float:
         """ Duration times by fte """
-        return self.duration * self.fte / 100.0
+        return self.duration * (self.fte / 100.0)
 
     @property
     def committed_days(self) -> float:
