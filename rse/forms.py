@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.utils.html import format_html
 import logging
 
 from .models import *
@@ -238,17 +239,22 @@ class ProjectAllocationForm(forms.ModelForm):
 
 class RatesWidget(forms.MultiWidget):
     """MultiWidget for Rates
+    Note that in the request.POST object, values for each widget are stored in '{widget_name}_{index}'.
+    
+    Example: {'overheads_0': '300', 'overheads_1': '0'}
     
     Parameters
     ----------
     forms : MultiWidget
         https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
     """
+        
     def __init__(self, attrs=None):
         widgets = [
             forms.Select(attrs=attrs, choices=[]),  # Set an empty choices list for now
-            forms.NumberInput(attrs=dict(**attrs, placeholder="Enter a custom rate if options are not specified.")),
+            forms.NumberInput(attrs=dict(**attrs, step='0.01', placeholder="Enter a custom rate if options are not specified.")),
         ]
+
         super().__init__(widgets, attrs)
 
     def decompress(self, value):
@@ -257,8 +263,18 @@ class RatesWidget(forms.MultiWidget):
         This method must be implemented.
         """
         if value:
-            return [value.rate, value.year]
+            overheads_select = value.get('select_input', None)
+            overheads_input = value.get('number_input', None)
+
+            return [overheads_select, overheads_input]
         return [None, None]
+    
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        
+        # Mark the second widget optional
+        context['widget']['subwidgets'][1]['attrs']['required'] = False
+        return context
 
 
 class DirectlyIncurredProjectForm(forms.ModelForm):
@@ -269,17 +285,18 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
     # Fields are created manually to set the date input format
     start = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
-
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Retrieve the recent financial years and their overheads rates
         recent_fys = FinancialYear.objects.order_by('-year')
         years_overheads = recent_fys.values_list('overheads_rate', 'year')
-        years_overheads = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_overheads)
+        years_overheads = list((str(rate), f'£{rate} - FY{fy}') for rate, fy in years_overheads)
         
         # Update the choices for the 'overheads_options' field
         self.fields['overheads'].widget.widgets[0].choices = years_overheads
+
         
     class Meta:    
         model = DirectlyIncurredProject
@@ -299,16 +316,35 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
         }
 
     def clean(self):
-        cleaned_data = super(DirectlyIncurredProjectForm, self).clean()
+        logger.info(f'before clean: {self.data}')
+        cleaned_data = super().clean()
+        try:
+            cleaned_data['overheads'] = self.clean_overheads()
+        except forms.ValidationError as e:
+            self.add_error('overheads', e)
+        logger.info(f'cleaned_data: {cleaned_data}')
         errors = {}
 
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end']:
                 errors['end'] = ('Project end date can not be before start date')
-
+        
         if errors:
             raise ValidationError(errors)
+
+    
+    def clean_overheads(self):
+        logger.info("clean----overheads")
+        overheads_select = self.data['overheads_0'] or None
+        overheads_input = self.data['overheads_1'] or None
+
+        if overheads_input:
+            return Decimal(overheads_input)
+        if overheads_select:
+            return Decimal(overheads_select)
+        
+        raise forms.ValidationError('Overheads: Please select or enter a valid number.')
 
     def clean_start(self):
         """

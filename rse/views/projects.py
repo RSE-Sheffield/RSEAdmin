@@ -115,7 +115,15 @@ def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
     
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
+        # try:
+        #     overheads = float(request.POST['overheads_1'])
+        # except ValueError: 
+        #     overheads = float(request.POST['overheads_0'])
+
+        # form_data = request.POST.copy()
+        # form_data['overheads'] = overheads
         form = DirectlyIncurredProjectForm(request.POST)
+
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
@@ -126,6 +134,8 @@ def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
                 return HttpResponseRedirect(next)
             else:
                 return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
+        else:
+            logger.info(form.errors)
     else:
         form = DirectlyIncurredProjectForm()
         # If request has a client id then automatically set this in the initial form data
