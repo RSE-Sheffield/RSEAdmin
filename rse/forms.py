@@ -244,10 +244,15 @@ class RatesWidget(forms.MultiWidget):
     
     Example: {'overheads_0': '300', 'overheads_1': '0'}
     
+    https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
+    
     Parameters
     ----------
-    forms : MultiWidget
-        https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
+    attrs: Dict
+        Attributes of the widget
+    rate_type: str
+        This should correspond to the rate field in the corresponding Project model.
+        E.g. 'overheads' in Directly Incurred.
     """
         
     def __init__(self, attrs=None, rate_type='overheads'):
@@ -257,7 +262,8 @@ class RatesWidget(forms.MultiWidget):
                 **attrs, 
                 step='0.01', 
                 type='number', 
-                placeholder="Enter a custom rate if options are not specified."
+                placeholder="Enter a custom rate. Clear this field if you do not want to use this.",
+                required=False
                 )
             ),
         ]
@@ -271,18 +277,14 @@ class RatesWidget(forms.MultiWidget):
         This method must be implemented.
         """
         if value:
-            value_select = value.get('select_input', None)
-            value_input = value.get('number_input', None)
-
+            try:
+                value_select = value[0]
+                value_input = value[1]
+            except Exception as e:
+                raise(f'Failed to get values when decompress: {e}')
             return [value_select, value_input]
         return [None, None]
-    
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        
-        # Mark the second widget optional
-        context['widget']['subwidgets'][1]['attrs']['required'] = False
-        return context
+
     
     def value_from_datadict(self, data: Dict[str, Any], files: Mapping[str, Iterable[Any]], name: str) -> Any:
         """This is required for the clean method to work
@@ -298,9 +300,26 @@ class RatesWidget(forms.MultiWidget):
             return value_input
         if value_select:
             return value_select
-        
         return None
         
+    def render(self, name, value, attrs=None, renderer=None):
+        """ Customise the rendering of the RatesWidget """
+        if value is None:
+            value = [None, None]
+        
+        select_html = self.widgets[0].render(f"{name}_0", value[0], attrs, renderer)
+        
+        # Not required for the input element
+        attrs.pop('required')
+        input_html = self.widgets[1].render(f"{name}_1", value[1], attrs, renderer)
+
+        return f'''
+            <div class="rates-widget">
+                {select_html}
+                <strong style="margin: 5px 0; display: block">Or enter the rate manually:</strong>
+                {input_html}
+            </div>
+        '''
 
 
 class DirectlyIncurredProjectForm(forms.ModelForm):
@@ -420,6 +439,17 @@ class ServiceProjectForm(forms.ModelForm):
                                        input_formats=('%d/%m/%Y',),
                                        required=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Retrieve the recent financial years and their overheads rates
+        recent_fys = FinancialYear.objects.order_by('-year')
+        years_service_rate = recent_fys.values_list('service_day_rate', 'year')
+        years_service_rate = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_service_rate)
+        
+        # Update the choices for the 'rate' field
+        self.fields['rate'].widget.widgets[0].choices = years_service_rate
+        
     class Meta:
         model = ServiceProject
         fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'days', 'rate', 'charged', 'invoice_received', 'created', 'creator']
@@ -431,7 +461,7 @@ class ServiceProjectForm(forms.ModelForm):
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices=Project.STATUS_CHOICES, attrs={'class': 'form-control pull-right'}),
             'days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'rate': RatesWidget(attrs={'class': 'form-control'}, rate_type='rate'),
             'charged': forms.CheckboxInput(),
             'creator': forms.HiddenInput(),
             'created': forms.HiddenInput(),

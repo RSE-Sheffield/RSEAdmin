@@ -87,10 +87,13 @@
 									{{ form.percentage }}
 									</td></tr>
 									
-									<tr><td>
-									<strong>Overheads Rate (Pro-Rata) £:</strong>
-									{{ form.overheads }}
-									</td></tr>
+									<tr>
+										<td>
+											<strong>Overheads Rate (Pro-Rata) £:</strong>
+											{{ form.overheads }}
+											<button class="btn btn-default btn-block bg-warning" name="clear_rates" type="button">Clear</button>
+										</td>
+									</tr>
 									
 									<tr><td>
 									<strong>Salary Band Used for Costing:</strong>
@@ -224,6 +227,10 @@
     {
         populate_salary_band();
     });
+
+	document.querySelector('button[name="clear_rates"]').addEventListener('click', function() {
+		document.querySelector('input[name="overheads_1"]').value = '';
+	})
 </script>
 
 {% endblock %}

@@ -155,6 +155,8 @@ def project_new_service(request: HttpRequest) -> HttpResponse:
     if request.method == 'POST' and 'project_submit' in request.POST:
         form = ServiceProjectForm(request.POST)
         if form.is_valid():
+            logger.info(form.cleaned_data)
+            return
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
             messages.add_message(request, messages.SUCCESS, f'New project {new_proj.name} created.')
