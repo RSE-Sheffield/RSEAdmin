@@ -3,9 +3,11 @@ from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import RegexValidator
 from django.conf import settings
+import logging
 
 from .models import *
 
+logger = logging.getLogger(__name__)
 
 class DateRangeField(forms.Field):
     """
@@ -234,6 +236,31 @@ class ProjectAllocationForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
+class RatesWidget(forms.MultiWidget):
+    """MultiWidget for Rates
+    
+    Parameters
+    ----------
+    forms : MultiWidget
+        https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
+    """
+    def __init__(self, attrs=None):
+        widgets = [
+            forms.Select(attrs=attrs, choices=[]),  # Set an empty choices list for now
+            forms.NumberInput(attrs=dict(**attrs, placeholder="Enter a custom rate if options are not specified.")),
+        ]
+        super().__init__(widgets, attrs)
+
+    def decompress(self, value):
+        """ 
+        Convert compressed value to a valid representation [value, label] 
+        This method must be implemented.
+        """
+        if value:
+            return [value.rate, value.year]
+        return [None, None]
+
+
 class DirectlyIncurredProjectForm(forms.ModelForm):
     """
     Class for creation and editing of a project
@@ -243,7 +270,18 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
     start = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
 
-    class Meta:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Retrieve the recent financial years and their overheads rates
+        recent_fys = FinancialYear.objects.order_by('-year')
+        years_overheads = recent_fys.values_list('overheads_rate', 'year')
+        years_overheads = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_overheads)
+        
+        # Update the choices for the 'overheads_options' field
+        self.fields['overheads'].widget.widgets[0].choices = years_overheads
+        
+    class Meta:    
         model = DirectlyIncurredProject
         fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band', 'created', 'creator']
         widgets = {
@@ -254,7 +292,7 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices=Project.STATUS_CHOICES, attrs={'class': 'form-control pull-right'}),
             'percentage': forms.NumberInput(attrs={'class': 'form-control'}),
-            'overheads': forms.NumberInput(attrs={'class': 'form-control'}),
+            'overheads': RatesWidget(attrs={'class': 'form-control'}),
             'salary_band': forms.Select(attrs={'class': 'form-control'}),
             'creator': forms.HiddenInput(),
             'created': forms.HiddenInput(),

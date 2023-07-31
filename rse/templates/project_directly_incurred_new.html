@@ -30,7 +30,7 @@
 									<tr><td>
 									<strong>Client:</strong>
 										<div class="input-group">
-											{{ form.client}}
+											{{ form.client }}
 											<div class="input-group-addon">
 												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_directly_incurred' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
 											</div>
@@ -39,17 +39,17 @@
 								
 									<tr><td>
 									<strong>Project Name:</strong>
-									{{ form.name}}
+									{{ form.name }}
 									</td></tr>
 									
 									<tr><td>
 									<strong>Project Internal ID (URMS or equivalent):</strong>
-									{{ form.proj_costing_id}}
+									{{ form.proj_costing_id }}
 									</td></tr>
 									
 									<tr><td>
 									<strong>Description / Notes:</strong>
-									{{ form.description}}
+									{{ form.description }}
 									</td></tr>
 									
 									<tr><td>
@@ -58,7 +58,7 @@
 											<div class="input-group-addon">
 												<i class="fa fa-calendar"></i>
 											</div>
-											{{ form.start}}
+											{{ form.start }}
 										</div>
 									</td></tr>
 									
@@ -68,38 +68,38 @@
 											<div class="input-group-addon">
 												<i class="fa fa-calendar"></i>
 											</div>
-											{{ form.end}}
+											{{ form.end }}
 										</div>
 									</td></tr>
 									
 									<tr><td>
 									<strong>Internal:</strong>
-									{{ form.internal}}
+									{{ form.internal }}
 									</td></tr>
 									
 									<tr><td>
 									<strong>Status:</strong>
-									{{ form.status}}
+									{{ form.status }}
 									</td></tr>
 									
 									<tr><td>
 									<strong>Percentage FTE:</strong>
-									{{ form.percentage}}
+									{{ form.percentage }}
 									</td></tr>
 									
 									<tr><td>
-									<strong>Overheads Rate (Pro-Rata):</strong>
-									{{ form.overheads}}
+									<strong>Overheads Rate (Pro-Rata) £:</strong>
+									{{ form.overheads }}
 									</td></tr>
 									
 									<tr><td>
 									<strong>Salary Band Used for Costing:</strong>
-									{{ form.salary_band}}
+									{{ form.salary_band }}
 									</td></tr>
 									
 								</tbody>
-								{{ form.created}}
-								{{ form.creator}}
+								{{ form.created }}
+								{{ form.creator }}
 							</table>
 				</div>
 				
@@ -193,7 +193,7 @@
 	// function sets the salary band drop down options based from specified start date
 	function populate_salary_band() {
       
-	  	var date = moment($("#{{form.start.id_for_label}}").val(), 'DD/MM/YYYY');
+		var date = moment($("#{{form.start.id_for_label}}").val(), 'DD/MM/YYYY');
 		var fy_year = date.year()
 		// Month is zero indexed (WTF!)
 		if (date.month() < 7)
@@ -205,8 +205,8 @@
         url: url,
         data: {
           'year': fy_year{% if edit %},    
-		  'selected': {{ form.salary_band.value }}
-		  {% endif %} 
+		  		'selected': {{ form.salary_band.value }}
+		  		{% endif %} 
         },
         success: function (data) {
           $("#{{form.salary_band.id_for_label}}").html(data); 
