@@ -1,3 +1,4 @@
+from typing import Any, Dict, Iterable, Mapping
 from django import forms
 from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
@@ -249,24 +250,31 @@ class RatesWidget(forms.MultiWidget):
         https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
     """
         
-    def __init__(self, attrs=None):
+    def __init__(self, attrs=None, rate_type='overheads'):
         widgets = [
             forms.Select(attrs=attrs, choices=[]),  # Set an empty choices list for now
-            forms.NumberInput(attrs=dict(**attrs, step='0.01', placeholder="Enter a custom rate if options are not specified.")),
+            forms.NumberInput(attrs=dict(
+                **attrs, 
+                step='0.01', 
+                type='number', 
+                placeholder="Enter a custom rate if options are not specified."
+                )
+            ),
         ]
 
+        self.rate_type = rate_type
         super().__init__(widgets, attrs)
 
     def decompress(self, value):
         """ 
-        Convert compressed value to a valid representation [value, label] 
+        Set initial values for the widgets.
         This method must be implemented.
         """
         if value:
-            overheads_select = value.get('select_input', None)
-            overheads_input = value.get('number_input', None)
+            value_select = value.get('select_input', None)
+            value_input = value.get('number_input', None)
 
-            return [overheads_select, overheads_input]
+            return [value_select, value_input]
         return [None, None]
     
     def get_context(self, name, value, attrs):
@@ -275,6 +283,24 @@ class RatesWidget(forms.MultiWidget):
         # Mark the second widget optional
         context['widget']['subwidgets'][1]['attrs']['required'] = False
         return context
+    
+    def value_from_datadict(self, data: Dict[str, Any], files: Mapping[str, Iterable[Any]], name: str) -> Any:
+        """This is required for the clean method to work
+        https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.Widget.value_from_datadict
+        """
+        if name != self.rate_type:
+            return super().value_from_datadict(data, files, name)
+        
+        value_input = data.get(f'{self.rate_type}_1', None)
+        value_select = data.get(f'{self.rate_type}_0', None)
+        
+        if value_input:
+            return value_input
+        if value_select:
+            return value_select
+        
+        return None
+        
 
 
 class DirectlyIncurredProjectForm(forms.ModelForm):
@@ -292,7 +318,7 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
         # Retrieve the recent financial years and their overheads rates
         recent_fys = FinancialYear.objects.order_by('-year')
         years_overheads = recent_fys.values_list('overheads_rate', 'year')
-        years_overheads = list((str(rate), f'£{rate} - FY{fy}') for rate, fy in years_overheads)
+        years_overheads = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_overheads)
         
         # Update the choices for the 'overheads_options' field
         self.fields['overheads'].widget.widgets[0].choices = years_overheads
@@ -315,14 +341,8 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
             'created': forms.HiddenInput(),
         }
 
-    def clean(self):
-        logger.info(f'before clean: {self.data}')
-        cleaned_data = super().clean()
-        try:
-            cleaned_data['overheads'] = self.clean_overheads()
-        except forms.ValidationError as e:
-            self.add_error('overheads', e)
-        logger.info(f'cleaned_data: {cleaned_data}')
+    def clean(self):   
+        cleaned_data = super(DirectlyIncurredProjectForm, self).clean()
         errors = {}
 
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
@@ -332,19 +352,21 @@ class DirectlyIncurredProjectForm(forms.ModelForm):
         
         if errors:
             raise ValidationError(errors)
+        
+        return cleaned_data
 
     
     def clean_overheads(self):
-        logger.info("clean----overheads")
         overheads_select = self.data['overheads_0'] or None
         overheads_input = self.data['overheads_1'] or None
 
         if overheads_input:
-            return Decimal(overheads_input)
+            return overheads_input
         if overheads_select:
-            return Decimal(overheads_select)
+            return overheads_select
         
         raise forms.ValidationError('Overheads: Please select or enter a valid number.')
+
 
     def clean_start(self):
         """

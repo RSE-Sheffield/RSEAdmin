@@ -71,7 +71,6 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
     # append salary and costs information for template
     append_project_and_allocation_costs(request, proj, allocations)
 
-	
 
     return render(request, 'project.html', view_dict)
 
@@ -115,13 +114,6 @@ def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
     
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
-        # try:
-        #     overheads = float(request.POST['overheads_1'])
-        # except ValueError: 
-        #     overheads = float(request.POST['overheads_0'])
-
-        # form_data = request.POST.copy()
-        # form_data['overheads'] = overheads
         form = DirectlyIncurredProjectForm(request.POST)
 
         if form.is_valid():
