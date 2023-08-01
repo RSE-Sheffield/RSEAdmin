@@ -460,7 +460,7 @@ class ServiceProjectForm(forms.ModelForm):
             'client': forms.Select(attrs={'class': 'form-control'}),
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices=Project.STATUS_CHOICES, attrs={'class': 'form-control pull-right'}),
-            'days': forms.NumberInput(attrs={'class': 'form-control'}),
+            'days': forms.NumberInput(attrs={'class': 'form-control', 'title': 'New feature: you can now assign fractional of a day, e.g. 0.5 days.'}),
             'rate': RatesWidget(attrs={'class': 'form-control'}, rate_type='rate'),
             'charged': forms.CheckboxInput(),
             'creator': forms.HiddenInput(),

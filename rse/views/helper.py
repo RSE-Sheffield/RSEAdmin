@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from decimal import Decimal
 
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -29,7 +30,7 @@ from rse.forms import *
 def append_project_and_allocation_costs(request: HttpRequest, project: Project, allocations: TypedQuerySet[RSEAllocation]):
     
     # calculate project budget and effort
-    total_value = project.value()
+    total_value = Decimal(project.value())
 
     # service project
     if project.is_service:
@@ -58,7 +59,7 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
     if project.is_service:
         project.total_value = total_value
         project.staff_cost = total_staff_cost
-        project.percent_total_budget = project.staff_cost / total_value * 100.0 if total_value!= 0 else 0
+        project.percent_total_budget = Decimal(project.staff_cost) / total_value * Decimal(100.0) if total_value != 0 else 0
         project.remaining_surplus = total_value - total_staff_cost
     # allocated project
     else:   
