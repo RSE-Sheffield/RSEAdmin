@@ -17,14 +17,17 @@
 				<div class="box-header with-border">
 					<h3 class="box-title">Select Project Type</h3>
 				</div>
-						
 				<form method="POST" action="">
 					{% csrf_token %}                                        
 					<div class="box-body">
 						<strong>Select Project Type</strong>
 						{{ form.type }}
 					</div>
-					
+					<div style="padding: 15px">
+						<i>
+							The project type 'Allocated' is renamed to 'Directly Incurred' as 'Allocated' generally refer to an academic member of staff rather than charged to the grant.
+						</i>
+					</div>
 					<div class="box-footer">
 						<input type="submit" value="Save" class="btn btn-primary btn-xm" />
 					</div>
