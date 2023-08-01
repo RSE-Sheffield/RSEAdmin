@@ -256,13 +256,16 @@ class RatesWidget(forms.MultiWidget):
     """
         
     def __init__(self, attrs=None, rate_type='overheads'):
+        placeholder_text = "Enter a custom rate. Clear this field if you do not want to use this."
+        
         widgets = [
             forms.Select(attrs=attrs, choices=[]),  # Set an empty choices list for now
             forms.NumberInput(attrs=dict(
                 **attrs, 
                 step='0.01', 
                 type='number', 
-                placeholder="Enter a custom rate. Clear this field if you do not want to use this.",
+                placeholder=placeholder_text,
+                title=placeholder_text,
                 required=False
                 )
             ),
@@ -304,9 +307,15 @@ class RatesWidget(forms.MultiWidget):
         
     def render(self, name, value, attrs=None, renderer=None):
         """ Customise the rendering of the RatesWidget """
+        # Set initial values for both widgets
         if value is None:
             value = [None, None]
         
+        # When editing the project there is only one overheads value, assign it to both widgets
+        # TODO: maybe consider to find out the overheads matches any of FY
+        if isinstance(value, Decimal):
+            value = [value, value]
+            
         select_html = self.widgets[0].render(f"{name}_0", value[0], attrs, renderer)
         
         # Not required for the input element

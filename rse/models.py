@@ -218,7 +218,7 @@ class SalaryBand(models.Model):
         Returns the salary cost for a number of days given a salary and FTE percentage
         Multiples by the ON COSTS value
         """
-        return (days / 365.0) * Decimal(salary) * (Decimal(percentage) / 100.0) * settings.ONCOSTS_SALARY_MULTIPLIER
+        return Decimal(days / 365.0) * Decimal(salary) * Decimal(percentage / 100.0) * Decimal(settings.ONCOSTS_SALARY_MULTIPLIER)
 
     def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> SalaryValue:
         """

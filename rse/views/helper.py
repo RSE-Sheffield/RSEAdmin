@@ -37,7 +37,7 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
         staff_budget = total_value
     # allocated project
     else:
-        staff_budget = project.staff_budget()
+        staff_budget = Decimal(project.staff_budget())
 
     # calculate staff costs and overheads
     total_staff_cost = 0
@@ -50,7 +50,7 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
             messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation on project {a.project} starting at {a.project.start} so will incur no cost.')
         a.staff_cost = salary_value.staff_cost
         # catch div by zero if duration is 0
-        a.project_budget_percentage =  (a.staff_cost / staff_budget * 100.0) if staff_budget != 0 else 100
+        a.project_budget_percentage = (a.staff_cost / staff_budget * Decimal(100.0)) if staff_budget != 0 else 100
         total_staff_cost += a.staff_cost
 
 
@@ -68,7 +68,7 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
         project.overhead = project.overhead_value()
         project.staff_cost = total_staff_cost
         # catch div by zero if duration is 0
-        project.percent_staff_budget = project.staff_cost / staff_budget * 100.0 if staff_budget != 0 else 0
+        project.percent_staff_budget = project.staff_cost / staff_budget * Decimal(100.0) if staff_budget != 0 else 0
         project.remaining_staff_budget = staff_budget - total_staff_cost
         
 
