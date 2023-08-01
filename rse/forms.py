@@ -442,7 +442,7 @@ class ServiceProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Retrieve the recent financial years and their overheads rates
+        # Retrieve the recent financial years and their service day rates
         recent_fys = FinancialYear.objects.order_by('-year')
         years_service_rate = recent_fys.values_list('service_day_rate', 'year')
         years_service_rate = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_service_rate)

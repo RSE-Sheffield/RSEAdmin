@@ -978,7 +978,7 @@ class ServiceProject(Project):
     """
     ServiceProject is a number of service days in which work should be undertaken. The projects dates set parameters for which the work can be undertaken but do not define the exact dates in which the work will be conducted. An allocation will convert the service days into an FTE equivalent so that time can be scheduled including holidays.
     """
-    days = models.IntegerField(default=1)
+    days = models.DecimalField(default=1, decimal_places=1, max_digits=5)
     """ Duration of the project in days. """
     rate = models.DecimalField(max_digits=8, decimal_places=2)
     """ Service rate """
