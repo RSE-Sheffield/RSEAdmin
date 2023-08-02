@@ -101,7 +101,9 @@ urlpatterns = [
     # Edit a client (and associated projects)
     re_path(r'^client/delete/(?P<pk>[0-9]+)$', clients.client_delete.as_view(), name='client_delete'),
 
-
+    # AJAX request to get all clients
+    re_path(r'^ajax/clients$', clients.ajax_get_all_clients, name='ajax_get_all_clients'),
+    
     ############
     ### RSEs ###
     ############
