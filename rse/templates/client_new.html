@@ -176,12 +176,25 @@
 						threshold: 2,
 						resultsList: {
 							maxResults: 10,
+							noResults: true,
+							// Custom element above the result list
+							element: (list, data) => {
+								const info = document.createElement("p");
+								info.style = "text-align:center; padding: 10px 0; margin: 0";
+
+								if (data.results.length > 0) {
+									info.innerHTML = `Displaying <strong>${data.results.length}</strong> out of <strong>${data.matches.length}</strong> results`;
+								} 
+								/* else {
+									info.innerHTML = `Found <strong>${data.matches.length}</strong> matching results for <strong>"${data.query}"</strong>`;
+								} */
+								list.prepend(info);
+							}
 						},
 						resultItem: {
 							highlight: true,
-							// custom element style
+							// custom result element style
 							element: (item, data) => {
-								
 								item.innerHTML = `
 									<div style="display: flex; justify-content: space-between;">
 										<span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
