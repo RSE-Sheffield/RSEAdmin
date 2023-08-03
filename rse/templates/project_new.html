@@ -1,54 +1,45 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 
-
 {% block stylesheets %}
-{{ block.super}}
-
+	{{ block.super}}
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: New Project {% endblock %}
 {% block page_name %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Project{% endblock %}
+
 {% block content %}
 
 	<div class ="row">
-        
-		<div class="col-md-8">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title">Select Project Type</h3>
-            </div>
-            
-			<form method="POST" action="">
-                {% csrf_token %}                                        
-				<div class="box-body">
-                    <strong>Select Project Type</strong>
-					{{ form.type }}
-							
-				</div>
 				
-				<div class="box-footer">
-					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+		<div class="col-md-8">
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Select Project Type</h3>
 				</div>
-			
-			</form>
-          </div>
-        </div>
-        
-            
-		
-    </div>
+				<form method="POST" action="">
+					{% csrf_token %}                                        
+					<div class="box-body">
+						<strong>Select Project Type</strong>
+						{{ form.type }}
+					</div>
+					<div style="padding: 15px">
+						<i>
+							The project type 'Allocated' is renamed to 'Directly Incurred' as 'Allocated' generally refer to an academic member of staff rather than charged to the grant.
+						</i>
+					</div>
+					<div class="box-footer">
+						<input type="submit" value="Save" class="btn btn-primary btn-xm" />
+					</div>
+				
+				</form>
+			</div>
+		</div>
 
-
-    
-
-   
-    
-    
+	</div>
     
 {% endblock %}
 
 {% block javascript %}
-{{ block.super}}
-
+	{{ block.super}}
 {% endblock %}

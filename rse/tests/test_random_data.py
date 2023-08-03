@@ -140,7 +140,7 @@ def random_project_and_allocation_data():
         if random.random()>0.5:
             # allocated
             percentage = random.randrange(5, 50, 5) # 5% to 50% with 5% step
-            p_temp = AllocatedProject(
+            p_temp = DirectlyIncurredProject(
                 percentage=percentage,
                 overheads=250.00,
                 salary_band=sb15_2017,
@@ -219,13 +219,13 @@ class ProjectAllocationTests(TestCase):
         Tests the randomly generated projects to ensure that they are valid projects
         """
         
-        # Test allocated projects (randomly generated fields)
+        # Test directly incurred projects (randomly generated fields)
         for p in Project.objects.all():
         
             # test choices
             self.assertIn(p.status, Project.status_choice_keys())
         
-            if isinstance(p, AllocatedProject):
+            if isinstance(p, DirectlyIncurredProject):
                 # percentage should be between 5% and 50%
                 self.assertLessEqual(p.percentage, 50) 
                 self.assertGreaterEqual(p.percentage, 5)
@@ -252,7 +252,7 @@ class ProjectAllocationTests(TestCase):
         Tests the randomly generated projects to ensure that they are valid projects
         """
         
-        # Test allocated projects (randomly generated fields)
+        # Test directly incurred projects (randomly generated fields)
         for p in Project.objects.all():
         
             for a in RSEAllocation.objects.filter(project=p):
@@ -271,7 +271,7 @@ class ProjectAllocationTests(TestCase):
         Assumes that project starting salary is same as each rses starting salary.
         """
         
-        # Test allocated projects (randomly generated fields)
+        # Test directly incurred projects (randomly generated fields)
         for p in Project.objects.all():
 
             project_cost = p.staff_cost(consider_internal=True).staff_cost

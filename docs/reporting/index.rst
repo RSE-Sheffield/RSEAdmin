@@ -24,11 +24,11 @@ RSE Costs
 
 The RSE costs view provides a breakdown of each RSEs salary costs. It includes the following information which is used to determine the RSEs staffing cost liability. Liability represents salary cost not cost recovered through allocations on projects.
 
-- **Recovered Salary :** Any recovered salary from allocations on projects (either *Allocated* projects or chargeable *Service* projects)
+- **Recovered Salary :** Any recovered salary from allocations on projects (either *Directly Incurred* projects or chargeable *Service* projects)
 - **Internal Project Salary :** Any salary cost as a result of allocations on internal projects
 - **Non-Recovered Staff Costs :** The salary less the recovered salary. This represents the actual salary cost to the RSE staff members underwriter (as liability considers time on internal projects).
 
-*Note: That any overheads generated are reported separately and may result in a net cash surplus even if the staff member has a salary liability.* Any overheads generated through allocations of RSS staff on *Allocated* projects can be `viewed per project <Project Costs & Overheads>`_ or in the `Financial Summary`_.
+*Note: That any overheads generated are reported separately and may result in a net cash surplus even if the staff member has a salary liability.* Any overheads generated through allocations of RSS staff on *Directly Incurred* projects can be `viewed per project <Project Costs & Overheads>`_ or in the `Financial Summary`_.
 
 The detail of how each RSEs salary is calculated can be viewed by selecting the :raw-html:`<i class="fa fa-calculator"></i>` icon.  This will present the `RSE Staff Costs Breakdown`_ report.
 
@@ -55,7 +55,7 @@ The detail of how each projects staff cost is calculated can be viewed by select
 Project Costs & Overheads
 -------------------------
 
-The projects costs and overheads report shows any RSE staff costs per project. The view also calculates overheads generated as a result of any *Allocated* projects based on the staff time allocated to the project. Service projects do not generate overheads but are included in this report if they are `charged`.
+The projects costs and overheads report shows any RSE staff costs per project. The view also calculates overheads generated as a result of any *Directly Incurred* projects based on the staff time allocated to the project. Service projects do not generate overheads but are included in this report if they are `charged`.
 
 The detail of how each Projects staff costs is calculated can be viewed by selecting the :raw-html:`<i class="fa fa-calculator"></i>` icon.  This will present the `Project Staff Costs Breakdown`_ report.
 

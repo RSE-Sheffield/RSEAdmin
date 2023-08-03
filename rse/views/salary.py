@@ -120,7 +120,7 @@ class financialyear_delete(UserPassesTestMixin, DeleteView):
         raise Http404("Page does not exist")
 
     def post(self, request, *args, **kwargs):
-        """ Use the post function to handle protected error (i.e. the financial year is used by an allocated project or salary grade change) """
+        """ Use the post function to handle protected error (i.e. the financial year is used by an directly incurred project or salary grade change) """
         try:
             return self.delete(request, *args, **kwargs)
         except (ProtectedError, IntegrityError) as error :
@@ -183,7 +183,7 @@ class financialyear_salaryband_delete(UserPassesTestMixin, DeleteView):
         raise Http404("Page does not exist")
 
     def post(self, request, *args, **kwargs):
-        """ Use the post function to handle protected error (i.e. the salary band is used by an allocated prject or salary grade change) """
+        """ Use the post function to handle protected error (i.e. the salary band is used by a directly incurred project or salary grade change) """
         try:
             return self.delete(request, *args, **kwargs)
         except (ProtectedError, IntegrityError) as error :

@@ -138,8 +138,8 @@ def setup_project_and_allocation_data():
     c.department = "COM"
     c.save()        
         
-    # Create an allocated project
-    p = AllocatedProject(
+    # Create an directly Incurred project
+    p = DirectlyIncurredProject(
         percentage=50,
         overheads=250.00,
         salary_band=sb15_2017,
@@ -156,7 +156,7 @@ def setup_project_and_allocation_data():
     p.save()
     
     
-    # Create an allocated project
+    # Create an service project
     p2 = ServiceProject(
         days=30,
         rate=275,
@@ -172,7 +172,7 @@ def setup_project_and_allocation_data():
         status='F')
     p2.save()
     
-    # Create an allocation for the AllocatedProject (spanning full 2017 financial year)
+    # Create an allocation for the DirectlyIncurredProject (spanning full 2017 financial year)
     a = RSEAllocation(rse=rse, 
         project=p,
         percentage=50,
@@ -180,7 +180,7 @@ def setup_project_and_allocation_data():
         end=date(2018, 7, 31))
     a.save()
     
-    # Create an allocation for the AllocatedProject (spanning full 2017 financial year) at 50% FTE
+    # Create an allocation for the DirectlyIncurredProject (spanning full 2017 financial year) at 50% FTE
     a2 = RSEAllocation(rse=rse, 
         project=p, 
         percentage=50,
@@ -581,10 +581,10 @@ class ProjectAllocationTests(TestCase):
         Tests for MTI polymorphism
         """
         
-        # Get an allocated project and test that the polymorphic plugin returns the correct type
+        # Get a directly incurred project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[0]
-        self.assertIsInstance(p, AllocatedProject)
+        self.assertIsInstance(p, DirectlyIncurredProject)
         
         # Get an service project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
@@ -596,7 +596,7 @@ class ProjectAllocationTests(TestCase):
         Tests polymorphic function duration which differs depending on project type
         """
         
-        # Get an allocated project and test that duration function returns the correct number of days
+        # Get a directly incurred project and test that duration function returns the correct number of days
         # Should return the project duration in days. I.e. 518 days
         #   153 days in 2017 FY
         #   212 days in 2017 FY (after grade point increment in Jan)
@@ -616,14 +616,14 @@ class ProjectAllocationTests(TestCase):
         Tests polymorphic function value which differs depending on project type
         """
         
-        # Get an allocated project and test that the value is determined from project salary band used for staff costing
+        # Get a directly incurred project and test that the value is determined from project salary band used for staff costing
         # Should return a value based of the following calculation
         # 50% of 
         #      5000 (2017 G1.5) * 153/365 (days in 2017 FY) +
         #      5000 (2017 G1.5) * 212/365(days in 2017 FY NO January increment) +
         #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
         p = Project.objects.all()[0]
-        self.assertIsInstance(p, AllocatedProject)
+        self.assertIsInstance(p, DirectlyIncurredProject)
         self.assertAlmostEqual(p.staff_budget(), 3548.15, places=2)
         
         # Get a service project and test the value is calculated from the day rate
@@ -657,8 +657,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero duration project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=50,
             overheads=250.00,
             salary_band=self.salary_band,
@@ -682,8 +682,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero fte project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=0,
             overheads=250.00,
             salary_band=self.salary_band,
@@ -707,8 +707,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero fte and zero duration project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=0,
             overheads=250.00,
             salary_band=self.salary_band,

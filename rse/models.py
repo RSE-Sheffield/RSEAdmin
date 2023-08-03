@@ -640,7 +640,7 @@ class SalaryGradeChange(models.Model):
 class Project(PolymorphicModel):
     """
     Project represents a project undertaken by RSE team.
-    Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
+    Projects are not abstract but should not be initialised without using either a DirectlyIncurredProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
     See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
     creator = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -873,10 +873,13 @@ class Project(PolymorphicModel):
         return {"r": r, "g": g, "b": b}
 
 
-class AllocatedProject(Project):
+class DirectlyIncurredProject(Project):
     """
-    AllocatedProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
-    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
+    DirectlyIncurredProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
+    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project.
+    
+    Previously the 'Allocated' project, this model was renamed because it does not fit with terminology used at UoS. 
+    Allocated is generally an academic member of staff rather than charged to the grant.
     """
     percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
     overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rota amount per year
@@ -948,7 +951,7 @@ class AllocatedProject(Project):
         """
         Returns a plain string representation of the project type
         """
-        return "Allocated"
+        return "Directly Incurred"
 
     @property
     def is_service(self) -> bool:
