@@ -103,6 +103,17 @@ def client_edit(request: HttpRequest, client_id) -> HttpResponse:
     view_dict['edit'] = True
     
     return render(request, 'client_new.html', view_dict)
+
+
+@login_required
+def ajax_get_all_clients(request):
+    """ A helper method to allow AJAX requests to retrieve all clients details for autocomplete. """
+    clients = Client.objects.all().values()
+    clients = list(clients)
+    
+    # Setting safe to False to allow array/list response
+    return JsonResponse(clients, safe=False)
+ 
  
 class client_delete(UserPassesTestMixin, DeleteView):
     """ POST only special delete view which redirects to clients list view """

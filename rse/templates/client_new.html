@@ -1,9 +1,28 @@
 {% extends 'adminlte/base.html' %}
 {% load static %}
 
+{% block extra_head %}
+	{{ block.super }}
+	<script type="text/javascript" src="{% static 'autoComplete/autoComplete.min.js' %}"></script>
+	<link
+		href="{% static 'autoComplete/css/autoComplete.02.css' %}"
+		rel="stylesheet"
+		type="text/css"
+	/>
+{% endblock %}
 
 {% block stylesheets %}
-{{ block.super}}
+	{{ block.super }}
+	<!-- Override autoComplete library style -->
+	<style>
+		div.autoComplete_wrapper {
+			width: 100%;
+		}
+		div.autoComplete_wrapper > input {
+			width: 100%;
+			font-size: 1.5rem;
+		}
+	</style>
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Client {% endblock %}
@@ -13,69 +32,69 @@
 	<div class ="row">
         
 		<div class="col-md-8">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title">{% if edit %}Edit{% else %}New{% endif %} Client</h3>
-            </div>
-            
-			<form method="POST" action="">
-				{% csrf_token %}
-											
-				<div class="box-body no-padding">
-				
-					<table id="id_client_table" class="table table-striped">
-						<tbody>
-						
-							<tr><td>
-							<strong>Client Name:</strong>
-							{{ form.name}}
-							</td></tr>
-							
-							<tr><td>
-							<strong>Department</strong>
-							{{ form.department}}
-							</td></tr>
-							
-							<tr><td>
-							<strong>Description / Notes:</strong>
-							{{ form.description}}
-							</td></tr>
-							
-						</tbody>
-					</table>
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">{% if edit %}Edit{% else %}New{% endif %} Client</h3>
 				</div>
-				
-				<div class="box-footer">
-					{% if form.errors %}
-						{% for field in form %}
-							{% for error in field.errors %}
+            
+				<form method="POST" action="">
+					{% csrf_token %}
+												
+					<div class="box-body no-padding">
+					
+						<table id="id_client_table" class="table table-striped">
+							<tbody>
+							
+								<tr><td>
+								<strong>Client Name:</strong>
+								{{ form.name }}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Department</strong>
+								{{ form.department }}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Description / Notes:</strong>
+								{{ form.description }}
+								</td></tr>
+								
+							</tbody>
+						</table>
+					</div>
+					
+					<div class="box-footer">
+						{% if form.errors %}
+							{% for field in form %}
+								{% for error in field.errors %}
+									<div class="alert alert-danger">
+										<strong>{{field.label}}: {{ error|escape }}</strong>
+									</div>
+								{% endfor %}
+							{% endfor %}
+							{% for error in form.non_field_errors %}
 								<div class="alert alert-danger">
-									<strong>{{field.label}}: {{ error|escape }}</strong>
+									<strong>{{ error|escape }}</strong>
 								</div>
 							{% endfor %}
-						{% endfor %}
-						{% for error in form.non_field_errors %}
-							<div class="alert alert-danger">
-								<strong>{{ error|escape }}</strong>
-							</div>
-						{% endfor %}
-					{% endif %}
-					<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
-					{% if edit and user.is_superuser%}
-						<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
-					{% endif %}
-				</div>
-			
-			</form>
-          </div>
-        </div>
+						{% endif %}
+						<input type="submit" value="Save" class="btn btn-primary btn-xm"></input>
+						{% if edit and user.is_superuser%}
+							<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
+						{% endif %}
+					</div>
+				
+				</form>
+			</div>
+		</div>
 			
 		
-    </div>
+	</div>
 
 
     
-    {% if edit and user.is_superuser %}
+	{% if edit and user.is_superuser %}
 	
 		{% if form.instance.total_projects > 0 %}
 			<div class="modal modal-danger fade" id="delete_modal" role="dialog">
@@ -125,7 +144,97 @@
 {% endblock %}
 
 {% block javascript %}
-{{ block.super}}
+	{{ block.super }}
 
+	<script type="text/javascript">
+		$(document).ready(function() {
+			const url = "{% url 'ajax_get_all_clients' %}"
+			
+			$.ajax({
+				url: url,
+				type: 'GET',
+				dataType: 'json',
+				beforeSend: function(xhr) {
+						xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+				},
+				success: function (data) {
+					/**
+					* Configuration for autoComplete.js
+					* https://tarekraafat.github.io/autoComplete.js/#/configuration
+					* Ensure the target input element has id set. See ClientForm in forms.py.
+					*/
+					const config = {
+						// id of the target element
+						name: "autoComplete",
+						placeHolder: "Please enter the client's name",
+						data: {
+							src: data,
+							keys: ["name"]
+						},
+						threshold: 2,
+						resultsList: {
+							maxResults: 10,
+							noResults: true,
+							// Custom element above the result list
+							element: (list, data) => {
+								const info = document.createElement("p");
+								info.style = "text-align:center; padding: 10px 0; margin: 0";
 
+								if (data.results.length > 0) {
+									info.innerHTML = `Displaying <strong>${data.results.length}</strong> out of <strong>${data.matches.length}</strong> results`;
+								} 
+								/* else {
+									info.innerHTML = `Found <strong>${data.matches.length}</strong> matching results for <strong>"${data.query}"</strong>`;
+								} */
+								list.prepend(info);
+							}
+						},
+						resultItem: {
+							highlight: true,
+							// custom result element style
+							element: (item, data) => {
+								item.innerHTML = `
+									<div style="display: flex; justify-content: space-between;">
+										<span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+											${data.match}
+										</span>
+										<span style="display: flex; align-items: center; font-size: 15px; font-weight: 400; text-transform: uppercase; color: rgba(0,0,0,0.7);">
+											${data.value.department}
+										</span>
+									</div>
+									${data.value.description && 
+										`<div style="padding: 0 5px; color: rgba(0,0,0,0.7); font-weight: 100">
+											${data.value.description}
+										</div>`
+									}
+								`;
+							}
+						},
+						events: {
+							input: {
+								// when an item is selected
+								selection: (event) => {
+									const selection = event.detail.selection.value;
+									// populate the selection
+									autoCompleteJS.input.value = selection.name;
+									$('#id_department').val(selection.department);
+									$('#id_description').val(selection.description);
+								}
+							}
+						}
+					};
+
+					const autoCompleteJS = new autoComplete({ ...config });
+        },
+				error: function(xhr, textStatus, errorThrown) {
+					$('#id_client_table').prepend(
+						`
+						<p style="color: red; padding: 5px 10px;">Failed to initialise autocomplete function, if this problem persists please contact IT.</p>
+						`
+					);
+					console.error(`Error: ${textStatus} - ${errorThrown}`)
+				}
+			})
+    });
+	</script>
 {% endblock %}

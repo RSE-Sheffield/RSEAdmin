@@ -417,7 +417,7 @@ class ClientForm(forms.ModelForm):
         model = Client
         fields = ['name', 'department', 'description']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'id': 'autoComplete'}),
             'department': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
         }
