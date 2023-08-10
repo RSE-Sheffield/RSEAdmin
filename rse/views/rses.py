@@ -17,6 +17,9 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.http import JsonResponse
 from django.conf import settings
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 from rse.models import *
 from rse.forms import *
@@ -180,9 +183,21 @@ def commitment(request: HttpRequest) -> HttpResponse:
     from_date = None
     until_date = None
     if request.method == 'GET':
-        form = FilterProjectForm(request.GET)
+        req_get_copy = request.GET.copy()
+
+        # Set default status to 'Funded'
+        req_get_copy['status'] = req_get_copy.get('status') or 'F'
+
+        # Set default start and end date to current FY
+        if req_get_copy.get('filter_range') is None:
+            current_fy = FinancialYear.objects.order_by('year').last()
+            req_get_copy['filter_range'] = f'{current_fy.start_date()} - {current_fy.end_date()}'
+
+        form = FilterProjectForm(req_get_copy)
+
         if form.is_valid():
             filter_range = form.cleaned_data["filter_range"]
+
             from_date = filter_range[0]
             q &= Q(end__gte=from_date)
             until_date = filter_range[1]
@@ -190,6 +205,7 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
             # apply status type query
             status = form.cleaned_data["status"]
+
             if status in 'PRFX':
                 q &= Q(project__status=status)
             elif status == 'L':

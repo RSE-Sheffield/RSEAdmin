@@ -12,6 +12,11 @@ class DateRangeField(forms.Field):
     Class is used to extend a text field by being able to parse the text and extract the date ranges
     init function used to store min and max date for future use without querying database
     If validation fails then min max date range is returned
+    
+    The date string should be one of the following formats:
+    - "yyyy-MM-dd"
+    - "dd/MM/yyyy"
+    
     """
 
     def __init__(self, *args, **kwargs):
@@ -30,13 +35,21 @@ class DateRangeField(forms.Field):
 
         # create a list of date items (one for start and one for until)
         fromuntil = value.split(' - ')
+        
         if len(fromuntil) != 2:
             return [self.min_date, self.max_date]
+        
         try:
             date_from = datetime.strptime(fromuntil[0], '%d/%m/%Y').date()
             date_until = datetime.strptime(fromuntil[1], '%d/%m/%Y').date()
         except ValueError:
-            return [self.min_date, self.max_date]
+            # try with different date format
+            try:
+                date_from = datetime.strptime(fromuntil[0], '%Y-%m-%d').date()
+                date_until = datetime.strptime(fromuntil[1], '%Y-%m-%d').date()
+            except ValueError:
+                return [self.min_date, self.max_date]
+        
         return [date_from, date_until]
 
     def validate(self, value):
@@ -82,7 +95,7 @@ class FilterDateRangeForm(forms.Form):
 
     @property
     def years(self):
-        return FinancialYear.objects.all()
+        return FinancialYear.objects.all().order_by('year')
 
 
 class FilterDateForm(forms.Form):
