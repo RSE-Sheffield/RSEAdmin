@@ -117,12 +117,12 @@
 					});
 				},
 			});
-		} );
 
-		// Search by initial values from form
-		$('#id_active_filter').val('Yes').change();
-		const initial_active_val = $.fn.dataTable.util.escapeRegex($('#id_active_filter').val());
-		$('#projects').DataTable().column("#active").search(initial_active_val ? '^'+initial_active_val+'$' : '', true, false).draw();
+			// Search by initial values from form
+			$('#id_active_filter').val('Yes').change();
+			const initial_active_val = $.fn.dataTable.util.escapeRegex($('#id_active_filter').val());
+			$('#projects').DataTable().column("#active").search(initial_active_val ? '^'+initial_active_val+'$' : '', true, false).draw();
+		});
 		
 	</script>
 {% endblock %}

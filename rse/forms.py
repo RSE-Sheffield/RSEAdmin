@@ -50,8 +50,9 @@ class UsersFilterForm(forms.Form):
     Values for options does not use database character keys as tables are filtered directly at client side (in the data table)
     """
 
-    active_filter = forms.ChoiceField(choices=(('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
-                                    widget=forms.Select(attrs={'class': 'form-control'}))
+    active_filter = forms.ChoiceField(
+        choices=(('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        widget=forms.Select(attrs={'class': 'form-control'}))
     staff_filter = forms.ChoiceField(choices= (('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
                                       widget=forms.Select(attrs={'class': 'form-control'}))
 
