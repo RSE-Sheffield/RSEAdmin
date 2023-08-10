@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import date, timedelta
 from django.utils import timezone
 from math import floor
@@ -28,7 +29,7 @@ T = TypeVar("T")
 
 class TypedQuerySet(Generic[T]):
     """
-    Django type hints for query sets are not typed (not very usefull).
+    Django type hints for query sets are not typed (not very useful).
     The following class can eb used to provide type information (see: https://stackoverflow.com/a/54797356)
     """
     def __iter__(self) -> Iterator[Union[T, QuerySet]]:
@@ -38,12 +39,13 @@ class TypedQuerySet(Generic[T]):
 class SalaryValue():
     """
     Class to represent a salary calculation.
-    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargable period)
+    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargeable period)
     """
     def __init__(self):
         self.staff_cost = 0
         self.cost_breakdown = []
         self.allocation_breakdown = {}
+        self.oncosts_multiplier = settings.ONCOSTS_SALARY_MULTIPLIER
 
     def add_staff_cost(self, salary_band, from_date: date, until_date: date, percentage: float = 100.0):
         cost_in_period = SalaryBand.salaryCost(days=(until_date - from_date).days, salary=salary_band.salary, percentage=percentage)
@@ -225,7 +227,6 @@ class SalaryBand(models.Model):
         Note: Should only be used for costing project staff budget values (i.e. non allocated staff time) as 
         RSEs may have increments which need to be considered in the costing.
         """
-
         # Check for obvious stupid
         if end < start:
             raise ValueError('End date is before start date')
@@ -247,7 +248,6 @@ class SalaryBand(models.Model):
 
             # Update salary cost
             salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
-
             # Calculate the next salary band
             # This cant be done before cost calculation salary_band_next_financial_year may modify the next_sb object
             if next_increment.month < 8:  # If date is before financial year then date range spans financial year
@@ -257,10 +257,9 @@ class SalaryBand(models.Model):
 
             # update chargeable period date and band
             next_increment = temp_next_increment
-
+        
         # Final salary cost for period not spanning a salary change
         salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=end, percentage=percentage)
-
         return salary_value
 
 
@@ -397,7 +396,7 @@ class RSE(models.Model):
     def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
         """
         Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
-        year as well as any additional salary grade changes. It works by iterating through chargable periods looking for 
+        year as well as any additional salary grade changes. It works by iterating through chargeable periods looking for 
         changes in staff salary. 
 
         This is different to a salary bad staff cost as it also considers salary grade changes which may be the result of
@@ -619,7 +618,7 @@ class SalaryGradeChange(models.Model):
         else:
             return False
 
-    def next_salary_grade_change(self, start: date, end: date) -> bool:
+    def next_salary_grade_change(self, start: date, end: date) -> Union[SalaryGradeChange, None]:
         """
         Returns the next salary grade change if there is one or None
         """
@@ -683,8 +682,8 @@ class Project(PolymorphicModel):
     )
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable and neither are non charged service projects. """
         pass
 
     @staticmethod
@@ -749,7 +748,7 @@ class Project(PolymorphicModel):
     @property
     def project_days(self) -> float:
         """ Duration times by fte """
-        return self.duration * self.fte / 100.0
+        return self.duration * (self.fte / 100.0)
 
     @property
     def committed_days(self) -> float:
@@ -881,13 +880,20 @@ class DirectlyIncurredProject(Project):
     Previously the 'Allocated' project, this model was renamed because it does not fit with terminology used at UoS. 
     Allocated is generally an academic member of staff rather than charged to the grant.
     """
-    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
-    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rota amount per year
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
+    
+    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1000)])
+    """
+    FTE percentage for the project. This was increased from 100 because sometimes
+    there are more than 100% FTE spent on the project.
+    """
+    overheads = models.DecimalField(max_digits=8, decimal_places=2)
+    """Overheads are a pro rota amount per year."""
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)
+    """Don't allow salary band deletion if there are allocations associated with it."""
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable."""
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable."""
         return not self.internal
 
     @property
@@ -928,7 +934,7 @@ class DirectlyIncurredProject(Project):
     def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
         """
         Function calculates the value of any overheads generated.
-        For allocated projects this is based on duration and a fixed overhead rate.
+        For directly incurred projects this is based on duration and a fixed overhead rate.
         Cap the from and end dates according to the project as certain queries may have dates based on financial years rather than project dates
         """
 
@@ -968,15 +974,22 @@ class ServiceProject(Project):
     """
     ServiceProject is a number of service days in which work should be undertaken. The projects dates set parameters for which the work can be undertaken but do not define the exact dates in which the work will be conducted. An allocation will convert the service days into an FTE equivalent so that time can be scheduled including holidays.
     """
-    days = models.IntegerField(default=1)                           # duration in days
-    rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate
-    charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
+    days = models.IntegerField(default=1)
+    """ Duration of the project in days. """
+    rate = models.DecimalField(max_digits=8, decimal_places=2)
+    """ Service rate """
+    charged = models.BooleanField(default=True)
+    """ Should staff time be charged to service account """
     invoice_received = models.DateField(null=True, blank=True)
+    """ Whether the invoice is received, if yes, specifies the date. """
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
-        return not self.internal and charged
+    def chargeable(self):
+        """ 
+        Indicates if the project is chargeable in a cost distribution. 
+        I.e. Internal projects are not chargeable and neither are non charged service projects. 
+        """
+        return not self.internal and self.charged
 
     @staticmethod
     def days_to_fte_days(days: int) -> int:
@@ -991,7 +1004,7 @@ class ServiceProject(Project):
     @property
     def duration(self) -> int:
         """
-        Use the avilable static method to convert days to FTE days
+        Use the available static method to convert days to FTE days
         """
         return ServiceProject.days_to_fte_days(self.days)
 

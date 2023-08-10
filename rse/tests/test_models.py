@@ -35,6 +35,12 @@ def setup_user_and_rse_data():
     rse = RSE(user=user)
     rse.employed_until = date(2025, 10, 1)
     rse.save()
+    
+    # create a user to test a project over 100 FTE
+    user = User.objects.create_user(username='testuser4', password='12345')
+    rse = RSE(user=user)
+    rse.employed_until = date(2027, 10, 1)
+    rse.save()
 
 
 def setup_salary_and_banding_data():
@@ -98,12 +104,14 @@ def setup_salary_and_banding_data():
     sb15_2019.save()
 
     # Create salary grade changes (requires that an RSE has been created in database)
+    # The following assign grade 1.1 to RSE at 08/2017, then increment to grade 1.3 at 08/2018
     sgc1 = SalaryGradeChange(rse=rse, salary_band=sb11_2017, date=sb11_2017.year.start_date())
     sgc1.save()
     sgc2 = SalaryGradeChange(rse=rse, salary_band=sb13_2018, date=sb13_2018.year.start_date())
     sgc2.save()
 
     # Create a salary grade change on 1st january to test for double increments
+    # The following assign grade 1.1 to RSE2 at 1/1/2018, then increment to grade 1.3 at 1/1/2019
     rse2 = RSE.objects.get(user__username='testuser2')
     sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=date(2018, 1, 1)) 
     sgc3.save()
@@ -115,7 +123,11 @@ def setup_salary_and_banding_data():
     sgc4 = SalaryGradeChange(rse=rse3, salary_band=sb11_2019, date=sb11_2019.year.start_date()) 
     sgc4.save()
 
-
+    rse4 = RSE.objects.get(user__username='testuser4')
+    sgc5 = SalaryGradeChange(rse=rse4, salary_band=sb15_2018, date=date(2018, 1, 1)) 
+    sgc5.save()
+    sgc6 = SalaryGradeChange(rse=rse4, salary_band=sb15_2019, date=date(2019, 1, 1))
+    sgc6.save()
     
 
 def setup_project_and_allocation_data():
@@ -128,12 +140,15 @@ def setup_project_and_allocation_data():
     
     # get expected salary band from database
     sb15_2017 = SalaryBand.objects.get(grade=1, grade_point=5, year=2017)
+    sb15_2018 = SalaryBand.objects.get(grade=1, grade_point=5, year=2018)
     # get user from database
     user = User.objects.get(username='testuser')
+    user3 = User.objects.get(username='testuser3')
     # get rse from database
     rse = RSE.objects.get(user=user)
+    rse3 = RSE.objects.get(user=user3)
 
-    # create some test projects
+    # create a client and some test projects
     c = Client(name="test_client")
     c.department = "COM"
     c.save()        
@@ -172,6 +187,25 @@ def setup_project_and_allocation_data():
         status='F')
     p2.save()
     
+    
+    # Create a directly incurred project to test over 100 FTE
+    p3 = DirectlyIncurredProject(
+        percentage=110,
+        overheads=250.00,
+        salary_band=sb15_2018,
+        # base class values
+        creator=user,
+        created=timezone.now(),
+        proj_costing_id="12345",
+        name="test_project_2",
+        description="none",
+        client=c,
+        start=date(2018, 1, 1),
+        end=date(2019, 2, 1),
+        status='F'
+    )
+    p3.save()
+    
     # Create an allocation for the DirectlyIncurredProject (spanning full 2017 financial year)
     a = RSEAllocation(rse=rse, 
         project=p,
@@ -195,6 +229,24 @@ def setup_project_and_allocation_data():
         start=date(2017, 8, 1),
         end=date(2017, 9, 1))
     a3.save()
+    
+    a4 = RSEAllocation(
+        rse=rse,
+        project=p3,
+        percentage=20,
+        start=date(2018, 1, 1),
+        end=date(2019, 2, 1)
+    )
+    a4.save()
+    
+    a5 = RSEAllocation(
+        rse=rse3,
+        project=p3,
+        percentage=90,
+        start=date(2018, 1, 1),
+        end=date(2018, 12, 31)
+    )
+    a5.save()
     
     
 
@@ -590,7 +642,8 @@ class ProjectAllocationTests(TestCase):
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[1]
         self.assertIsInstance(p, ServiceProject)
-    
+        
+        
     def test_project_duration(self):
         """
         Tests polymorphic function duration which differs depending on project type
@@ -608,6 +661,12 @@ class ProjectAllocationTests(TestCase):
         # Should return the project duration in days (30 days plus 19 days adjustment for TRAC)
         p = Project.objects.all()[1]
         self.assertEqual(p.duration, 49)
+        
+        # 2018.1.1 - 2018.7.31  212 days
+        # 2018.8.1 - 2019.2.1   186 days
+        p = Project.objects.get(name="test_project_2")
+        self.assertEqual(p.duration, 396)
+    
         
     # Remove Oncosts in settings
     @override_settings(ONCOSTS_SALARY_MULTIPLIER=1.0)
@@ -630,6 +689,20 @@ class ProjectAllocationTests(TestCase):
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
         self.assertAlmostEqual(p.value(), 8250.00, places=2)
+        
+        
+        """Calculate the value for a 110% FTE project
+        Cost breakdown (in project salary band rather than individual RSE salaries)
+            110% of 
+                5001 (2018 G1.5) * 212/365 (17 FY) +
+                5002 (2018 G1.5) * 153/365 (18 FY) + 
+                5002 (2019 G1.5) * 31/365
+            Increment to 5002 from Aug 2018 because we use next year's salary on Jan
+            for FY.
+        """        
+        p = Project.objects.get(name="test_project_2")
+        self.assertIsInstance(p, DirectlyIncurredProject)
+        self.assertAlmostEqual(p.staff_budget(), 5968.87, places=2)
         
    
 class EdgeCasesDivByZeros(TestCase):
