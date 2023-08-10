@@ -80,6 +80,7 @@
 					{{form.active_filter}}
 					
 					</br>
+					
 				</div>
 			</div>
 		</div>
@@ -119,8 +120,11 @@
 			});
 
 			// Search by initial values from form
+			// Change the initial value
 			$('#id_active_filter').val('Yes').change();
+			
 			const initial_active_val = $.fn.dataTable.util.escapeRegex($('#id_active_filter').val());
+			
 			$('#projects').DataTable().column("#active").search(initial_active_val ? '^'+initial_active_val+'$' : '', true, false).draw();
 		});
 		
