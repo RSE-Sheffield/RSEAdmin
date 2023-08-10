@@ -38,6 +38,7 @@ if DEV_CONTAINER is not None:
         }
     )
 else:
+    # TODO: use postgres for local dev
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -53,3 +54,17 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static-root/')
 
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

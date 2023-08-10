@@ -44,6 +44,18 @@ class DateRangeField(forms.Field):
             forms.ValidationError('Date range is in wrong format')
 
 
+class UsersFilterForm(forms.Form):
+    """
+    Class represents a filter form for filtering by Active and Staff status
+    Values for options does not use database character keys as tables are filtered directly at client side (in the data table)
+    """
+
+    active_filter = forms.ChoiceField(choices=(('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+                                    widget=forms.Select(attrs={'class': 'form-control'}))
+    staff_filter = forms.ChoiceField(choices= (('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+                                      widget=forms.Select(attrs={'class': 'form-control'}))
+
+
 class FilterDateRangeForm(forms.Form):
     """
     Class represents a date range field using the javascript daterangepicker library.

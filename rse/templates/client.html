@@ -15,66 +15,67 @@
 	<div class ="row">
         
 		<div class="col-md-9">
-          <div class="box box-solid">
-            <div class="box-header with-border">
-              <h3 class="box-title"> Projects Associated with {{client.name}}</h3>
+			<div class="box box-solid">
+				<div class="box-header with-border">
+					<h3 class="box-title"> Projects Associated with {{client.name}}</h3>
 			  
-			  <a id="id_add_client" href="{% url 'project_new' %}?client={{ client.id }}&next={% url 'client' client.id %}" class="fa fa-plus pull-right" data-toggle="tooltip" title="" data-original-title="Create a new project for this client"></a>
-            </div>
-            <div class="box-body">
-              
-			  <table id="projects" class="table table-hover">
-					<thead>
-						<tr>
-							<th>ID</th>
-							<th id="type">Type</th>
-							<th id="internal">Internal</th>
-							<th id="title">Title</th>
-							<th id="status">Status</th>
-							<th id="duration">Duration (days)</th>
-							<th id="fte">FTE</th>
-							<th id="start">Start</th>
-							<th id="end">End</th>
-							<th id="schedule">Schedule</th>
-							<th id="progress">Commitment</th>
-							<th id="progress_label"></th>
-							<th id="more"></th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for p in projects %}
-						<tr>
-							<td>{{ p.id }}</td>
-							<td>{{ p.type_str }}</td>
-							<td><input type="checkbox" disabled {% if p.internal %}checked{% endif %}></input></td>
-							<td>{{ p.name }}</td>
-							<td><span class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span></td>
-							<td>{{ p.duration }}</td>
-							<td>{{ p.fte }}</td>
-							<td>{{ p.start|date:'Y-m-d' }}</td>
-							<td>{{ p.end|date:'Y-m-d' }}</td>
-							<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
-							<td>
-								<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
-									<div class="progress-bar {% if p.percent_allocated|percent < 50 %}progress-bar-danger{% elif p.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated|percent}}%"></div>
-								</div>
-							</td>
-							<td>
-								<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated|percent}}%</span>
-							</td>
-							<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			  
-            </div>
-          </div>
-        </div>
+					<a id="id_add_client" href="{% url 'project_new' %}?client={{ client.id }}&next={% url 'client' client.id %}" class="fa fa-plus pull-right" data-toggle="tooltip" title="" data-original-title="Create a new project for this client"></a>
+				</div>
+				
+				<div class="box-body">
+								
+					<table id="projects" class="table table-hover">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th id="type">Type</th>
+								<th id="internal">Internal</th>
+								<th id="title">Title</th>
+								<th id="status">Status</th>
+								<th id="duration">Duration (days)</th>
+								<th id="fte">FTE</th>
+								<th id="start">Start</th>
+								<th id="end">End</th>
+								<th id="schedule">Schedule</th>
+								<th id="progress">Commitment</th>
+								<th id="progress_label"></th>
+								<th id="more"></th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for p in projects %}
+							<tr>
+								<td>{{ p.id }}</td>
+								<td>{{ p.type_str }}</td>
+								<td><input type="checkbox" disabled {% if p.internal %}checked{% endif %}></input></td>
+								<td>{{ p.name }}</td>
+								<td><span class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span></td>
+								<td>{{ p.duration }}</td>
+								<td>{{ p.fte }}</td>
+								<td>{{ p.start|date:'Y-m-d' }}</td>
+								<td>{{ p.end|date:'Y-m-d' }}</td>
+								<td><span class="label {{ p.get_schedule_display|schedulestatuslabel }}">{{ p.get_schedule_display }}</span></td>
+								<td>
+									<div class="progress progress-xs {% if p.percent_allocated >= 50 and p.percent_allocated < 99.5%} progress-striped active {% endif %}">
+										<div class="progress-bar {% if p.percent_allocated|percent < 50 %}progress-bar-danger{% elif p.percent_allocated|percent == "100" %}progress-bar-success{%else%}progress-bar-primary{% endif %} " style="width: {{p.percent_allocated|percent}}%"></div>
+									</div>
+								</td>
+								<td>
+									<span class="badge {% if p.percent_allocated < 50 %}bg-red{% elif p.percent_allocated|percent == "100" %}bg-green{%else%}bg-light-blue{% endif %}">{{p.percent_allocated|percent}}%</span>
+								</td>
+								<td><a href="{% url 'project' p.id %}" class="btn btn-block btn-primary btn-xs">Info</a></td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					
+				</div>
+			</div>
+		</div>
 		
 		<div class="col-md-3">
           
-			 <div class="box box-default">
+			<div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Client Details</h3>
 					<span class="pull-right"><a href="{% url 'client_edit' client.id %}" class="text-muted"><i class="fa fa-edit"></i></a></span>
@@ -98,7 +99,7 @@
 				</div>
 			</div>
 			 
-			 <div class="box box-default">
+			<div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">Client Project Filters</h3>
 					<div class="box-tools pull-right">
