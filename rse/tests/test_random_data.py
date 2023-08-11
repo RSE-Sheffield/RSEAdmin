@@ -6,11 +6,7 @@ from django.test import TestCase
 
 from rse.models import *
 import random
-
-#####
-MIN_PROJECT_PERCENTAGE = 5
-MAX_PROJECT_PERCENTAGE = 120
-PERCENTAGE_STEP = 5
+from .constant import *
 
 
 ###########################################
@@ -39,6 +35,18 @@ def random_user_and_rse_data():
         rse = RSE(user=u)
         rse.employed_until = date(2025, 1, 1)
         rse.save()
+        
+    # Create an inactive user (not currently employed)
+    u = User.objects.create_user(
+            username=INACTIVE_USERNAME, 
+            password='12345', 
+            first_name='Inactive', 
+            last_name='Test', 
+            is_active=False
+        )
+    rse = RSE(user=u)
+    rse.employed_until = date(2020, 1, 1)
+    rse.save()
 
     
 def random_salary_and_banding_data():
@@ -56,45 +64,27 @@ def random_salary_and_banding_data():
     y2018.save()
     y2019 = FinancialYear(year=2019)
     y2019.save()
+    y2020 = FinancialYear(year=2020)
+    y2020.save()
 
-    # Create an incremental range for 2017 year
-    sb11_2017 = SalaryBand(grade=1, grade_point=1, salary=(1000), year=y2017, increments=True)
-    sb11_2017.save()
-    sb12_2017 = SalaryBand(grade=1, grade_point=2, salary=(2000), year=y2017, increments=True)
-    sb12_2017.save()
-    sb13_2017 = SalaryBand(grade=1, grade_point=3, salary=(3000), year=y2017, increments=True)
-    sb13_2017.save()
-    # Create non incremental range
-    sb14_2017 = SalaryBand(grade=1, grade_point=4, salary=(4000), year=y2017, increments=False)
-    sb14_2017.save()
-    sb15_2017 = SalaryBand(grade=1, grade_point=5, salary=(5000), year=y2017, increments=False)
-    sb15_2017.save()
-
-    # Create an incremental range for 2018 year
-    sb11_2018 = SalaryBand(grade=1, grade_point=1, salary=(1001), year=y2018, increments=True)
-    sb11_2018.save()
-    sb12_2018 = SalaryBand(grade=1, grade_point=2, salary=(2001), year=y2018, increments=True)
-    sb12_2018.save()
-    sb13_2018 = SalaryBand(grade=1, grade_point=3, salary=(3001), year=y2018, increments=True)
-    sb13_2018.save()
-    # Create non incremental range
-    sb14_2018 = SalaryBand(grade=1, grade_point=4, salary=(4001), year=y2018, increments=False)
-    sb14_2018.save()
-    sb15_2018 = SalaryBand(grade=1, grade_point=5, salary=(5001), year=y2018, increments=False)
-    sb15_2018.save()
-
-    # Create an incremental range for 2019 year
-    sb11_2019 = SalaryBand(grade=1, grade_point=1, salary=(1002), year=y2019, increments=True)
-    sb11_2019.save()
-    sb12_2019 = SalaryBand(grade=1, grade_point=2, salary=(2002), year=y2019, increments=True)
-    sb12_2019.save()
-    sb13_2019 = SalaryBand(grade=1, grade_point=3, salary=(3002), year=y2019, increments=True)
-    sb13_2019.save()
-    # Create non incremental range
-    sb14_2019 = SalaryBand(grade=1, grade_point=4, salary=(4002), year=y2019, increments=False)
-    sb14_2019.save()
-    sb15_2019 = SalaryBand(grade=1, grade_point=5, salary=(5002), year=y2019, increments=False)
-    sb15_2019.save()
+    # Create an incremental range (1, 2, 3) and non incremental range (4, 5) for years 2017 - 2020
+    # Each year comes with grade 1 with 5 grade points.
+    for year in range(2017, 2021):
+        curr_year = FinancialYear(year=year)
+        curr_year.save()
+        
+        if year == 2017:
+            sb11_2017 = curr_year
+        
+        for grade_point in range(1, 6):
+            curr_gp = SalaryBand(
+                grade=1, 
+                grade_point=grade_point, 
+                salary=(1000 * grade_point + (year - 2017)), 
+                year=curr_year, 
+                increments=True if grade_point in [1, 2, 3] else False
+            )
+            curr_gp.save()
 
     # Create salary grade changes
     for r in RSE.objects.all():

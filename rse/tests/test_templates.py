@@ -1,14 +1,7 @@
-from datetime import date, datetime
-from django.utils import timezone
 from django.urls import reverse_lazy
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase, override_settings
-from django.test import LiveServerTestCase
-import time
 from rse.models import *
-from rse.tests.test_random_data import random_project_and_allocation_data
-from django.conf import settings
 from rse.tests.selenium_template_test import *
+from .constant import *
 
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
@@ -217,6 +210,10 @@ class AuthenticationTemplateTests(SeleniumTemplateTest):
         expected = "RSE Group Administration Tool: View all Users"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
+        
+        # Test filter inactive users
+        el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USERNAME}')]") 
+        self.assertEqual(len(el_with_inactive_username), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)

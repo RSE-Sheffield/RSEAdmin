@@ -1,23 +1,12 @@
-from datetime import date, datetime
-from django.utils import timezone
-from django.urls import reverse_lazy
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase
+from datetime import date
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-import time
 from rse.models import *
 from rse.tests.test_random_data import random_project_and_allocation_data
-from django.conf import settings
-import os
-from django.contrib.auth import (
-    SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY,
-)
 
-from django.contrib.sessions.backends.db import SessionStore
+from .constant import *
 
-DEV_CONTAINER = os.getenv('DEV_CONTAINER')
     
 class SeleniumTemplateTest(LiveServerTestCase):
     """
