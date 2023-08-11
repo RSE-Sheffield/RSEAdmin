@@ -138,7 +138,14 @@ class FilterProjectForm(FilterDateRangeForm):
             ('A', 'All'),
             ('L', 'Funded and Review')) +
             Project.STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control pull-right'}))
+        initial='F',
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
+    
+    rse_in_employment = forms.ChoiceField(
+        choices=(('All', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
     # Type cant be filtered at database level as it is a property
     # type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 
