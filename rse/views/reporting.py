@@ -210,7 +210,7 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
         in_employment = True if rse_in_employment == 'Yes' else False
         filtered_rses_id = [rse.id for rse in rses if rse.current_employment == in_employment]
         rses = rses.filter(id__in=filtered_rses_id)
-    
+
     for rse in (rse for rse in rses if rse.employed_in_period(from_date, until_date)):
         # get any allocations for rse
         allocations = RSEAllocation.objects.filter(rse=rse).filter(q)

@@ -38,10 +38,10 @@ def random_user_and_rse_data():
         
     # Create an inactive user (not currently employed)
     u = User.objects.create_user(
-            username=INACTIVE_USERNAME, 
+            username=INACTIVE_USER_USERNAME, 
             password='12345', 
-            first_name='Inactive', 
-            last_name='Test', 
+            first_name=INACTIVE_USER_FIRST_NAME, 
+            last_name=INACTIVE_USER_LAST_NAME, 
             is_active=False
         )
     rse = RSE(user=u)
@@ -56,16 +56,6 @@ def random_salary_and_banding_data():
     
     # create test user and rse
     random_user_and_rse_data()
-    
-    # Create some financial years
-    y2017 = FinancialYear(year=2017)
-    y2017.save()
-    y2018 = FinancialYear(year=2018)
-    y2018.save()
-    y2019 = FinancialYear(year=2019)
-    y2019.save()
-    y2020 = FinancialYear(year=2020)
-    y2020.save()
 
     # Create an incremental range (1, 2, 3) and non incremental range (4, 5) for years 2017 - 2020
     # Each year comes with grade 1 with 5 grade points.
@@ -73,10 +63,8 @@ def random_salary_and_banding_data():
         curr_year = FinancialYear(year=year)
         curr_year.save()
         
-        if year == 2017:
-            sb11_2017 = curr_year
-        
         for grade_point in range(1, 6):
+            # salary for each grade point increments by 1 each year
             curr_gp = SalaryBand(
                 grade=1, 
                 grade_point=grade_point, 
@@ -85,11 +73,16 @@ def random_salary_and_banding_data():
                 increments=True if grade_point in [1, 2, 3] else False
             )
             curr_gp.save()
+            
+            if year == 2017 and grade_point == 1:
+                sb11_2017 = curr_gp
+        
 
     # Create salary grade changes
     for r in RSE.objects.all():
         sgc1 = SalaryGradeChange(rse=r, salary_band=sb11_2017, date=sb11_2017.year.start_date())
         sgc1.save()
+
 
 def random_project_and_allocation_data():
     """
@@ -115,7 +108,7 @@ def random_project_and_allocation_data():
     # Create some random projects for test database
     for x in range(20):
         proj_costing_id = random.randint(1,99999)
-        start=date(random.randint(2018, 2020), random.randint(1, 12), 1)    #random month in 2017 to 2020
+        start=date(random.randint(2018, 2021), random.randint(1, 12), 1)    #random month in 2017 to 2020
         # if start month is dec then end year cant start in same year
         if start.month == 12:
             end_year=random.randint(start.year+1, 2022)
@@ -130,10 +123,10 @@ def random_project_and_allocation_data():
         status = random.choice(Project.status_choice_keys())
 
         #internal project
-        internal = True if random.random()>0.5 else False
+        internal = True if random.random() > 0.5 else False
 
         #random choice between allocated or service project
-        if random.random()>0.5:
+        if random.random() > 0.5:
             # allocated
             percentage = random.randrange(MIN_PROJECT_PERCENTAGE, MAX_PROJECT_PERCENTAGE, PERCENTAGE_STEP) # 5% to 50% with 5% step
             p_temp = DirectlyIncurredProject(
