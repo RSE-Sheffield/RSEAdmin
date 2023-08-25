@@ -58,7 +58,7 @@ class SalaryValue():
         self.cost_breakdown.extend(salary_value.cost_breakdown)
 
     @property
-    def value(self) -> float:
+    def value(self) -> Decimal:
         return self.staff_cost * self.oncosts_multiplier
 
 
@@ -69,6 +69,10 @@ class FinancialYear(models.Model):
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
     year = models.IntegerField(primary_key=True)  # Must relate to a financial year
+    service_day_rate = models.DecimalField(max_digits=8, decimal_places=2, default=300)
+    """ Service day rate for the current financial year """
+    overheads_rate = models.DecimalField(max_digits=8, decimal_places=2, default=250)
+    """ Overheads rate pro rota for the current financial year """
     
     def start_date(self) -> date:
         """Get start date of the financial year."""
@@ -209,12 +213,12 @@ class SalaryBand(models.Model):
         return SalaryBand.spans_calendar_year(start, end) or SalaryBand.spans_financial_year(start, end)
 
     @staticmethod
-    def salaryCost(days, salary, percentage: float = 100.0) -> float:
+    def salaryCost(days, salary, percentage: float = 100.0) -> Decimal:
         """
         Returns the salary cost for a number of days given a salary and FTE percentage
         Multiples by the ON COSTS value
         """
-        return (days / 365.0) * float(salary) * (float(percentage) / 100.0) * settings.ONCOSTS_SALARY_MULTIPLIER
+        return Decimal(days / 365.0) * Decimal(salary) * Decimal(percentage / 100.0) * Decimal(settings.ONCOSTS_SALARY_MULTIPLIER)
 
     def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> SalaryValue:
         """
@@ -393,7 +397,7 @@ class RSE(models.Model):
         else:
             return False
 
-    def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+    def staff_cost(self, from_date: date, until_date: date, percentage: float = 100):
         """
         Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
         year as well as any additional salary grade changes. It works by iterating through chargeable periods looking for 
@@ -465,7 +469,7 @@ class RSE(models.Model):
 
         return salary_value
 
-    def days_from_budget(self, start: date, budget: float, percent: float) -> int:
+    def days_from_budget(self, start: date, budget: Decimal, percent: float) -> int:
         """
         Get the number of days which this RSE can be charged given a budget and FTE
         """
@@ -499,7 +503,7 @@ class RSE(models.Model):
                 sgc = temp_sgc
 
             # daily salary rate in span
-            span_dr = float(temp_salary_band.salary) / 365.0
+            span_dr = Decimal(temp_salary_band.salary) / 365.0
             span_days = (span_end - temp_start).days
             span_spend = span_dr * span_days * (percent / 100.0)
 
@@ -722,11 +726,11 @@ class Project(PolymorphicModel):
         """ Implemented by concrete classes."""
         pass
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """ Implemented by concrete classes."""
         pass
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """ Implemented by concrete classes. """
         pass
 
@@ -912,7 +916,7 @@ class DirectlyIncurredProject(Project):
         """ Calculated by adjusting duration by TRAC """
         return Project.fte_days_to_working_days(self.duration)* self.fte / 100.0
 
-    def value(self) -> float:
+    def value(self) -> Decimal:
         """
         Value represent staff costs and overhead is determined by project duration and salary cost of salary band used for costing
         """
@@ -922,7 +926,7 @@ class DirectlyIncurredProject(Project):
 
         return salary_costs.staff_cost + overheads
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """
         Function to calculate staff budget for an allocation project.
         Represents total of salary costs for duration of project
@@ -931,7 +935,7 @@ class DirectlyIncurredProject(Project):
 
         return salary_costs.staff_cost
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """
         Function calculates the value of any overheads generated.
         For directly incurred projects this is based on duration and a fixed overhead rate.
@@ -974,7 +978,7 @@ class ServiceProject(Project):
     """
     ServiceProject is a number of service days in which work should be undertaken. The projects dates set parameters for which the work can be undertaken but do not define the exact dates in which the work will be conducted. An allocation will convert the service days into an FTE equivalent so that time can be scheduled including holidays.
     """
-    days = models.IntegerField(default=1)
+    days = models.DecimalField(default=1, decimal_places=1, max_digits=5)
     """ Duration of the project in days. """
     rate = models.DecimalField(max_digits=8, decimal_places=2)
     """ Service rate """
@@ -992,13 +996,13 @@ class ServiceProject(Project):
         return not self.internal and self.charged
 
     @staticmethod
-    def days_to_fte_days(days: int) -> int:
+    def days_to_fte_days(days: Decimal) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are a fixed number if working days which are in settings file) to a FTE duration
         Assumes WORKING_DAYS_PER_YEAR > 0. If you set this as zero your an idiot. 
         """
-        return floor(days * (365.0 / settings.WORKING_DAYS_PER_YEAR))
+        return floor(days * (Decimal(365.0) / settings.WORKING_DAYS_PER_YEAR))
 
     
     @property
@@ -1013,20 +1017,20 @@ class ServiceProject(Project):
         """ Number of paid service days """
         return self.days
 
-    def value(self) -> float:
+    def value(self) -> Decimal:
         """
         Value is determined by service days multiplied by rate
         """
-        return self.days * float(self.rate)
+        return self.days * Decimal(self.rate)
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """
         Service projects don't have a staff budget as they have a number of service days.
         Returns the project value (which includes overheads) which could in theory be entirely used to fund staff time.
         """
         return self.value()
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None):
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """
         Function calculates the value of any overheads generated.
         For service projects there is no overhead just a surplus depending on staff costs and invoice date. As such this function should not be used for service projects.

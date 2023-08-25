@@ -564,33 +564,33 @@ class SalaryCalculationTests(TestCase):
         
         # Test cost of 2017 1.1 for period without any increments
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1)).staff_cost, 84.93, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1)).staff_cost, Decimal(84.93), places=2)
         
         # Test cost of 2017 1.1 for period without any increments at 50% FTE
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365 *0.5
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1), percentage=50.0).staff_cost, 42.47, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1), percentage=50.0).staff_cost, Decimal(42.47), places=2)
         
         # Test cost of 2017 1.1 for period with NO grade point increment (as starting salary is in last 6M of year)
         # Expected behaviour is value of salary for year duration with increment in January 
         # I.e. 1000 (2017 G1.1) * 153/365 (days in 2017 FY)
         #      1000 (2017 G1.1) * 212/365(days in 2017 after January with no increment)
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2018, 8, 1)).staff_cost, 1000.00, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2018, 8, 1)).staff_cost, Decimal(1000.00), places=2)
         
         # Test cost of 2017 1.1 for period with financial year adjustment
         # Expected behaviour is value of salary for 2017 G7.1 July and 2018 G7.1 August 2018
         # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
         #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
-        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, 169.95, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, Decimal(169.95), places=2)
 
         # Test cost of 2018 1.3 for period with grade point increment
         # Expected behaviour is value of salary for 2018 G1.3 August-Dec and 2018 G1.4 Dec-August 2019
         # I.e. 1001 (2017 G1.1) * 153/365 (days in 2018 FY)
         #      2001 (2017 G1.2) * 212/365(days in 2018 after January with increment)
-        self.assertAlmostEqual(sgc2.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, 3581.82, places=2)
+        self.assertAlmostEqual(sgc2.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, Decimal(3581.82), places=2)
 
         # Test cost of 2018 1.3 for period with grade point increment
         # Same as previous test however there is an explicit salary grade change to G1.3 which should be picked up from the initial salary grade change used
-        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, 3581.82, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, Decimal(3581.82), places=2)
 
 
     # Remove Oncosts in settings
@@ -605,19 +605,19 @@ class SalaryCalculationTests(TestCase):
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, Decimal(748.11), places=2)
 
         # Test over the time period including before of employment
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost prior to 1/1/2018
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2017, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2017, 1, 1), until_date=date(2018, 10, 1)).staff_cost, Decimal(748.11), places=2)
 
         # Test over the time period including after employment
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost after to 1/10/2018
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, 748.11, places=2) 
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, Decimal(748.11), places=2) 
 
 class ProjectAllocationTests(TestCase):
     """
@@ -683,12 +683,12 @@ class ProjectAllocationTests(TestCase):
         #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
         p = Project.objects.all()[0]
         self.assertIsInstance(p, DirectlyIncurredProject)
-        self.assertAlmostEqual(p.staff_budget(), 3548.15, places=2)
+        self.assertAlmostEqual(p.staff_budget(), Decimal(3548.15), places=2)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
-        self.assertAlmostEqual(p.value(), 8250.00, places=2)
+        self.assertAlmostEqual(p.value(), Decimal(8250.00), places=2)
         
         
         """Calculate the value for a 110% FTE project
@@ -702,7 +702,7 @@ class ProjectAllocationTests(TestCase):
         """        
         p = Project.objects.get(name="test_project_2")
         self.assertIsInstance(p, DirectlyIncurredProject)
-        self.assertAlmostEqual(p.staff_budget(), 5968.87, places=2)
+        self.assertAlmostEqual(p.staff_budget(), Decimal(5968.87), places=2)
         
    
 class EdgeCasesDivByZeros(TestCase):

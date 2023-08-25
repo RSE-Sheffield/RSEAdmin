@@ -9,7 +9,7 @@ services:
       - .:/var/www
     ports:
       - "8080:8080"
-    
+    restart: on-failure:5
   
   # PostgreSQL docs https://www.postgresql.org/docs/14/index.html
   # https://hub.docker.com/_/postgres

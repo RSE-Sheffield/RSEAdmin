@@ -71,7 +71,6 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
     # append salary and costs information for template
     append_project_and_allocation_costs(request, proj, allocations)
 
-	
 
     return render(request, 'project.html', view_dict)
 
@@ -107,6 +106,7 @@ def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
         form = DirectlyIncurredProjectForm(request.POST)
+
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
@@ -117,6 +117,8 @@ def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
                 return HttpResponseRedirect(next)
             else:
                 return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
+        else:
+            logger.info(form.errors)
     else:
         form = DirectlyIncurredProjectForm()
         # If request has a client id then automatically set this in the initial form data

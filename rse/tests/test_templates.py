@@ -12,6 +12,8 @@ from rse.tests.selenium_template_test import *
 
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 ########################
 ### Index (homepage) ###
@@ -670,6 +672,27 @@ class SalaryTemplateTests(SeleniumTemplateTest):
             expected = f"RSE Group Administration Tool: Edit {self.first_financial_year} Financial Year"
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
+            
+            # test rate update
+            EXPECTED_VALUE = 500.00
+            overhead_el = self.selenium.find_element(By.NAME, 'overheads_rate')
+            prev_overhead_value = overhead_el.get_attribute('value')
+            # clear the value
+            overhead_el.clear()
+            overhead_el.send_keys(EXPECTED_VALUE)
+            
+            # Submit new values
+            submit_btn =  self.selenium.find_element(By.NAME, 'rate_form')
+            submit_btn.click()
+            
+            # Wait for page to reload
+            overhead_el = WebDriverWait(self.selenium, 2).until(
+                EC.presence_of_element_located((By.NAME, 'overheads_rate'))
+            )
+            overhead_value = float(overhead_el.get_attribute('value'))
+
+            self.assertEqual(overhead_value, EXPECTED_VALUE)
+            self.assertNotEqual(overhead_value, prev_overhead_value)
             
             # test rse view (login should be required)
             self.get_url_as_rse(url)

@@ -17,13 +17,15 @@
 	<div class="col-md-9">
 		<div class="box">
 			<div class="box-header with-border">
-              <h3 class="box-title"> {{year}} Grade Points</h3>
+              <h3 class="box-title"> {{year}} Financial Year</h3>
 			  <div class="pull-right">
-				
-					<a href="{% url 'financialyears' %}?year={{year}}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Return to Financial Year View"><i class="fa fa-th-list"></i></a>
+					<a href="{% url 'financialyears' %}?year={{year}}" class="text-muted" data-toggle="tooltip" title="" data-original-title="Return to Financial Year View">
+						<i class="fa fa-th-list"></i>
+					</a>
 				</div>
 			</div>
 			<div class="box-body table-responsive padding">
+				<h4>Grade points</h4>
 				<table id="grade_point_table" class="table table-hover">
 					<thead>
 						<tr>
@@ -57,7 +59,7 @@
 			<div class="box-footer">
 				<i>Add new grade point to financial year</i>
 				
-				<form method="POST" action="">
+				<form method="POST" action="" name="sb_form">
 					{% csrf_token %}  
 					<table id="new_grade_point_table" class="table table-hover">
 						<thead>
@@ -94,20 +96,57 @@
 							</div>
 						{% endfor %}
 					{% endif %}
-					
-					<input type="submit" value="Add Grade Point" class="btn btn-primary btn-xm"></input>
-
-					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_financialyear_modal">Delete Financial Year</button>
+					<input type="submit" name="sb_form" value="Add Grade Point" class="btn btn-primary btn-xm"></input>
 				</form>
+				
+				<h4 style="margin-top: 30px;">Rates</h4>
+				<i>Update these rates will not affect past projects.</i>
+				<form method="POST">
+					{% csrf_token %} 
+					{{ rate_form.year }}
+					
+					{% if rate_form.errors %}
+						{% for field in rate_form %}
+							{% for error in field.errors %}
+								<div class="alert alert-danger">
+									<strong>{{field.label}}: {{ error|escape }}</strong>
+								</div>
+							{% endfor %}
+						{% endfor %}
+						{% for error in rate_form.non_field_errors %}
+							<div class="alert alert-danger">
+								<strong>{{ error|escape }}</strong>
+							</div>
+						{% endfor %}
+					{% endif %}
+
+					<table id="update_rates_table" class="table table-hover">
+						<thead>
+							<tr>
+								<th id="rate_type">Rates</th>
+								<th id="rate_amount">Amount in £</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Overheads rate</td>
+								<td>{{ rate_form.overheads_rate }}</td>
+							</tr>
+							<tr>
+								<td>Service day rate</td>
+								<td>{{ rate_form.service_day_rate }}</td>
+							</tr>
+						</tbody>
+					</table>
+					<input type="submit" name="rate_form" value="Update rates" class="btn btn-primary btn-xm"></input>
+				</form>
+
+				<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_financialyear_modal">Delete Financial Year</button>
 			</div>
+			{% comment %} End of box footer {% endcomment %}
 		</div>
 	</div>
-	
-	
-
-
 </div>
-
 
 
 <div class="modal modal-danger fade" id="delete_modal" role="dialog">
