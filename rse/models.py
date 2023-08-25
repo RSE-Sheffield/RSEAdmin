@@ -680,6 +680,7 @@ class Project(PolymorphicModel):
         ('Active', 'Active'),
         ('Completed', 'Completed'),
         ('Scheduled', 'Scheduled'),
+        ('Rejected', 'Rejected'),
     )
 
     @property
@@ -779,6 +780,7 @@ class Project(PolymorphicModel):
 
     @property
     def get_schedule_display(self) -> str:
+        """ Schedule should be rejected if the status is rejected. """
         if self.status == Project.REJECTED:
             return Project.SCHEDULE_REJECTED
         
