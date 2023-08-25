@@ -81,14 +81,13 @@ class FinancialYear(models.Model):
     def end_date(self) -> date:
         """Get end date of the financial year."""
         
-        return self.start_date() + timedelta(days=365 if self.is_leap_year else 364)
+        return self.start_date() + timedelta(days=365 if self.is_leap_year == True else 364)
 
 
     def date_in_financial_year(self, date: date) -> bool:
         """
         Functions checks is a date is in the finical year represented
         """
-        
         return date >= self.start_date() and date <= self.end_date()
 
 
