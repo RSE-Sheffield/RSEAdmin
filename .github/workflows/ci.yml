@@ -30,7 +30,7 @@ jobs:
 
       - name: Collect static files
         run: |
-          poetry run manage.py collectstatic
+          poetry run python manage.py collectstatic
 
       - name: Run tests and capture coverage stats
         run: |
