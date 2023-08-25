@@ -211,19 +211,20 @@ class AuthenticationTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
-        # Test filter inactive users
-        el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
-        self.assertEqual(len(el_with_inactive_username), 0)
-        
-        # test filter options
-        dropdown = Select(self.selenium.find_element(By.ID, 'id_active_filter'))
-        dropdown.select_by_visible_text('No')
-        
-        el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
-        self.assertEqual(len(el_with_inactive_username), 1)
-        
-        el_with_django_username = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'django')]") 
-        self.assertEqual(len(el_with_django_username), 0)
+        if self.blank_db != True:
+            # Test filter inactive users
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 0)
+            
+            # test filter options
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_active_filter'))
+            dropdown.select_by_visible_text('No')
+            
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 1)
+            
+            el_with_django_username = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'django')]") 
+            self.assertEqual(len(el_with_django_username), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
