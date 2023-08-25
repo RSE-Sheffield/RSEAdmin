@@ -192,8 +192,7 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
         # Set default start and end date to current FY
         if req_get_copy.get('filter_range') is None:
-            current_fy = FinancialYear.objects.order_by('year').last()
-            req_get_copy['filter_range'] = f'{current_fy.start_date()} - {current_fy.end_date()}'
+            req_get_copy['filter_range'] = create_default_filter_range()
 
         # the 'initial' property doesn't work here because this is a bound form
         form = FilterProjectForm(req_get_copy)

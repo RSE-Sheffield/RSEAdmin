@@ -174,8 +174,7 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
 
         # Set default start and end date to current FY
         if req_get_copy.get('filter_range') is None:
-            current_fy = FinancialYear.objects.order_by('year').last()
-            req_get_copy['filter_range'] = f'{current_fy.start_date()} - {current_fy.end_date()}'
+            req_get_copy['filter_range'] = create_default_filter_range()
             
         form = FilterProjectForm(req_get_copy)
         
