@@ -806,24 +806,25 @@ class ReportingTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
-        # Test filter not currently employed rses
-        el_with_inactive_user = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_FIRST_NAME} {INACTIVE_USER_LAST_NAME}')]") 
-        self.assertEqual(len(el_with_inactive_user), 0)
-        
-        # change filter option
-        dropdown = Select(self.selenium.find_element(By.ID, 'id_rse_in_employment'))
-        dropdown.select_by_visible_text('No')
-        date_input = self.selenium.find_element(By.ID, 'id_filter_range')
-        date_input.send_keys('01/08/2017 - 31/07/2018')
-        date_apply_btn = self.selenium.find_element(By.XPATH, "//button[contains(@class, 'applyBtn') and contains(text(), 'Apply')]")
-        date_apply_btn.click()
-        
-        apply_btn = self.selenium.find_element(By.XPATH, "//button[text()='Apply']")
-        apply_btn.click()
+        if self.blank_db != True:
+            # Test filter not currently employed rses
+            el_with_inactive_user = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_FIRST_NAME} {INACTIVE_USER_LAST_NAME}')]") 
+            self.assertEqual(len(el_with_inactive_user), 0)
+            
+            # change filter option
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_rse_in_employment'))
+            dropdown.select_by_visible_text('No')
+            date_input = self.selenium.find_element(By.ID, 'id_filter_range')
+            date_input.send_keys('01/08/2017 - 31/07/2018')
+            date_apply_btn = self.selenium.find_element(By.XPATH, "//button[contains(@class, 'applyBtn') and contains(text(), 'Apply')]")
+            date_apply_btn.click()
+            
+            apply_btn = self.selenium.find_element(By.XPATH, "//button[text()='Apply']")
+            apply_btn.click()
 
-        # expect to show only not currently employed rses
-        el_with_in_employment_rse = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'Bong Ma')]") 
-        self.assertEqual(len(el_with_in_employment_rse), 0)
+            # expect to show only not currently employed rses
+            el_with_in_employment_rse = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'Bong Ma')]") 
+            self.assertEqual(len(el_with_in_employment_rse), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)

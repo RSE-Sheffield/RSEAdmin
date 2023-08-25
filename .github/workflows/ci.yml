@@ -28,6 +28,10 @@ jobs:
           sudo chmod +x /usr/local/share/geckodriver
           sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
 
+      - name: Collect static files
+        run: |
+          poetry run manage.py collectstatic
+
       - name: Run tests and capture coverage stats
         run: |
           poetry run coverage run manage.py test
