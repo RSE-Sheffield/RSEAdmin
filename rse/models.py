@@ -675,6 +675,7 @@ class Project(PolymorphicModel):
     SCHEDULE_ACTIVE = "Active"
     SCHEDULE_COMPLETED = "Completed"
     SCHEDULE_SCHEDULED = "Scheduled"
+    SCHEDULE_REJECTED = "Rejected"
     SCHEDULE_CHOICES_TEXT_KEYS = (
         ('Active', 'Active'),
         ('Completed', 'Completed'),
@@ -778,6 +779,9 @@ class Project(PolymorphicModel):
 
     @property
     def get_schedule_display(self) -> str:
+        if self.status == Project.REJECTED:
+            return Project.SCHEDULE_REJECTED
+        
         now = timezone.now().date()
         if now < self.start:
             return Project.SCHEDULE_SCHEDULED
