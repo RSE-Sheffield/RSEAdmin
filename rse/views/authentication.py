@@ -22,6 +22,9 @@ from rse.models import *
 from rse.forms import *
 from rse.views.helper import *
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 #######################
 ### Authentication ####
@@ -207,6 +210,9 @@ def user_change_password(request: HttpRequest, user_id) -> HttpResponse:
 
 @user_passes_test(lambda u: u.is_superuser)
 def users(request: HttpRequest) -> HttpResponse:
-    users = User.objects.all()
+    # exclude fields like password
+    users = User.objects.all().only('first_name', 'last_name', 'username', 'is_superuser', 'is_staff', 'is_active')
     
-    return render(request, 'users.html', { "users": users })
+    form = UsersFilterForm(request.GET)
+
+    return render(request, 'users.html', { "users": users, "form": form })

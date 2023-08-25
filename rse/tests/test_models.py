@@ -535,6 +535,7 @@ class SalaryCalculationTests(TestCase):
         
         # Get first (2017) financial year
         fy = FinancialYear.objects.all()[0]
+        print(fy)
         
         # Test date at start of financial year (1st August 2017)
         self.assertTrue(fy.date_in_financial_year(date(2017, 8, 1)))
