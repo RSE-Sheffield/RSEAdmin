@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from typing import Dict
-import logging
 
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -18,12 +17,10 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.http import JsonResponse
 from django.conf import settings
 
+
 from rse.models import *
 from rse.forms import *
 from rse.views.helper import *
-
-
-logger = logging.getLogger(__name__)
 
 ################################
 ### Projects and Allocations ###
