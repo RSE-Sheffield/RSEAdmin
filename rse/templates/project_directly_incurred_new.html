@@ -11,128 +11,127 @@
 {% block page_name %}RSE Group Administration Tool: {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project{% endblock %}
 {% block content %}
 
-	<div class ="row">
-             
-        <div class="col-md-8">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
-            </div>
-            
-			<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_directly_incurred' %}{% endif %}">
-				{% csrf_token %} 
-											
-				<div class="box-body no-padding">
-			
-							<table id="id_project_table" class="table table-striped">
-								<tbody>
-								
-									<tr><td>
-									<strong>Client:</strong>
-										<div class="input-group">
-											{{ form.client}}
-											<div class="input-group-addon">
-												<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_directly_incurred' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
-											</div>
-										</div>
-									</td></tr>
-								
-									<tr><td>
-									<strong>Project Name:</strong>
-									{{ form.name}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Project Internal ID (URMS or equivalent):</strong>
-									{{ form.proj_costing_id}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Description / Notes:</strong>
-									{{ form.description}}
-									</td></tr>
-									
-									<tr><td>
-										<strong>Start Date:</strong>
-										<div class="input-group">
-											<div class="input-group-addon">
-												<i class="fa fa-calendar"></i>
-											</div>
-											{{ form.start}}
-										</div>
-									</td></tr>
-									
-									<tr><td>
-										<strong>End Date:</strong>
-										<div class="input-group">
-											<div class="input-group-addon">
-												<i class="fa fa-calendar"></i>
-											</div>
-											{{ form.end}}
-										</div>
-									</td></tr>
-									
-									<tr><td>
-									<strong>Internal:</strong>
-									{{ form.internal}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Status:</strong>
-									{{ form.status}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Percentage FTE:</strong>
-									{{ form.percentage}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Overheads Rate (Pro-Rata):</strong>
-									{{ form.overheads}}
-									</td></tr>
-									
-									<tr><td>
-									<strong>Salary Band Used for Costing:</strong>
-									{{ form.salary_band}}
-									</td></tr>
-									
-								</tbody>
-								{{ form.created}}
-								{{ form.creator}}
-							</table>
+	<div class ="row">        
+		<div class="col-md-8">
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title"> {% if edit %}Edit{% else %}New{% endif %} Directly Incurred Project {% if edit %}(Project Internal ID: {{form.instance.id}}){% endif %}</h3>
 				</div>
+							
+				<form method="POST" action="{% if edit %}{% url 'project_edit' form.instance.id %}{% else %}{% url 'project_new_directly_incurred' %}{% endif %}">
+					{% csrf_token %} 
+												
+					<div class="box-body no-padding">
 				
-				<div class="box-footer">
-					{% if form.errors %}
-						{% for field in form %}
-							{% for error in field.errors %}
+						<table id="id_project_table" class="table table-striped">
+							<tbody>
+							
+								<tr><td>
+								<strong>Client:</strong>
+									<div class="input-group">
+										{{ form.client}}
+										<div class="input-group-addon">
+											<a id="id_add_client" href="{% url 'client_new' %}?next={% url 'project_new_directly_incurred' %}" class="fa fa-plus" data-toggle="tooltip" title="" data-original-title="Create a new client"></a>
+										</div>
+									</div>
+								</td></tr>
+							
+								<tr><td>
+								<strong>Project Name:</strong>
+								{{ form.name}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Project Internal ID (URMS or equivalent):</strong>
+								{{ form.proj_costing_id}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Description / Notes:</strong>
+								{{ form.description}}
+								</td></tr>
+								
+								<tr><td>
+									<strong>Start Date:</strong>
+									<div class="input-group">
+										<div class="input-group-addon">
+											<i class="fa fa-calendar"></i>
+										</div>
+										{{ form.start}}
+									</div>
+								</td></tr>
+								
+								<tr><td>
+									<strong>End Date:</strong>
+									<div class="input-group">
+										<div class="input-group-addon">
+											<i class="fa fa-calendar"></i>
+										</div>
+										{{ form.end}}
+									</div>
+								</td></tr>
+								
+								<tr><td>
+								<strong>Internal:</strong>
+								{{ form.internal}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Status:</strong>
+								{{ form.status}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Percentage FTE:</strong>
+								{{ form.percentage}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Overheads Rate (Pro-Rata):</strong>
+								{{ form.overheads}}
+								</td></tr>
+								
+								<tr><td>
+								<strong>Salary Band Used for Costing:</strong>
+								{{ form.salary_band}}
+								</td></tr>
+								
+							</tbody>
+							{{ form.created}}
+							{{ form.creator}}
+						</table>
+					</div>
+				
+					<div class="box-footer">
+						{% if form.errors %}
+							{% for field in form %}
+								{% for error in field.errors %}
+									<div class="alert alert-danger">
+										<strong>{{field.label}}: {{ error|escape }}</strong>
+									</div>
+								{% endfor %}
+							{% endfor %}
+							{% for error in form.non_field_errors %}
 								<div class="alert alert-danger">
-									<strong>{{field.label}}: {{ error|escape }}</strong>
+									<strong>{{ error|escape }}</strong>
 								</div>
 							{% endfor %}
-						{% endfor %}
-						{% for error in form.non_field_errors %}
-							<div class="alert alert-danger">
-								<strong>{{ error|escape }}</strong>
-							</div>
-						{% endfor %}
-					{% endif %}
-					<input type="submit" name="project_submit" value="Save" class="btn btn-primary btn-xm"></input>
-					{% if edit and user.is_superuser%}
-					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
-					{% endif %}
-				</div>
-			
-			</form>
-          </div>
-        </div>
-			
-		
-    </div>
+						{% endif %}
+						<input type="submit" name="project_submit" value="Save" class="btn btn-primary btn-xm"></input>
+						<a href="{% url 'project' project_id %}">
+							<button type="button" class="btn btn-warning">Exit without saving</button>
+						</a>	
+						{% if edit and user.is_superuser%}
+						<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
+						{% endif %}
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 
 
-    {% if edit and user.is_superuser %}
+	{% if edit and user.is_superuser %}
 	<div class="modal modal-danger fade" id="delete_modal" role="dialog">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
@@ -156,10 +155,7 @@
 	</div>
 	{% endif %}
 
-   
-    
-    
-    
+
 {% endblock %}
 
 {% block javascript %}

@@ -129,6 +129,9 @@
 						{% endfor %}
 					{% endif %}
 					<input type="submit" name="project_submit" value="Save" class="btn btn-primary btn-xm"></input>
+					<a href="{% url 'project' project_id %}">
+						<button type="button" class="btn btn-warning">Exit without saving</button>
+					</a>	
 					{% if edit and user.is_superuser %}
 					<button type="button" class="btn btn-danger btn-xm pull-right" data-toggle="modal" data-target="#delete_modal">Delete</button>
 					{% endif %}

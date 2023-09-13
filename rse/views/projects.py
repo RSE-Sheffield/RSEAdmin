@@ -17,7 +17,6 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.http import JsonResponse
 from django.conf import settings
 
-
 from rse.models import *
 from rse.forms import *
 from rse.views.helper import *
@@ -199,6 +198,8 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
     else:
         form = formclass(instance=proj)
     view_dict['form'] = form
+
+    view_dict['project_id'] = project_id 
     
     # Add edit field to indicate delete should be available
     view_dict['edit'] = True
