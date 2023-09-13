@@ -317,12 +317,12 @@ class ServiceProjectForm(forms.ModelForm):
                             attrs={'class': 'form-control'}),
                             input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'),
-                          attrs={'class': 'form-control'}),
-                          input_formats=('%d/%m/%Y',))
+                            attrs={'class': 'form-control'}),
+                            input_formats=('%d/%m/%Y',))
     invoice_received = forms.DateField(widget=forms.DateInput(format=('%d/%m/%Y'),
-                                       attrs={'class': 'form-control'}),
-                                       input_formats=('%d/%m/%Y',),
-                                       required=False)
+                                        attrs={'class': 'form-control'}),
+                                        input_formats=('%d/%m/%Y',),
+                                        required=False)
 
     class Meta:
         model = ServiceProject
