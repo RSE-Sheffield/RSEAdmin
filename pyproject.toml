@@ -14,7 +14,7 @@ gunicorn = {version = "^20.1", optional = true}
 psycopg2 = "^2.9"
 mysqlclient = {version = "^2", optional = true}
 python-dateutil = "~2.8.2"
-cryptography = "^39.0"
+cryptography = "^41.0"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^3.0"
