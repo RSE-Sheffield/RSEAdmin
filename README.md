@@ -145,7 +145,6 @@ All pages of the site require logging in. You can use your super user account or
 
 The site has a self explanatory navigation menu which varies depending on the permissions of the user.
 
-
 ## Testing
 
 The site uses continuous integration. You can run all tests locally as follows. This requires the installation of [https://github.com/mozilla/geckodriver](GeckoDriver (Firefox web driver)) which must be available on your `$PATH`:
@@ -262,3 +261,10 @@ A [separate repo is available](https://github.com/RSE-Sheffield/rseadmin-ansible
 [virtualenv]: https://virtualenv.pypa.io/en/latest/
 [poetry]: https://poetry.eustace.io/
 [userguide]: https://rseadmin.readthedocs.io/en/latest/
+
+
+## Other notes
+
+### Styling
+
+[Django Adminlte2](https://django-adminlte2.readthedocs.io/en/stable/) for the overall theming. The version of Adminlte2 used in this app is using Bootstrap v3.3.7.

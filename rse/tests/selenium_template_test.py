@@ -4,8 +4,19 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from rse.models import *
 from rse.tests.test_random_data import random_project_and_allocation_data
-
 from .constant import *
+from django.conf import settings
+import os
+from django.contrib.auth import (
+    SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY,
+)
+from django.contrib.sessions.backends.db import SessionStore
+
+import logging
+from selenium.webdriver.remote.remote_connection import LOGGER
+LOGGER.setLevel(logging.WARNING)
+
+DEV_CONTAINER = os.getenv('DEV_CONTAINER')
 
     
 class SeleniumTemplateTest(LiveServerTestCase):
@@ -17,6 +28,7 @@ class SeleniumTemplateTest(LiveServerTestCase):
 
     PAGE_TITLE_LOGIN = "RSE Group Administration Tool: Login Required"
     
+    # Docker containers connect each other with the service name
     if DEV_CONTAINER is not None:
         host = 'app'
 
@@ -24,7 +36,7 @@ class SeleniumTemplateTest(LiveServerTestCase):
         """ Override init to provide a flag for blank database initialisation """
 
         self.blank_db = kwargs.pop('blank_db', False)
-
+        
         # call the super
         super(SeleniumTemplateTest, self).__init__(*args, **kwargs)
 

@@ -54,7 +54,6 @@ def financialyears(request: HttpRequest) -> HttpResponse:
         year = years[0]
     view_dict['year'] = year
     
-
     
     # Get all salary bands for the financial year
     salary_bands = SalaryBand.objects.filter(year=year).order_by('-grade', '-grade_point')
@@ -73,15 +72,25 @@ def financialyear_edit(request: HttpRequest, year_id: int) -> HttpResponse:
     year = get_object_or_404(FinancialYear, pk=year_id)
     view_dict['year'] = year
 
-        # Form handling for new salary bands
+    sb_form = NewSalaryBandForm(year=year)
+    rate_form = UpdateRatesForm(instance=year)
+    
+    # Form handling for new salary bands and rate updates
     if request.method == 'POST':
-        sb_form = NewSalaryBandForm(request.POST, year=year)
-        if sb_form.is_valid():
-            sb_form.save()
-    else:
-        sb_form = NewSalaryBandForm(year=year)
-    view_dict['sb_form'] = sb_form
+        if 'sb_form' in request.POST:
+            sb_form = NewSalaryBandForm(request.POST, year=year)
+            if sb_form.is_valid():
+                sb_form.save()
         
+        if 'rate_form' in request.POST:
+            rate_form = UpdateRatesForm(request.POST, instance=year)
+            if rate_form.is_valid():
+                rate_form.save()
+                messages.add_message(request, message='Rates updated successfully.', level=messages.SUCCESS)
+
+    view_dict['sb_form'] = sb_form
+    view_dict['rate_form'] = rate_form
+    
     # Get all salary bands for the financial year
     salary_bands = SalaryBand.objects.filter(year=year).order_by('-grade', '-grade_point')
     view_dict['salary_bands'] = salary_bands

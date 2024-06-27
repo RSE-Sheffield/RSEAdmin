@@ -90,6 +90,7 @@
 									<tr><td>
 									<strong>Service Rate:</strong>
 									{{ form.rate}}
+									<button class="btn btn-default btn-block bg-warning" name="clear_rates" type="button">Clear</button>
 									</td></tr>
 									
 									<tr><td>
@@ -205,8 +206,9 @@
 		$(this).val(picker.startDate.format('DD/MM/YYYY'));
 	});
 
-
-
+	document.querySelector('button[name="clear_rates"]').addEventListener('click', function() {
+		document.querySelector('input[name="rate_1"]').value = '';
+	})
 </script>
 
 {% endblock %}
