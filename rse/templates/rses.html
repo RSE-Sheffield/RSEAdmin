@@ -32,7 +32,7 @@
 							<th id="name">Username</th>
 							<th id="department">Employed From</th>
 							<th id="description">Employed Until</th>
-							<th id="description">Currently Employment</th>
+							<th id="current_employment">Currently Employment</th>
 							{% if user.is_superuser %} <th id="description">Current Grade Point </th> {% endif %}
 							<th id="num_active_projects">Current Capacity</th>
 							<th id="num_active_projects_label"></th>
@@ -77,23 +77,47 @@
 
 	<div class="col-md-3">
 		<div class="box box-default">
-            <div class="box-header with-border">
-              	<h3 class="box-title">Options</h3>
-            </div>
-            <div class="box-body">
-              	<p><i>Toggle the visibility of grade points in this view. </i></p>
-			  	<div class="checkbox">
-                    <label>
-                      	<input type="checkbox" id="id_show_grade"> Show grade points
+			<div class="box-header with-border">
+				<h3 class="box-title">Options</h3>
+			</div>
+			<div class="box-body">
+				<p><i>Toggle the visibility of grade points in this view. </i></p>
+				<div class="checkbox">
+					<label>
+						<input type="checkbox" id="id_show_grade"> Show grade points
 					</label>
-                </div>
-            </div>
-        </div>
+				</div>
+			</div>
+		</div>
+
+		<div class="box box-default">
+			<div class="box-header with-border">
+				<h3 class="box-title">Filters</h3>
+				<div class="box-tools pull-right">
+					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="box-body">
+				
+				<div class="form-group">
+					<label>Employed status</label>
+					<p><i>Show all RSEs, or filter by whether the RSE is currently employed.</i></p>
+					
+					<select name="employed_filter" class="form-control" required="" id="id_employed_filter">
+						<option value="" >All</option>
+						<option value="Yes" selected="">Yes</option>
+						<option value="No">No</option>
+					</select>
+					
+					</br>
+					
+				</div>
+			</div>
+		</div>
 	</div>
 
 	
-
-
 </div>
 
 
@@ -111,7 +135,26 @@
 			$('#rses').DataTable({
 				pageLength: 25,
 				scrollX: false,
+				initComplete: function () {
+					// current employment filter
+					this.api().column("#current_employment").every( function () {
+						const column = this;
+						const select = $('#id_employed_filter')
+							.on( 'change', function () {
+								const val = $.fn.dataTable.util.escapeRegex(
+									$(this).val()
+								);
+								column
+									.search( val ? `^${val}$` : '', true, false )
+									.draw();
+							} );
+					});
+				},
 			} );
+
+			const initial_employed_val = $.fn.dataTable.util.escapeRegex($('#id_employed_filter').val());
+			
+			$('#rses').DataTable().column("#current_employment").search(initial_employed_val ? '^'+initial_employed_val+'$' : '', true, false).draw();
 
 
 			//toggle grade

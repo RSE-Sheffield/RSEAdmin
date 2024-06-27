@@ -1,14 +1,7 @@
-from datetime import date, datetime
-from django.utils import timezone
 from django.urls import reverse_lazy
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase, override_settings
-from django.test import LiveServerTestCase
-import time
 from rse.models import *
-from rse.tests.test_random_data import random_project_and_allocation_data
-from django.conf import settings
 from rse.tests.selenium_template_test import *
+from .constant import *
 
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
@@ -219,6 +212,21 @@ class AuthenticationTemplateTests(SeleniumTemplateTest):
         expected = "RSE Group Administration Tool: View all Users"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
+        
+        if self.blank_db != True:
+            # Test filter inactive users
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 0)
+            
+            # test filter options
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_active_filter'))
+            dropdown.select_by_visible_text('No')
+            
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 1)
+            
+            el_with_django_username = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'django')]") 
+            self.assertEqual(len(el_with_django_username), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
@@ -820,6 +828,26 @@ class ReportingTemplateTests(SeleniumTemplateTest):
         expected = f"RSE Group Administration Tool: RSE Team Staff Costs and Liability"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
+        
+        if self.blank_db != True:
+            # Test filter not currently employed rses
+            el_with_inactive_user = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_FIRST_NAME} {INACTIVE_USER_LAST_NAME}')]") 
+            self.assertEqual(len(el_with_inactive_user), 0)
+            
+            # change filter option
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_rse_in_employment'))
+            dropdown.select_by_visible_text('No')
+            date_input = self.selenium.find_element(By.ID, 'id_filter_range')
+            date_input.send_keys('01/08/2017 - 31/07/2018')
+            date_apply_btn = self.selenium.find_element(By.XPATH, "//button[contains(@class, 'applyBtn') and contains(text(), 'Apply')]")
+            date_apply_btn.click()
+            
+            apply_btn = self.selenium.find_element(By.XPATH, "//button[text()='Apply']")
+            apply_btn.click()
+
+            # expect to show only not currently employed rses
+            el_with_in_employment_rse = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'Bong Ma')]") 
+            self.assertEqual(len(el_with_in_employment_rse), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)

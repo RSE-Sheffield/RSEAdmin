@@ -17,6 +17,9 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.http import JsonResponse
 from django.conf import settings
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 from rse.models import *
 from rse.forms import *
@@ -180,9 +183,23 @@ def commitment(request: HttpRequest) -> HttpResponse:
     from_date = None
     until_date = None
     if request.method == 'GET':
-        form = FilterProjectForm(request.GET)
+        req_get_copy = request.GET.copy()
+
+        # Set default status to 'Funded'
+        req_get_copy['status'] = req_get_copy.get('status') or 'F'
+        # Set default in employment status to 'Yes'
+        req_get_copy['rse_in_employment'] = req_get_copy.get('rse_in_employment') or 'Yes'
+
+        # Set default start and end date to current FY
+        if req_get_copy.get('filter_range') is None:
+            req_get_copy['filter_range'] = create_default_filter_range()
+
+        # the 'initial' property doesn't work here because this is a bound form
+        form = FilterProjectForm(req_get_copy)
+
         if form.is_valid():
             filter_range = form.cleaned_data["filter_range"]
+
             from_date = filter_range[0]
             q &= Q(end__gte=from_date)
             until_date = filter_range[1]
@@ -190,28 +207,44 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
             # apply status type query
             status = form.cleaned_data["status"]
+
             if status in 'PRFX':
                 q &= Q(project__status=status)
             elif status == 'L':
                 q &= Q(project__status='F')|Q(project__status='R')
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+                
+            rse_in_employment = form.cleaned_data["rse_in_employment"]
+                
     else:
         form = FilterProjectForm()
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
     view_dict['form'] = form
+    
+    # Filter by employment status
+    if rse_in_employment != 'All':
+        in_employment = True if rse_in_employment == 'Yes' else False
+        
+        # remove allocations from RSEs doesn't meet the criteria
+        unique_rses_id = set([allocation.rse.id for allocation in allocations if allocation.rse.current_employment == in_employment])
+        allocations = allocations.filter(rse__id__in=unique_rses_id)
+   
         
     # Get unique RSE ids allocated to project and build list of (RSE, [RSEAllocation]) objects for commitment graph
     allocation_unique_rses = allocations.values('rse').distinct()
+
     commitment_data = []
     rse_allocations = {}
+    
     for a in allocation_unique_rses:
         r_a = allocations.filter(rse__id=a['rse'])
         rse = RSE.objects.get(id=a['rse'])
         rse_allocations[rse] = r_a
         commitment_data.append((rse, RSEAllocation.commitment_summary(r_a, from_date, until_date)))
+    
     view_dict['commitment_data'] = commitment_data
     view_dict['rse_allocations'] = rse_allocations
 	

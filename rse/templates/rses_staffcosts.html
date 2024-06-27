@@ -18,9 +18,9 @@
 
 
    
-    <div class ="row">
+	<div class ="row">
         
-        <div class="col-md-9">
+		<div class="col-md-9">
 			<div class="box box-default">
 				<div class="box-header with-border">
 					<h3 class="box-title">RSE Staff Costs and Liability</h3>
@@ -35,7 +35,6 @@
 								<th id="internal">Internal Project Salary</th>
 								<th id="non_recovered">Non-Recovered Staff Costs</th>
 								<th id="liability">Liability</th>
-								
 							</tr>
 						</thead>
 						<tbody>
@@ -67,36 +66,41 @@
 					</table>
 				</div>
 			</div>
-        </div>
+		</div>
 		
 		<div class="col-md-3">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title">Filter</h3>
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Filter</h3>
 			  <div class="box-tools pull-right">
 					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
 					</button>
 				</div>
-            </div>
+			</div>
 			<form method='GET' id="filter_form">
 				<div class="box-body">
 				  <div class="form-group">
 					
-					<label>Date range:</label>
-					<p><i>Will include any projects which have any time within the selected date range</i><p>
-					<div class="input-group">
-					  <div class="input-group-addon">
-						<i class="fa fa-calendar"></i>
-					  </div>
-					  {{ form.filter_range }}
-					</div>
-					</br>
-					
+						<label>Date range:</label>
+						<p><i>Will include any projects which have any time within the selected date range</i><p>
+						<div class="input-group">
+							<div class="input-group-addon">
+							<i class="fa fa-calendar"></i>
+							</div>
+							{{ form.filter_range }}
+						</div>
+						</br>
 						
-					<label>Funding Status</label>
-					<p><i>Filter projects based current funding status</i></p>
-					{{ form.status }}
-					</br>
+							
+						<label>Funding Status</label>
+						<p><i>Filter projects based current funding status</i></p>
+						{{ form.status }}
+						</br></br></br>
+
+						<label>RSE Employment Status</label>
+						<p><i>Filter projects based on whether RSE is currently employed (regardless whether the RSE is employed for the selected date range).</i></p>
+						{{ form.rse_in_employment }}
+						</br>
 					
 				  </div>
 				</div>
@@ -104,11 +108,8 @@
 					<button type="submit" class="btn btn-primary">Apply</button>
 				</div>
 			</form>
-          </div>
-        </div>
-		
-    </div>
-    
+		</div>
+	</div>
     
  
 {% endblock %}
@@ -117,8 +118,5 @@
 {{ block.super}}
 
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
-
-
-    
     
 {% endblock %}

@@ -68,19 +68,25 @@ class FinancialYear(models.Model):
     """
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
+    
     year = models.IntegerField(primary_key=True)  # Must relate to a financial year
     service_day_rate = models.DecimalField(max_digits=8, decimal_places=2, default=300)
     """ Service day rate for the current financial year """
     overheads_rate = models.DecimalField(max_digits=8, decimal_places=2, default=250)
     """ Overheads rate pro rota for the current financial year """
     
+    
     def start_date(self) -> date:
         """Get start date of the financial year."""
+        
         return date(self.year, 8, 1)
+    
 
     def end_date(self) -> date:
         """Get end date of the financial year."""
-        return self.start_date() + timedelta(days=364)
+        
+        return self.start_date() + timedelta(days=365 if self.is_leap_year == True else 364)
+
 
     def date_in_financial_year(self, date: date) -> bool:
         """
@@ -88,6 +94,19 @@ class FinancialYear(models.Model):
         """
         return date >= self.start_date() and date <= self.end_date()
 
+
+    def is_leap_year(self) -> bool:
+        """ Check if the financial year includes a leap year (next year). """
+        
+        next_year = self.year + 1
+
+        # Leap year is divisible by 4. A century leap year is not divisible by 4 but 400.
+        if (next_year % 4 == 0) or (next_year % 400 == 0):
+            return True
+        
+        return False
+    
+    
     def __str__(self) -> str:
         return str(self.year)
 

@@ -72,3 +72,11 @@ def append_project_and_allocation_costs(request: HttpRequest, project: Project, 
         project.remaining_staff_budget = staff_budget - total_staff_cost
         
 
+def create_default_filter_range():
+    curr_fy = FinancialYear.objects.order_by('year').last()
+    
+    if curr_fy is None:
+        curr_year = datetime.now().year
+        curr_fy = FinancialYear(year=curr_year)
+        
+    return f'{curr_fy.start_date()} - {curr_fy.end_date()}'

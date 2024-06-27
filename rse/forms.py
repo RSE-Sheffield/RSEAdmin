@@ -16,6 +16,11 @@ class DateRangeField(forms.Field):
     Class is used to extend a text field by being able to parse the text and extract the date ranges
     init function used to store min and max date for future use without querying database
     If validation fails then min max date range is returned
+    
+    The date string should be one of the following formats:
+    - "yyyy-MM-dd"
+    - "dd/MM/yyyy"
+    
     """
 
     def __init__(self, *args, **kwargs):
@@ -34,18 +39,39 @@ class DateRangeField(forms.Field):
 
         # create a list of date items (one for start and one for until)
         fromuntil = value.split(' - ')
+        
         if len(fromuntil) != 2:
             return [self.min_date, self.max_date]
+        
         try:
             date_from = datetime.strptime(fromuntil[0], '%d/%m/%Y').date()
             date_until = datetime.strptime(fromuntil[1], '%d/%m/%Y').date()
         except ValueError:
-            return [self.min_date, self.max_date]
+            # try with different date format
+            try:
+                date_from = datetime.strptime(fromuntil[0], '%Y-%m-%d').date()
+                date_until = datetime.strptime(fromuntil[1], '%Y-%m-%d').date()
+            except ValueError:
+                return [self.min_date, self.max_date]
+        
         return [date_from, date_until]
 
     def validate(self, value):
         if len(value) != 2:
             forms.ValidationError('Date range is in wrong format')
+
+
+class UsersFilterForm(forms.Form):
+    """
+    Class represents a filter form for filtering by Active and Staff status
+    Values for options does not use database character keys as tables are filtered directly at client side (in the data table)
+    """
+
+    active_filter = forms.ChoiceField(
+        choices=(('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        widget=forms.Select(attrs={'class': 'form-control'}))
+    staff_filter = forms.ChoiceField(choices= (('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+                                      widget=forms.Select(attrs={'class': 'form-control'}))
 
 
 class FilterDateRangeForm(forms.Form):
@@ -73,7 +99,7 @@ class FilterDateRangeForm(forms.Form):
 
     @property
     def years(self):
-        return FinancialYear.objects.all()
+        return FinancialYear.objects.all().order_by('year')
 
 
 class FilterDateForm(forms.Form):
@@ -116,7 +142,14 @@ class FilterProjectForm(FilterDateRangeForm):
             ('A', 'All'),
             ('L', 'Funded and Review')) +
             Project.STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control pull-right'}))
+        initial='F',
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
+    
+    rse_in_employment = forms.ChoiceField(
+        choices=(('All', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
     # Type cant be filtered at database level as it is a property
     # type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 

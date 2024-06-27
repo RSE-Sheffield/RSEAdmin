@@ -38,6 +38,7 @@ if DEV_CONTAINER is not None:
         }
     )
 else:
+    # TODO: use postgres for local dev
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
