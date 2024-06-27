@@ -397,7 +397,7 @@ def time_project(request: HttpRequest, project_id: int) -> HttpResponse:
     view_dict['total_expected'] = project.working_days
     view_dict['total_delivered'] =  TimeSheetEntry.working_days(tses)
     view_dict['total_remaining'] = view_dict['total_expected'] - view_dict['total_delivered']
-    view_dict['total_percent'] = view_dict['total_delivered']*100.0 / view_dict['total_expected'] # no need to catch div by 0 as total_expected can not be 0
+    view_dict['total_percent'] = view_dict['total_delivered'] * 100.0 / float(view_dict['total_expected']) # no need to catch div by 0 as total_expected can not be 0
 
     return render(request, 'time_project.html', view_dict)
 
