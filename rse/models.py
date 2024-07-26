@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import OperationalError, ProgrammingError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
