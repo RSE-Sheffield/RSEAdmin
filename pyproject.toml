@@ -15,6 +15,7 @@ psycopg2 = "^2.9.9"
 mysqlclient = {version = "^2", optional = true}
 python-dateutil = "~2.9.0"
 cryptography = "^39.0"
+setuptools = "69.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^3.0"

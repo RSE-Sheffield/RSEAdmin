@@ -42,7 +42,7 @@
 					<tbody>
 						{% for rse in rses %}
 						<tr>
-							<td>{{ rse.user.first_name }} {{ rse.user.last_name }}</td>
+							<td><a href="{% url 'rse' rse.user.username %}" >{{ rse.user.first_name }} {{ rse.user.last_name }}</a></td>
 							<td>{{ rse.user.username }}</td>
 							<td>{{ rse.employed_from|default_if_none:"" }}</td>
 							<td>{{ rse.employed_until }}</td>

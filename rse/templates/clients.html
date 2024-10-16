@@ -21,7 +21,7 @@
 				<table id="clients" class="table table-hover">
 					<thead>
 						<tr>
-							<th id="id">ID</th>
+                            <th id="id">ID</th>
 							<th id="name">Name</th>
 							<th id="department">Department</th>
 							<th id="description">Description</th>
@@ -33,8 +33,8 @@
 					<tbody>
 						{% for c in clients %}
 						<tr>
-							<td>{{ c.id }}</td>
-							<td>{{ c.name }}</td>
+							<td><a href="{% url 'client' c.id %}" >{{ c.id }}</a></td>
+							<td><a href="{% url 'client' c.id %}" >{{ c.name }}</a></td>
 							<td>{{ c.department }}</td>
 							<td>{{ c.description|truncatechars:100 }}</td>
 							<td> 
