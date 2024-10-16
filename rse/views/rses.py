@@ -247,14 +247,14 @@ def commitment(request: HttpRequest) -> HttpResponse:
 
     stacked_commitment_data = []
     rse_allocations = {}
-    num_allocations = 1 if len(rse_allocations) < 1 else len(rse_allocations)
-    
+
     for a in allocation_unique_rses:
         r_a = allocations.filter(rse__id=a['rse'])
         rse = RSE.objects.get(id=a['rse'])
         rse_allocations[rse] = r_a
         stacked_commitment_data.append((rse, RSEAllocation.stacked_commitment_summary(r_a, from_date, until_date)))
 
+    num_allocations = 1 if len(rse_allocations) < 1 else len(rse_allocations)
     stacked_commitment_summary = RSEAllocation.stacked_commitment_summary(rse_allocations.values(),
                                                                           from_date,
                                                                           until_date,
