@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import math
 from datetime import date, timedelta
 from django.utils import timezone
 from math import floor
@@ -9,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import OperationalError, ProgrammingError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
@@ -894,6 +896,10 @@ class Project(PolymorphicModel):
         b = hash(self.end) % 255
         return {"r": r, "g": g, "b": b}
 
+    @property
+    def border_colour_rbg(self) -> Dict[str, int]:
+        return {colour_name: math.ceil(colour * 1.1) for colour_name, colour in self.colour_rbg.items()}
+
 
 class DirectlyIncurredProject(Project):
     """
@@ -1242,3 +1248,57 @@ class RSEAllocation(models.Model):
 
         # Return list of unique (date, effort, [RSEAllocation])
         return list(zip(unique_dates, unique_effort, unique_cumulative_allocations))
+
+    @staticmethod
+    def stacked_commitment_summary(allocations: 'RSEAllocation' | list,
+                                   from_date: date = None,
+                                   until_date: date = None,
+                                   percent_scaling = 1.0):
+        default_delta = timedelta(days=30*6)
+        if from_date is None:
+            from_date = date.today() - default_delta
+
+        if until_date is None:
+            until_date = date.today() + default_delta
+
+        if not isinstance(allocations, QuerySet):
+            # If it's a list item instead of a query object
+            # means multiple allocations have been passed
+            all_allocations = []
+            for allocation in allocations:
+                for item in allocation:
+                    all_allocations.append(item)
+            allocations = all_allocations
+
+
+        # Get all dates
+        all_dates = {from_date, until_date, date.today()}
+        for item in allocations:
+            all_dates.add(item.start)
+            all_dates.add(item.end)
+
+        # Convert to list and sort earliest first
+        all_dates = list(all_dates)
+        all_dates.sort()
+
+        out_allocs = {}
+        for item in allocations:
+            item_alloc = []
+            if item.start >= from_date:
+                # Don't add if before from_date
+                item_alloc.append({"x": item.start, "y": item.percentage * percent_scaling})
+            for alloc_date in all_dates:
+                if item.start < alloc_date < item.end and from_date <= alloc_date <= until_date:
+                    # Add allocation percentage for all dates between start and end
+                    item_alloc.append({"x": alloc_date, "y": item.percentage * percent_scaling})
+            if item.end <= until_date:
+                # Don't add if after until_date
+                item_alloc.append({"x": item.end, "y": 0})
+            out_allocs[item] = item_alloc
+
+        return out_allocs
+
+
+
+
+

@@ -1,0 +1,121 @@
+{% load static %}
+<!-- Commitment graph -->
+<script src="{% static 'chartjs/moment.2.30.1.js' %}"></script>
+<script src="{% static 'chartjs/chart4.umd.js' %}"></script>
+<script src="{% static 'chartjs/chartjs-adapter-moment.min.js' %}"></script>
+<script>
+	{% for plot_rse, commitments in stacked_commitment_data %}
+    let ctx{{ plot_rse.id }} = $('#commitment-graph-{{ plot_rse.id }}');
+    let myChart{{ plot_rse.id }} = new Chart(ctx{{ plot_rse.id }}, {
+            type: 'line',
+            data: {
+                datasets: [
+                {
+                    label: "Current Date Today",
+                    borderDash: [10,5] ,
+                    data: [
+
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"),
+                                "y": 0,
+                            },
+                            {
+                                "x": moment("{% now 'Y-m-d'%}"),
+                                "y": 100.0,
+                            },
+                    ],
+					borderColor: 'rgba(255, 0, 0, 1.0)',
+					fill: false,
+                    stack: "current_date",
+                },
+                {%  for alloc_item, allocations in  commitments.items %}
+                {
+                    label: "{{ alloc_item.project.name }}",
+					stepped: 'before',
+                    data: [
+                        {% for alloc in allocations %}
+                            {
+                                "x": moment("{{alloc.x | date:'Y-m-d'}}"),
+                                "y": {{alloc.y}},
+								{#tooltip: "{% for a in allocs %} {{a}},  {% endfor %}"#}
+                            },
+                        {% endfor %}
+                    ],
+					backgroundColor: 'rgba({{ alloc_item.project.colour_rbg.r }}, {{ alloc_item.project.colour_rbg.g }}, {{ alloc_item.project.colour_rbg.b }}, 1.0)',
+					borderColor: 'rgba({{ alloc_item.project.border_colour_rbg.r }}, {{ alloc_item.project.border_colour_rbg.g }}, {{ alloc_item.project.border_colour_rbg.b }}, 1.0)',
+					fill: "start",
+                    stack: "commitment"
+                },
+                {% endfor %}
+                ]
+            },
+            options: {
+				responsive: true,
+                maintainAspectRatio: false,
+				legend: {
+						display: true,
+					},
+				scales: {
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            beginAtZero:true,
+                            min: 0,
+
+                            callback: function(label, index, labels) {
+                                return label+'% FTE';
+                            },
+                        },
+                        suggestedMax: 100.0,
+                        suggestedMin: 0,
+
+                    },
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                            displayFormats: {
+                                quarter: 'D MMM YYYY'
+                            },
+
+                        },
+                        max: moment("{{until_date | date:'Y-m-d'}}"),
+                        suggestedMax: moment("{{until_date | date:'Y-m-d'}}"),
+                        min: moment("{{from_date | date:'Y-m-d'}}"),
+                        suggestedMin: moment("{{from_date | date:'Y-m-d'}}"),
+                    }
+                },
+                interaction: {
+                  mode: "nearest",
+                  axis: "x",
+                  intersect: false,
+                },
+                plugins: {
+                      tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+
+                                  return tooltipItem.formattedValue + "% " + tooltipItem.dataset.label;
+                                },
+                                footer: (tooltipItems) => {
+                                  let total = 0;
+                                  tooltipItems.forEach((item)=>{
+                                    total += Number(item.formattedValue);
+                                  })
+                                  return "Total " +  total + "% FTE"
+                                }
+                            },
+
+                            filter: function (tooltipItem){
+                              // Don't display the Current date line values on tooltip
+                              return tooltipItem.dataset.label !== "Current Date Today";
+                            }
+                        },
+
+                }
+
+            }
+    });
+  {% endfor %}
+
+</script>

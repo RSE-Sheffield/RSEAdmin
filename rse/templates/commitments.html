@@ -7,6 +7,7 @@
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: Team Commitment{% endblock %}
@@ -14,9 +15,6 @@
 {% block page_name %}RSE Group Administration Tool: Team Commitment{% endblock %}
 {% block content %}
 
-
-
-   
 	<div class ="row">
 			
 		<div class="col-md-9">
@@ -26,11 +24,18 @@
 					<li><a href="#tab_allocation" data-toggle="tab">Allocations (Project Gantt)</a></li>
 				</ul>
 				<div class="tab-content">
-					<div class="tab-pane active" id="tab_commitment">
-							<div style="float: right">
-								<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon" data-toggle="tooltip" title="" data-original-title="Expand/Contract View"></i></button>
-							</div>
-							<canvas id="commitmentChart" width="100%"></canvas>
+					<div class="tab-pane active" id="tab_commitment" style="padding: 0 1em">
+							{% for rse, allocation in stacked_commitment_data %}
+                            <div class="row">
+                                <div class="col" >
+                                    <h3>{{ rse.user.first_name }} {{ rse.user.last_name }}</h3>
+                                    <div style="position: relative; height: 300px; width: 100%; margin: 1em 0">
+                                        <canvas id="commitment-graph-{{ rse.id }}" ></canvas>
+                                    </div>
+
+                                </div>
+                            </div>
+                            {% endfor %}
 					</div>
 					
 					<div class="tab-pane" id="tab_allocation">
@@ -92,12 +97,8 @@
 {{ block.super}}
 
 {% include "includes/rsesgantt.html" with rses=rse_allocations %}
-
-{% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
-
+{% include "includes/commitmentgraph_stacked.html" with stacked_commitment_data=stacked_commitment_data from_date=from_date until_date=until_date%}
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
 
 
-    
-    
 {% endblock %}

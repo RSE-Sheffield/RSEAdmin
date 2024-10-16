@@ -175,7 +175,7 @@ def random_project_and_allocation_data():
             if p.fte-allocated == MIN_PROJECT_PERCENTAGE:
                 percentage = MIN_PROJECT_PERCENTAGE
             else:
-                percentage = random.randrange(MIN_PROJECT_PERCENTAGE, p.fte-allocated, PERCENTAGE_STEP) # 5% step
+                percentage = random.randrange(MIN_PROJECT_PERCENTAGE, int(p.fte-allocated), PERCENTAGE_STEP) # 5% step
                 # Create the allocation
             allocation = RSEAllocation(rse=r, 
                 project=p, 

@@ -6,15 +6,16 @@ authors = ["Paul Richmond <p.richmond@sheffield.ac.uk>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-Django = "^3.2"
-django-adminlte2 = "~0.4.1"
+python = "^3.11"
+Django = "^4.2"
+django-adminlte2 = "~0.4.3"
 django-polymorphic = "^3.1"
-gunicorn = {version = "^20.1", optional = true}
-psycopg2 = "^2.9"
+gunicorn = {version = "^22.0", optional = true}
+psycopg2 = "^2.9.9"
 mysqlclient = {version = "^2", optional = true}
-python-dateutil = "~2.8.2"
+python-dateutil = "~2.9.0"
 cryptography = "^39.0"
+setuptools = "69.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^3.0"
