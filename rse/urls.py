@@ -53,11 +53,11 @@ urlpatterns = [
     # View All Projects (list view)
     re_path(r'^projects$', projects.projects, name='projects'),
 
-    # Create Allocated Project view
+    # Create Project view
     re_path(r'^project/new$', projects.project_new, name='project_new'),
 
-    # Create Allocated Project view
-    re_path(r'^project/allocated/new$', projects.project_new_allocated, name='project_new_allocated'),
+    # Create DirectlyIncurred Project view
+    re_path(r'^project/directly_incurred/new$', projects.project_new_directly_incurred, name='project_new_directly_incurred'),
 
     # Create Service Project view
     re_path(r'^project/service/new$', projects.project_new_service, name='project_new_service'),
@@ -101,7 +101,9 @@ urlpatterns = [
     # Edit a client (and associated projects)
     re_path(r'^client/delete/(?P<pk>[0-9]+)$', clients.client_delete.as_view(), name='client_delete'),
 
-
+    # AJAX request to get all clients
+    re_path(r'^ajax/clients$', clients.ajax_get_all_clients, name='ajax_get_all_clients'),
+    
     ############
     ### RSEs ###
     ############

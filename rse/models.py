@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import math
 from datetime import date, timedelta
 from django.utils import timezone
 from math import floor
@@ -8,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import OperationalError, ProgrammingError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 from django.db.models import Max, Min, QuerySet
 from typing import Iterator, Union, TypeVar, Generic
@@ -28,7 +31,7 @@ T = TypeVar("T")
 
 class TypedQuerySet(Generic[T]):
     """
-    Django type hints for query sets are not typed (not very usefull).
+    Django type hints for query sets are not typed (not very useful).
     The following class can eb used to provide type information (see: https://stackoverflow.com/a/54797356)
     """
     def __iter__(self) -> Iterator[Union[T, QuerySet]]:
@@ -38,12 +41,13 @@ class TypedQuerySet(Generic[T]):
 class SalaryValue():
     """
     Class to represent a salary calculation.
-    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargable period)
+    Has a salary aa dictionary for each to log how the salary/overhead was calculated (for each chargeable period)
     """
     def __init__(self):
         self.staff_cost = 0
         self.cost_breakdown = []
         self.allocation_breakdown = {}
+        self.oncosts_multiplier = settings.ONCOSTS_SALARY_MULTIPLIER
 
     def add_staff_cost(self, salary_band, from_date: date, until_date: date, percentage: float = 100.0):
         cost_in_period = SalaryBand.salaryCost(days=(until_date - from_date).days, salary=salary_band.salary, percentage=percentage)
@@ -56,7 +60,7 @@ class SalaryValue():
         self.cost_breakdown.extend(salary_value.cost_breakdown)
 
     @property
-    def value(self) -> float:
+    def value(self) -> Decimal:
         return self.staff_cost * self.oncosts_multiplier
 
 
@@ -66,15 +70,25 @@ class FinancialYear(models.Model):
     """
     Year represents a financial year starting in August of the year field (not an academic year of Sept to Sept).
     """
+    
     year = models.IntegerField(primary_key=True)  # Must relate to a financial year
+    service_day_rate = models.DecimalField(max_digits=8, decimal_places=2, default=300)
+    """ Service day rate for the current financial year """
+    overheads_rate = models.DecimalField(max_digits=8, decimal_places=2, default=250)
+    """ Overheads rate pro rota for the current financial year """
+    
     
     def start_date(self) -> date:
         """Get start date of the financial year."""
+        
         return date(self.year, 8, 1)
+    
 
     def end_date(self) -> date:
         """Get end date of the financial year."""
-        return self.start_date() + timedelta(days=364)
+        
+        return self.start_date() + timedelta(days=365 if self.is_leap_year == True else 364)
+
 
     def date_in_financial_year(self, date: date) -> bool:
         """
@@ -82,6 +96,19 @@ class FinancialYear(models.Model):
         """
         return date >= self.start_date() and date <= self.end_date()
 
+
+    def is_leap_year(self) -> bool:
+        """ Check if the financial year includes a leap year (next year). """
+        
+        next_year = self.year + 1
+
+        # Leap year is divisible by 4. A century leap year is not divisible by 4 but 400.
+        if (next_year % 4 == 0) or (next_year % 400 == 0):
+            return True
+        
+        return False
+    
+    
     def __str__(self) -> str:
         return str(self.year)
 
@@ -139,8 +166,8 @@ class SalaryBand(models.Model):
 
     def salary_band_next_financial_year(self):
         """
-        Provides the salary and for the next financial year
-        Normal behavior is to use the next years financial data. If there is no next year financial data then the current years financial data is used.
+        Provides the salary band for the next financial year
+        Normal behaviour is to use the next years financial data. If there is no next year financial data then the current years financial data is used.
         Grade point should not change as this represents just the salary change in August which is the inflation adjustment.
         """
         # Query database to find a salary band for next years financial data
@@ -207,12 +234,12 @@ class SalaryBand(models.Model):
         return SalaryBand.spans_calendar_year(start, end) or SalaryBand.spans_financial_year(start, end)
 
     @staticmethod
-    def salaryCost(days, salary, percentage: float = 100.0) -> float:
+    def salaryCost(days, salary, percentage: float = 100.0) -> Decimal:
         """
         Returns the salary cost for a number of days given a salary and FTE percentage
         Multiples by the ON COSTS value
         """
-        return (days / 365.0) * float(salary) * (float(percentage) / 100.0) * settings.ONCOSTS_SALARY_MULTIPLIER
+        return Decimal(days / 365.0) * Decimal(salary) * Decimal(percentage / 100.0) * Decimal(settings.ONCOSTS_SALARY_MULTIPLIER)
 
     def staff_cost(self, start: date, end: date, percentage: float = 100.0) -> SalaryValue:
         """
@@ -225,7 +252,6 @@ class SalaryBand(models.Model):
         Note: Should only be used for costing project staff budget values (i.e. non allocated staff time) as 
         RSEs may have increments which need to be considered in the costing.
         """
-
         # Check for obvious stupid
         if end < start:
             raise ValueError('End date is before start date')
@@ -247,7 +273,6 @@ class SalaryBand(models.Model):
 
             # Update salary cost
             salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=temp_next_increment, percentage=percentage)
-
             # Calculate the next salary band
             # This cant be done before cost calculation salary_band_next_financial_year may modify the next_sb object
             if next_increment.month < 8:  # If date is before financial year then date range spans financial year
@@ -257,10 +282,9 @@ class SalaryBand(models.Model):
 
             # update chargeable period date and band
             next_increment = temp_next_increment
-
+        
         # Final salary cost for period not spanning a salary change
         salary_value.add_staff_cost(salary_band=next_sb, from_date=next_increment, until_date=end, percentage=percentage)
-
         return salary_value
 
 
@@ -394,10 +418,10 @@ class RSE(models.Model):
         else:
             return False
 
-    def staff_cost(self, from_date: date, until_date: date, percentage:float = 100):
+    def staff_cost(self, from_date: date, until_date: date, percentage: float = 100):
         """
         Calculates the staff cost  between a given period. This function must consider any increments, changes in financial
-        year as well as any additional salary grade changes. It works by iterating through chargable periods looking for 
+        year as well as any additional salary grade changes. It works by iterating through chargeable periods looking for 
         changes in staff salary. 
 
         This is different to a salary bad staff cost as it also considers salary grade changes which may be the result of
@@ -466,7 +490,7 @@ class RSE(models.Model):
 
         return salary_value
 
-    def days_from_budget(self, start: date, budget: float, percent: float) -> int:
+    def days_from_budget(self, start: date, budget: Decimal, percent: float) -> int:
         """
         Get the number of days which this RSE can be charged given a budget and FTE
         """
@@ -500,7 +524,7 @@ class RSE(models.Model):
                 sgc = temp_sgc
 
             # daily salary rate in span
-            span_dr = float(temp_salary_band.salary) / 365.0
+            span_dr = Decimal(temp_salary_band.salary) / 365.0
             span_days = (span_end - temp_start).days
             span_spend = span_dr * span_days * (percent / 100.0)
 
@@ -619,7 +643,7 @@ class SalaryGradeChange(models.Model):
         else:
             return False
 
-    def next_salary_grade_change(self, start: date, end: date) -> bool:
+    def next_salary_grade_change(self, start: date, end: date) -> Union[SalaryGradeChange, None]:
         """
         Returns the next salary grade change if there is one or None
         """
@@ -640,7 +664,7 @@ class SalaryGradeChange(models.Model):
 class Project(PolymorphicModel):
     """
     Project represents a project undertaken by RSE team.
-    Projects are not abstract but should not be initialised without using either a AllocatedProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
+    Projects are not abstract but should not be initialised without using either a DirectlyIncurredProject or ServiceProject (i.e. Multi-Table Inheritance). The Polymorphic django utility is used to make inheritance much cleaner.
     See docs: https://django-polymorphic.readthedocs.io/en/stable/quickstart.html
     """
     creator = models.ForeignKey(User, on_delete=models.PROTECT)
@@ -683,8 +707,8 @@ class Project(PolymorphicModel):
     )
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable and neither are non charged service projects. """
         pass
 
     @staticmethod
@@ -723,11 +747,11 @@ class Project(PolymorphicModel):
         """ Implemented by concrete classes."""
         pass
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """ Implemented by concrete classes."""
         pass
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """ Implemented by concrete classes. """
         pass
 
@@ -749,7 +773,7 @@ class Project(PolymorphicModel):
     @property
     def project_days(self) -> float:
         """ Duration times by fte """
-        return self.duration * self.fte / 100.0
+        return self.duration * (self.fte / 100.0)
 
     @property
     def committed_days(self) -> float:
@@ -872,19 +896,33 @@ class Project(PolymorphicModel):
         b = hash(self.end) % 255
         return {"r": r, "g": g, "b": b}
 
+    @property
+    def border_colour_rbg(self) -> Dict[str, int]:
+        return {colour_name: math.ceil(colour * 1.1) for colour_name, colour in self.colour_rbg.items()}
 
-class AllocatedProject(Project):
+
+class DirectlyIncurredProject(Project):
     """
-    AllocatedProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
-    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project
+    DirectlyIncurredProject is a cost recovery project used to allocate an RSE for a percentage of time given the projects start and end dates
+    Allocations may span beyond project start and end dates as RSE salary cost may be less than what was costed on project.
+    
+    Previously the 'Allocated' project, this model was renamed because it does not fit with terminology used at UoS. 
+    Allocated is generally an academic member of staff rather than charged to the grant.
     """
-    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])   # FTE percentage
-    overheads = models.DecimalField(max_digits=8, decimal_places=2)        # Overheads are a pro rata amount per year
-    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)  # Don't allow salary band deletion if there are allocations associated with it
+    
+    percentage = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(1000)])
+    """
+    FTE percentage for the project. This was increased from 100 because sometimes
+    there are more than 100% FTE spent on the project.
+    """
+    overheads = models.DecimalField(max_digits=8, decimal_places=2)
+    """Overheads are a pro rota amount per year."""
+    salary_band = models.ForeignKey(SalaryBand, on_delete=models.PROTECT)
+    """Don't allow salary band deletion if there are allocations associated with it."""
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable."""
+    def chargeable(self):
+        """ Indicates if the project is chargeable in a cost distribution. I.e. Internal projects are not chargeable."""
         return not self.internal
 
     @property
@@ -903,7 +941,7 @@ class AllocatedProject(Project):
         """ Calculated by adjusting duration by TRAC """
         return Project.fte_days_to_working_days(self.duration)* self.fte / 100.0
 
-    def value(self) -> float:
+    def value(self) -> Decimal:
         """
         Value represent staff costs and overhead is determined by project duration and salary cost of salary band used for costing
         """
@@ -913,7 +951,7 @@ class AllocatedProject(Project):
 
         return salary_costs.staff_cost + overheads
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """
         Function to calculate staff budget for an allocation project.
         Represents total of salary costs for duration of project
@@ -922,10 +960,10 @@ class AllocatedProject(Project):
 
         return salary_costs.staff_cost
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> float:
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """
         Function calculates the value of any overheads generated.
-        For allocated projects this is based on duration and a fixed overhead rate.
+        For directly incurred projects this is based on duration and a fixed overhead rate.
         Cap the from and end dates according to the project as certain queries may have dates based on financial years rather than project dates
         """
 
@@ -948,7 +986,7 @@ class AllocatedProject(Project):
         """
         Returns a plain string representation of the project type
         """
-        return "Allocated"
+        return "Directly Incurred"
 
     @property
     def is_service(self) -> bool:
@@ -965,30 +1003,37 @@ class ServiceProject(Project):
     """
     ServiceProject is a number of service days in which work should be undertaken. The projects dates set parameters for which the work can be undertaken but do not define the exact dates in which the work will be conducted. An allocation will convert the service days into an FTE equivalent so that time can be scheduled including holidays.
     """
-    days = models.IntegerField(default=1)                           # duration in days
-    rate = models.DecimalField(max_digits=8, decimal_places=2)      # service rate
-    charged = models.BooleanField(default=True)                     # Should staff time be charged to serice account
+    days = models.DecimalField(default=1, decimal_places=1, max_digits=5)
+    """ Duration of the project in days. """
+    rate = models.DecimalField(max_digits=8, decimal_places=2)
+    """ Service rate """
+    charged = models.BooleanField(default=True)
+    """ Should staff time be charged to service account """
     invoice_received = models.DateField(null=True, blank=True)
+    """ Whether the invoice is received, if yes, specifies the date. """
 
     @property
-    def chargable(self):
-        """ Indicates if the project is chargable in a cost distribution. I.e. Internal projects are not chargable and neither are non charged service projects. """
-        return not self.internal and charged
+    def chargeable(self):
+        """ 
+        Indicates if the project is chargeable in a cost distribution. 
+        I.e. Internal projects are not chargeable and neither are non charged service projects. 
+        """
+        return not self.internal and self.charged
 
     @staticmethod
-    def days_to_fte_days(days: int) -> int:
+    def days_to_fte_days(days: Decimal) -> int:
         """
         Duration is determined by number of service days adjusted for weekends and holidays
         This maps service days (of which there are a fixed number if working days which are in settings file) to a FTE duration
         Assumes WORKING_DAYS_PER_YEAR > 0. If you set this as zero your an idiot. 
         """
-        return floor(days * (365.0 / settings.WORKING_DAYS_PER_YEAR))
+        return floor(days * (Decimal(365.0) / settings.WORKING_DAYS_PER_YEAR))
 
     
     @property
     def duration(self) -> int:
         """
-        Use the avilable static method to convert days to FTE days
+        Use the available static method to convert days to FTE days
         """
         return ServiceProject.days_to_fte_days(self.days)
 
@@ -997,20 +1042,20 @@ class ServiceProject(Project):
         """ Number of paid service days """
         return self.days
 
-    def value(self) -> float:
+    def value(self) -> Decimal:
         """
         Value is determined by service days multiplied by rate
         """
-        return self.days * float(self.rate)
+        return self.days * Decimal(self.rate)
 
-    def staff_budget(self) -> float:
+    def staff_budget(self) -> Decimal:
         """
         Service projects don't have a staff budget as they have a number of service days.
         Returns the project value (which includes overheads) which could in theory be entirely used to fund staff time.
         """
         return self.value()
 
-    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None):
+    def overhead_value(self, from_date: date = None, until_date: date = None, percentage: float = None) -> Decimal:
         """
         Function calculates the value of any overheads generated.
         For service projects there is no overhead just a surplus depending on staff costs and invoice date. As such this function should not be used for service projects.
@@ -1203,3 +1248,57 @@ class RSEAllocation(models.Model):
 
         # Return list of unique (date, effort, [RSEAllocation])
         return list(zip(unique_dates, unique_effort, unique_cumulative_allocations))
+
+    @staticmethod
+    def stacked_commitment_summary(allocations: 'RSEAllocation' | list,
+                                   from_date: date = None,
+                                   until_date: date = None,
+                                   percent_scaling = 1.0):
+        default_delta = timedelta(days=30*6)
+        if from_date is None:
+            from_date = date.today() - default_delta
+
+        if until_date is None:
+            until_date = date.today() + default_delta
+
+        if not isinstance(allocations, QuerySet):
+            # If it's a list item instead of a query object
+            # means multiple allocations have been passed
+            all_allocations = []
+            for allocation in allocations:
+                for item in allocation:
+                    all_allocations.append(item)
+            allocations = all_allocations
+
+
+        # Get all dates
+        all_dates = {from_date, until_date, date.today()}
+        for item in allocations:
+            all_dates.add(item.start)
+            all_dates.add(item.end)
+
+        # Convert to list and sort earliest first
+        all_dates = list(all_dates)
+        all_dates.sort()
+
+        out_allocs = {}
+        for item in allocations:
+            item_alloc = []
+            if item.start >= from_date:
+                # Don't add if before from_date
+                item_alloc.append({"x": item.start, "y": item.percentage * percent_scaling})
+            for alloc_date in all_dates:
+                if item.start < alloc_date < item.end and from_date <= alloc_date <= until_date:
+                    # Add allocation percentage for all dates between start and end
+                    item_alloc.append({"x": alloc_date, "y": item.percentage * percent_scaling})
+            if item.end <= until_date:
+                # Don't add if after until_date
+                item_alloc.append({"x": item.end, "y": 0})
+            out_allocs[item] = item_alloc
+
+        return out_allocs
+
+
+
+
+

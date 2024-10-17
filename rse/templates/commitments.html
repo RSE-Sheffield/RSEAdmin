@@ -7,6 +7,7 @@
 {{ block.super}}
 <link rel="stylesheet" type="text/css" href="{% static 'jsGanttImproved/jsgantt.css' %}" />
 <link rel="stylesheet" type="text/css" href="{% static 'daterangepicker/daterangepicker.css' %}" />
+
 {% endblock %}
 
 {% block title %}RSE Group Administration Tool: Team Commitment{% endblock %}
@@ -14,23 +15,27 @@
 {% block page_name %}RSE Group Administration Tool: Team Commitment{% endblock %}
 {% block content %}
 
-
-
-   
-    <div class ="row">
-        
-        <div class="col-md-9">
+	<div class ="row">
+			
+		<div class="col-md-9">
 			<div class="nav-tabs-custom">
 				<ul class="nav nav-tabs">
 					<li class="active"><a href="#tab_commitment" data-toggle="tab">Commitment (RSE FTE)</a></li>
 					<li><a href="#tab_allocation" data-toggle="tab">Allocations (Project Gantt)</a></li>
 				</ul>
 				<div class="tab-content">
-					<div class="tab-pane active" id="tab_commitment">
-							<div style="float: right">
-								<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon" data-toggle="tooltip" title="" data-original-title="Expand/Contract View"></i></button>
-							</div>
-							<canvas id="commitmentChart" width="100%"></canvas>
+					<div class="tab-pane active" id="tab_commitment" style="padding: 0 1em">
+							{% for rse, allocation in stacked_commitment_data %}
+                            <div class="row">
+                                <div class="col" >
+                                    <h3>{{ rse.user.first_name }} {{ rse.user.last_name }}</h3>
+                                    <div style="position: relative; height: 300px; width: 100%; margin: 1em 0">
+                                        <canvas id="commitment-graph-{{ rse.id }}" ></canvas>
+                                    </div>
+
+                                </div>
+                            </div>
+                            {% endfor %}
 					</div>
 					
 					<div class="tab-pane" id="tab_allocation">
@@ -39,63 +44,61 @@
 				</div>
 			</div>
 
-          
-        </div>
+		</div>
 		
 		<div class="col-md-3">
-          <div class="box box-default">
-            <div class="box-header with-border">
-              <h3 class="box-title">Filter</h3>
+			<div class="box box-default">
+				<div class="box-header with-border">
+					<h3 class="box-title">Filter</h3>
 			  <div class="box-tools pull-right">
 					<button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
 					</button>
 				</div>
-            </div>
+			</div>
 			<form method='GET' id="filter_form">
 				<div class="box-body">
 				  <div class="form-group">
 					
-					<label>Date range:</label>
-					<p><i>Will show any projects which have any time within the selected date range</i><p>
-					<div class="input-group">
-					  <div class="input-group-addon">
-						<i class="fa fa-calendar"></i>
-					  </div>
-					  {{ form.filter_range }}
-					</div>
-					</br>
-					
+						<label>Date range:</label>
+						<p><i>Will show any projects which have any time within the selected date range</i><p>
+						<div class="input-group">
+							<div class="input-group-addon">
+								<i class="fa fa-calendar"></i>
+							</div>
+							{{ form.filter_range }}
+						</div>
+						</br>
+
+						<label>Funding Status</label>
+						<p><i>Filter projects based current funding status</i></p>
+						{{ form.status }}
 						
-					<label>Funding Status</label>
-					<p><i>Filter projects based current funding status</i></p>
-					{{ form.status }}
-					</br>
-					
+						<br/><br/><br/>
+						
+						<label>RSE Employment Status</label>
+						<p><i>Filter projects based on whether RSE is currently employed.</i></p>
+						{{ form.rse_in_employment }}
+						</br>
+						
 				  </div>
 				</div>
 				<div class="box-footer">
 					<button type="submit" class="btn btn-primary">Apply</button>
 				</div> {{temp}}
 			</form>
-          </div>
-        </div>
-		
-    </div>
+		</div>
+
+	</div>
+
     
-    
- 
 {% endblock %}
 
 {% block javascript %}
 {{ block.super}}
 
 {% include "includes/rsesgantt.html" with rses=rse_allocations %}
-
-{% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
-
+{% include "includes/commitmentgraph_stacked.html" with stacked_commitment_data=stacked_commitment_data from_date=from_date until_date=until_date%}
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
 
 
-    
-    
 {% endblock %}

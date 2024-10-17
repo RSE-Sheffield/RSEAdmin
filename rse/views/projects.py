@@ -71,14 +71,12 @@ def project(request: HttpRequest, project_id) -> HttpResponse:
     # append salary and costs information for template
     append_project_and_allocation_costs(request, proj, allocations)
 
-	
 
     return render(request, 'project.html', view_dict)
 
 
 @login_required
 def project_new(request: HttpRequest) -> HttpResponse:
-
     # Dict for view
     view_dict = {}  # type: Dict[str, object]
     
@@ -87,8 +85,8 @@ def project_new(request: HttpRequest) -> HttpResponse:
         form = ProjectTypeForm(request.POST)
         if form.is_valid():
             type = form.cleaned_data['type']
-            if type == 'A':
-                return project_new_allocated(request)
+            if type == 'D':
+                return project_new_directly_incurred(request)
             else:
                 return project_new_service(request)
     else:
@@ -100,14 +98,15 @@ def project_new(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
-def project_new_allocated(request: HttpRequest) -> HttpResponse:
+def project_new_directly_incurred(request: HttpRequest) -> HttpResponse:
 
     # Dict for view
     view_dict = {}  # type: Dict[str, object]
     
     # process or create form
     if request.method == 'POST' and 'project_submit' in request.POST:
-        form = AllocatedProjectForm(request.POST)
+        form = DirectlyIncurredProjectForm(request.POST)
+
         if form.is_valid():
             # Save to DB (add project as not a displayed field)
             new_proj = form.save()
@@ -118,8 +117,10 @@ def project_new_allocated(request: HttpRequest) -> HttpResponse:
                 return HttpResponseRedirect(next)
             else:
                 return HttpResponseRedirect(reverse_lazy('project', kwargs={'project_id': new_proj.id}))
+        else:
+            logger.info(form.errors)
     else:
-        form = AllocatedProjectForm()
+        form = DirectlyIncurredProjectForm()
         # If request has a client id then automatically set this in the initial form data
         client_id = request.GET.get('client', None)
         if client_id:
@@ -133,7 +134,7 @@ def project_new_allocated(request: HttpRequest) -> HttpResponse:
 
     view_dict['form'] = form
     
-    return render(request, 'project_allocated_new.html', view_dict)
+    return render(request, 'project_directly_incurred_new.html', view_dict)
 
 @login_required
 def project_new_service(request: HttpRequest) -> HttpResponse:
@@ -182,9 +183,9 @@ def project_edit(request: HttpRequest, project_id) -> HttpResponse:
     view_dict = {}  # type: Dict[str, object]
     
     # depending on project type change the form and template
-    if isinstance(proj, AllocatedProject):
-        formclass = AllocatedProjectForm
-        template = 'project_allocated_new.html'
+    if isinstance(proj, DirectlyIncurredProject):
+        formclass = DirectlyIncurredProjectForm
+        template = 'project_directly_incurred_new.html'
     else :
         formclass = ServiceProjectForm
         template = 'project_service_new.html'

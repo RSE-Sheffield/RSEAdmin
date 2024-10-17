@@ -11,7 +11,7 @@ The tool is a web app written using the [Django][django] web framework (Python) 
 
 This readme covers installation, getting started and access to the demo site. Please refer to the [User Guide][userguide] documentation for a description of features.
 
-# Demo site
+## Demo site
 
 A live version of the tool is available online at:
 
@@ -20,6 +20,67 @@ A live version of the tool is available online at:
 You can log in as either an RSE user (username of `user[0-9]` with password `12345`) or as an admin (username of `rseadmin` with password `demosite`).
 
 The site is populated with random demo data which is reset at midnight every night.
+
+## Contributing
+
+For any new code you should create a new branch from the `dev` branch and create a pull request to merge into it. The `main` branch will be the default branch for deployment and should only have pull requests from the `dev` branch. Only stable changes can merge into the `main` branch.
+
+```mermaid
+graph LR
+
+fb1[feat/new-shiny-feature] --PR--> dev
+fixb1[fix/project-problem] --PR--> dev
+fb2[feat/another-feature] --PR--> dev
+dev --PR, merge if tested and stable--> main
+dev --deploy--> ds[DEV server]
+main --deploy--> ps[PROD server]
+```
+
+## Development using docker containers
+
+You'll need to install [Docker](https://www.docker.com/), this can be done by either install Docker Desktop, or just the Docker Engine.
+
+Use the following command to build images:
+
+```bash
+docker compose build --pull
+```
+
+Run containers:
+
+```bash
+docker compose up -d
+```
+
+Setup Postgres database using the script:
+
+```bash
+docker-compose exec --user postgres db sh /tmp/db_init.sh
+```
+
+This script will create a user `django` with password `django_postgres` with an associated database called `django`.
+
+You can also setup the database manually using the following commands:
+
+```bash
+# Create the user, you'll need to enter the password
+# https://www.postgresql.org/docs/current/app-createuser.html
+docker-compose exec --user postgres db createuser --pwprompt django
+```
+
+And create their database:
+
+```bash
+docker-compose exec --user postgres db createdb --owner=django django
+```
+
+Then use the commands from the [next section](#development-install-using-poetry) to build the database, collect static files, create an admin user etc. For example:
+
+```bash
+docker compose exec app poetry run python manage.py migrate
+```
+
+You do not need to run the command for running the server, as it will be handled via the commands in the container image and in the docker-compose file.
 
 ## Development install using Poetry
 
@@ -83,7 +144,6 @@ The website will then be viewable at [http://127.0.0.1:8080](http://127.0.0.1:80
 All pages of the site require logging in. You can use your super user account or if you have generated some random data you can use the RSE users user0-user10 with the password '12345'.
 
 The site has a self explanatory navigation menu which varies depending on the permissions of the user.
-
 
 ## Testing
 
@@ -201,3 +261,10 @@ A [separate repo is available](https://github.com/RSE-Sheffield/rseadmin-ansible
 [virtualenv]: https://virtualenv.pypa.io/en/latest/
 [poetry]: https://poetry.eustace.io/
 [userguide]: https://rseadmin.readthedocs.io/en/latest/
+
+
+## Other notes
+
+### Styling
+
+[Django Adminlte2](https://django-adminlte2.readthedocs.io/en/stable/) for the overall theming. The version of Adminlte2 used in this app is using Bootstrap v3.3.7.

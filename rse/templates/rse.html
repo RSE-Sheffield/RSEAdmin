@@ -21,14 +21,14 @@
           <div class="box box-solid">
             <div class="box-header with-border">
               <h3 class="box-title"> FTE Commitment Overview for {{rse}}</h3>
-			  <div style="float: right">
-				
-					<button id="commitment_graph_scale"  type="submit" class="btn btn-block btn-default btn-xs"><i class="fa fa-expand" id="commitment_graph_scale_icon"></i></button>
-				
-			  </div>
             </div>
-            <div class="box-body">
-              <canvas id="commitmentChart" width="100%"></canvas>
+
+            <div class="box-body" style="height: 400px">
+                {% if stacked_commitment_data %}
+                <canvas id="commitment-graph-{{ stacked_commitment_data.0.0.id }}" width="100%"></canvas>
+                {% else %}
+                No allocations in selected time period
+                {% endif %}
             </div>
           </div>
         </div>
@@ -57,6 +57,14 @@
 					<p><i>Filter projects based current funding status</i></p>
 					{{ form.status }}
 					</br>
+
+
+
+                    <label>RSE Employment Status</label>
+                    <p><i>Filter projects based on whether RSE is currently employed.</i></p>
+                    {{ form.rse_in_employment }}
+                    </br>
+
 					
 				  </div>
 				</div>
@@ -88,10 +96,11 @@
 {{ block.super}}
 
 {% include "includes/rsesgantt.html" with rses=rses %}
-
-{% include "includes/commitmentgraph.html" with commitment_data=commitment_data canvas_id="commitmentChart" scale_button_id="commitment_graph_scale"%}
-
+{% if stacked_commitment_data %}
+{% include "includes/commitmentgraph_stacked.html" with stacked_commitment_data=stacked_commitment_data from_date=from_date until_date=until_date%}
+{% endif %}
 {% include "includes/daterangepicker.html" with filter_form=form html_form="filter_form" %}
+
 
 
     

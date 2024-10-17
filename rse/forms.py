@@ -1,17 +1,26 @@
+from typing import Any, Dict, Iterable, Mapping
 from django import forms
 from datetime import datetime, timedelta
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.utils.html import format_html
+import logging
 
 from .models import *
 
+logger = logging.getLogger(__name__)
 
 class DateRangeField(forms.Field):
     """
     Class is used to extend a text field by being able to parse the text and extract the date ranges
     init function used to store min and max date for future use without querying database
     If validation fails then min max date range is returned
+    
+    The date string should be one of the following formats:
+    - "yyyy-MM-dd"
+    - "dd/MM/yyyy"
+    
     """
 
     def __init__(self, *args, **kwargs):
@@ -30,18 +39,39 @@ class DateRangeField(forms.Field):
 
         # create a list of date items (one for start and one for until)
         fromuntil = value.split(' - ')
+        
         if len(fromuntil) != 2:
             return [self.min_date, self.max_date]
+        
         try:
             date_from = datetime.strptime(fromuntil[0], '%d/%m/%Y').date()
             date_until = datetime.strptime(fromuntil[1], '%d/%m/%Y').date()
         except ValueError:
-            return [self.min_date, self.max_date]
+            # try with different date format
+            try:
+                date_from = datetime.strptime(fromuntil[0], '%Y-%m-%d').date()
+                date_until = datetime.strptime(fromuntil[1], '%Y-%m-%d').date()
+            except ValueError:
+                return [self.min_date, self.max_date]
+        
         return [date_from, date_until]
 
     def validate(self, value):
         if len(value) != 2:
             forms.ValidationError('Date range is in wrong format')
+
+
+class UsersFilterForm(forms.Form):
+    """
+    Class represents a filter form for filtering by Active and Staff status
+    Values for options does not use database character keys as tables are filtered directly at client side (in the data table)
+    """
+
+    active_filter = forms.ChoiceField(
+        choices=(('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        widget=forms.Select(attrs={'class': 'form-control'}))
+    staff_filter = forms.ChoiceField(choices= (('', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+                                      widget=forms.Select(attrs={'class': 'form-control'}))
 
 
 class FilterDateRangeForm(forms.Form):
@@ -69,7 +99,7 @@ class FilterDateRangeForm(forms.Form):
 
     @property
     def years(self):
-        return FinancialYear.objects.all()
+        return FinancialYear.objects.all().order_by('year')
 
 
 class FilterDateForm(forms.Form):
@@ -95,7 +125,7 @@ class ProjectTypeForm(forms.Form):
     Extends the filter range form by adding type and status fields
     """
 
-    type = forms.ChoiceField(choices=(('S', 'Service'), ('A', 'Allocated')),
+    type = forms.ChoiceField(choices=(('S', 'Service'), ('D', 'Directly Incurred')),
                              widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 
 
@@ -108,11 +138,19 @@ class FilterProjectForm(FilterDateRangeForm):
     """
     status = forms.ChoiceField(
         choices=(
-            ('U', 'Funded, Review and in Preperation'),
+            ('U', 'Funded, Review and in Preparation'),
             ('A', 'All'),
             ('L', 'Funded and Review')) +
             Project.STATUS_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control pull-right'}))
+        initial='F',
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
+    
+    rse_in_employment = forms.ChoiceField(
+        choices=(('All', 'All'), ('Yes', 'Yes'), ('No', 'No')),
+        initial="All",
+        widget=forms.Select(attrs={'class': 'form-control pull-right'})
+    )
     # Type cant be filtered at database level as it is a property
     # type = forms.ChoiceField(choices = (('A', 'All'), ('F', 'Allocated'), ('S', 'Service')), widget=forms.Select(attrs={'class': 'form-control pull-right'}))
 
@@ -124,7 +162,7 @@ class ProjectsFilterForm(forms.Form):
     Values for options doe not use database character keys as tables are filtered directly at client side (in the data table)
     """
 
-    type_filter = forms.ChoiceField(choices=(('', 'All'), ('Allocated', 'Allocated Only'), ('Service', 'Service Only')),
+    type_filter = forms.ChoiceField(choices=(('', 'All'), ('Directly Incurred', 'Directly Incurred Only'), ('Service', 'Service Only')),
                                     widget=forms.Select(attrs={'class': 'form-control'}))
     status_filter = forms.ChoiceField(choices= (('', 'All'),) + Project.STATUS_CHOICES_TEXT_KEYS,
                                       widget=forms.Select(attrs={'class': 'form-control'}))
@@ -234,7 +272,100 @@ class ProjectAllocationForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class AllocatedProjectForm(forms.ModelForm):
+class RatesWidget(forms.MultiWidget):
+    """MultiWidget for Rates
+    Note that in the request.POST object, values for each widget are stored in '{widget_name}_{index}'.
+    
+    Example: {'overheads_0': '300', 'overheads_1': '0'}
+    
+    https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.MultiWidget
+    
+    Parameters
+    ----------
+    attrs: Dict
+        Attributes of the widget
+    rate_type: str
+        This should correspond to the rate field in the corresponding Project model.
+        E.g. 'overheads' in Directly Incurred.
+    """
+        
+    def __init__(self, attrs=None, rate_type='overheads'):
+        placeholder_text = "Enter a custom rate. Clear this field if you do not want to use this."
+        
+        widgets = [
+            forms.Select(attrs=attrs, choices=[]),  # Set an empty choices list for now
+            forms.NumberInput(attrs=dict(
+                **attrs, 
+                step='0.01', 
+                type='number', 
+                placeholder=placeholder_text,
+                title=placeholder_text,
+                required=False
+                )
+            ),
+        ]
+
+        self.rate_type = rate_type
+        super().__init__(widgets, attrs)
+
+    def decompress(self, value):
+        """ 
+        Set initial values for the widgets.
+        This method must be implemented.
+        """
+        if value:
+            try:
+                value_select = value[0]
+                value_input = value[1]
+            except Exception as e:
+                raise(f'Failed to get values when decompress: {e}')
+            return [value_select, value_input]
+        return [None, None]
+
+    
+    def value_from_datadict(self, data: Dict[str, Any], files: Mapping[str, Iterable[Any]], name: str) -> Any:
+        """This is required for the clean method to work
+        https://docs.djangoproject.com/en/3.2/ref/forms/widgets/#django.forms.Widget.value_from_datadict
+        """
+        if name != self.rate_type:
+            return super().value_from_datadict(data, files, name)
+        
+        value_input = data.get(f'{self.rate_type}_1', None)
+        value_select = data.get(f'{self.rate_type}_0', None)
+        
+        if value_input:
+            return value_input
+        if value_select:
+            return value_select
+        return None
+        
+    def render(self, name, value, attrs=None, renderer=None):
+        """ Customise the rendering of the RatesWidget """
+        # Set initial values for both widgets
+        if value is None:
+            value = [None, None]
+        
+        # When editing the project there is only one overheads value, assign it to both widgets
+        # TODO: maybe consider to find out the overheads matches any of FY
+        if isinstance(value, Decimal):
+            value = [value, value]
+            
+        select_html = self.widgets[0].render(f"{name}_0", value[0], attrs, renderer)
+        
+        # Not required for the input element
+        attrs.pop('required')
+        input_html = self.widgets[1].render(f"{name}_1", value[1], attrs, renderer)
+
+        return f'''
+            <div class="rates-widget">
+                {select_html}
+                <strong style="margin: 5px 0; display: block">Or enter the rate manually:</strong>
+                {input_html}
+            </div>
+        '''
+
+
+class DirectlyIncurredProjectForm(forms.ModelForm):
     """
     Class for creation and editing of a project
     """
@@ -242,9 +373,21 @@ class AllocatedProjectForm(forms.ModelForm):
     # Fields are created manually to set the date input format
     start = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
     end = forms.DateField(widget=forms.DateInput(format = ('%d/%m/%Y'), attrs={'class' : 'form-control'}), input_formats=('%d/%m/%Y',))
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    class Meta:
-        model = AllocatedProject
+        # Retrieve the recent financial years and their overheads rates
+        recent_fys = FinancialYear.objects.order_by('-year')
+        years_overheads = recent_fys.values_list('overheads_rate', 'year')
+        years_overheads = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_overheads)
+        
+        # Update the choices for the 'overheads_options' field
+        self.fields['overheads'].widget.widgets[0].choices = years_overheads
+
+        
+    class Meta:    
+        model = DirectlyIncurredProject
         fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'percentage', 'overheads', 'salary_band', 'created', 'creator']
         widgets = {
             'proj_costing_id': forms.TextInput(attrs={'class': 'form-control'}),
@@ -254,23 +397,38 @@ class AllocatedProjectForm(forms.ModelForm):
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices=Project.STATUS_CHOICES, attrs={'class': 'form-control pull-right'}),
             'percentage': forms.NumberInput(attrs={'class': 'form-control'}),
-            'overheads': forms.NumberInput(attrs={'class': 'form-control'}),
+            'overheads': RatesWidget(attrs={'class': 'form-control'}),
             'salary_band': forms.Select(attrs={'class': 'form-control'}),
             'creator': forms.HiddenInput(),
             'created': forms.HiddenInput(),
         }
 
-    def clean(self):
-        cleaned_data = super(AllocatedProjectForm, self).clean()
+    def clean(self):   
+        cleaned_data = super(DirectlyIncurredProjectForm, self).clean()
         errors = {}
 
         # Validation checks that the dates are correct (no need to raise errors if fields are empty as they are required so superclass will have done this)
         if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end']:
                 errors['end'] = ('Project end date can not be before start date')
-
+        
         if errors:
             raise ValidationError(errors)
+        
+        return cleaned_data
+
+    
+    def clean_overheads(self):
+        overheads_select = self.data['overheads_0'] or None
+        overheads_input = self.data['overheads_1'] or None
+
+        if overheads_input:
+            return overheads_input
+        if overheads_select:
+            return overheads_select
+        
+        raise forms.ValidationError('Overheads: Please select or enter a valid number.')
+
 
     def clean_start(self):
         """
@@ -324,6 +482,17 @@ class ServiceProjectForm(forms.ModelForm):
                                        input_formats=('%d/%m/%Y',),
                                        required=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Retrieve the recent financial years and their service day rates
+        recent_fys = FinancialYear.objects.order_by('-year')
+        years_service_rate = recent_fys.values_list('service_day_rate', 'year')
+        years_service_rate = list((rate, f'£{rate} - FY{fy}') for rate, fy in years_service_rate)
+        
+        # Update the choices for the 'rate' field
+        self.fields['rate'].widget.widgets[0].choices = years_service_rate
+        
     class Meta:
         model = ServiceProject
         fields = ['proj_costing_id', 'name', 'description', 'client', 'internal', 'start', 'end', 'status', 'days', 'rate', 'charged', 'invoice_received', 'created', 'creator']
@@ -334,8 +503,8 @@ class ServiceProjectForm(forms.ModelForm):
             'client': forms.Select(attrs={'class': 'form-control'}),
             'internal': forms.CheckboxInput(),
             'status': forms.Select(choices=Project.STATUS_CHOICES, attrs={'class': 'form-control pull-right'}),
-            'days': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'days': forms.NumberInput(attrs={'class': 'form-control', 'title': 'New feature: you can now assign fractional of a day, e.g. 0.5 days.'}),
+            'rate': RatesWidget(attrs={'class': 'form-control'}, rate_type='rate'),
             'charged': forms.CheckboxInput(),
             'creator': forms.HiddenInput(),
             'created': forms.HiddenInput(),
@@ -417,7 +586,7 @@ class ClientForm(forms.ModelForm):
         model = Client
         fields = ['name', 'department', 'description']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'id': 'autoComplete'}),
             'department': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
         }
@@ -598,6 +767,16 @@ class NewSalaryBandForm(forms.ModelForm):
         }
 
 
+class UpdateRatesForm(forms.ModelForm):        
+    class Meta:
+        model = FinancialYear
+        fields = ['overheads_rate', 'service_day_rate']
+        widgets = {
+            'overheads_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'service_day_rate': forms.NumberInput(attrs={'class': 'form-control'})
+        }
+
+
 class NewFinancialYearForm(forms.ModelForm):
     """
     Class represents a form for creating a new salary band with a given year
@@ -609,13 +788,15 @@ class NewFinancialYearForm(forms.ModelForm):
 
     class Meta:
         model = FinancialYear
-        fields = ['year']
+        fields = ['year', 'overheads_rate', 'service_day_rate']
         widgets = {
             'year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'overheads_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'service_day_rate': forms.NumberInput(attrs={'class': 'form-control'})
         }
 
     def save(self, commit=True):
-        """ Override to copy salary band data from previous finanical year """
+        """ Override to copy salary band data from previous financial year """
         financial_year = super(NewFinancialYearForm, self).save(commit=False)
 
         if commit:

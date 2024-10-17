@@ -39,10 +39,10 @@
 					<tbody>
 						{% for p in projects %}
 						<tr>
-							<td>{{ p.id }}</td>
+							<td><a href="{% url 'project' p.id %}">{{ p.id }}</a></td>
 							<td>{{ p.type_str }}</td>
 							<td><input type="checkbox" disabled {% if p.internal %}checked{% endif %}></input></td>
-							<td>{{ p.name }}</td>
+                            <td><a href="{% url 'project' p.id %}">{{ p.name }}</a></td>
 							<td><span class="label {{ p.status|projectstatuslabel }}">{{ p.get_status_display }}</span></td>
 							<td>{{ p.duration }}</td>
 							<td>{{ p.fte }}</td>
@@ -77,7 +77,6 @@
 				</div>
 			</div>
 			<div class="box-body">
-				
 				
 				<div class="form-group">
 					<label>Project Type</label>

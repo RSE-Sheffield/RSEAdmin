@@ -19,3 +19,8 @@ secrets.json
 #that isn't
 !.gitignore
 !.github
+
+dist/
+
+# Docker container volumes
+volumes

@@ -8,8 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
-        os: [ubuntu-18.04]
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -27,6 +27,10 @@ jobs:
           sudo tar -zxf /tmp/gd.tgz -C /usr/local/share
           sudo chmod +x /usr/local/share/geckodriver
           sudo ln -s /usr/local/share/geckodriver /usr/local/bin/geckodriver
+
+      - name: Collect static files
+        run: |
+          poetry run python manage.py collectstatic
 
       - name: Run tests and capture coverage stats
         run: |

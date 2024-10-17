@@ -35,6 +35,12 @@ def setup_user_and_rse_data():
     rse = RSE(user=user)
     rse.employed_until = date(2025, 10, 1)
     rse.save()
+    
+    # create a user to test a project over 100 FTE
+    user = User.objects.create_user(username='testuser4', password='12345')
+    rse = RSE(user=user)
+    rse.employed_until = date(2027, 10, 1)
+    rse.save()
 
 
 def setup_salary_and_banding_data():
@@ -98,12 +104,14 @@ def setup_salary_and_banding_data():
     sb15_2019.save()
 
     # Create salary grade changes (requires that an RSE has been created in database)
+    # The following assign grade 1.1 to RSE at 08/2017, then increment to grade 1.3 at 08/2018
     sgc1 = SalaryGradeChange(rse=rse, salary_band=sb11_2017, date=sb11_2017.year.start_date())
     sgc1.save()
     sgc2 = SalaryGradeChange(rse=rse, salary_band=sb13_2018, date=sb13_2018.year.start_date())
     sgc2.save()
 
     # Create a salary grade change on 1st january to test for double increments
+    # The following assign grade 1.1 to RSE2 at 1/1/2018, then increment to grade 1.3 at 1/1/2019
     rse2 = RSE.objects.get(user__username='testuser2')
     sgc3 = SalaryGradeChange(rse=rse2, salary_band=sb11_2017, date=date(2018, 1, 1)) 
     sgc3.save()
@@ -115,7 +123,11 @@ def setup_salary_and_banding_data():
     sgc4 = SalaryGradeChange(rse=rse3, salary_band=sb11_2019, date=sb11_2019.year.start_date()) 
     sgc4.save()
 
-
+    rse4 = RSE.objects.get(user__username='testuser4')
+    sgc5 = SalaryGradeChange(rse=rse4, salary_band=sb15_2018, date=date(2018, 1, 1)) 
+    sgc5.save()
+    sgc6 = SalaryGradeChange(rse=rse4, salary_band=sb15_2019, date=date(2019, 1, 1))
+    sgc6.save()
     
 
 def setup_project_and_allocation_data():
@@ -128,18 +140,21 @@ def setup_project_and_allocation_data():
     
     # get expected salary band from database
     sb15_2017 = SalaryBand.objects.get(grade=1, grade_point=5, year=2017)
+    sb15_2018 = SalaryBand.objects.get(grade=1, grade_point=5, year=2018)
     # get user from database
     user = User.objects.get(username='testuser')
+    user3 = User.objects.get(username='testuser3')
     # get rse from database
     rse = RSE.objects.get(user=user)
+    rse3 = RSE.objects.get(user=user3)
 
-    # create some test projects
+    # create a client and some test projects
     c = Client(name="test_client")
     c.department = "COM"
     c.save()        
         
-    # Create an allocated project
-    p = AllocatedProject(
+    # Create an directly Incurred project
+    p = DirectlyIncurredProject(
         percentage=50,
         overheads=250.00,
         salary_band=sb15_2017,
@@ -156,7 +171,7 @@ def setup_project_and_allocation_data():
     p.save()
     
     
-    # Create an allocated project
+    # Create an service project
     p2 = ServiceProject(
         days=30,
         rate=275,
@@ -172,7 +187,26 @@ def setup_project_and_allocation_data():
         status='F')
     p2.save()
     
-    # Create an allocation for the AllocatedProject (spanning full 2017 financial year)
+    
+    # Create a directly incurred project to test over 100 FTE
+    p3 = DirectlyIncurredProject(
+        percentage=110,
+        overheads=250.00,
+        salary_band=sb15_2018,
+        # base class values
+        creator=user,
+        created=timezone.now(),
+        proj_costing_id="12345",
+        name="test_project_2",
+        description="none",
+        client=c,
+        start=date(2018, 1, 1),
+        end=date(2019, 2, 1),
+        status='F'
+    )
+    p3.save()
+    
+    # Create an allocation for the DirectlyIncurredProject (spanning full 2017 financial year)
     a = RSEAllocation(rse=rse, 
         project=p,
         percentage=50,
@@ -180,7 +214,7 @@ def setup_project_and_allocation_data():
         end=date(2018, 7, 31))
     a.save()
     
-    # Create an allocation for the AllocatedProject (spanning full 2017 financial year) at 50% FTE
+    # Create an allocation for the DirectlyIncurredProject (spanning full 2017 financial year) at 50% FTE
     a2 = RSEAllocation(rse=rse, 
         project=p, 
         percentage=50,
@@ -195,6 +229,24 @@ def setup_project_and_allocation_data():
         start=date(2017, 8, 1),
         end=date(2017, 9, 1))
     a3.save()
+    
+    a4 = RSEAllocation(
+        rse=rse,
+        project=p3,
+        percentage=20,
+        start=date(2018, 1, 1),
+        end=date(2019, 2, 1)
+    )
+    a4.save()
+    
+    a5 = RSEAllocation(
+        rse=rse3,
+        project=p3,
+        percentage=90,
+        start=date(2018, 1, 1),
+        end=date(2018, 12, 31)
+    )
+    a5.save()
     
     
 
@@ -483,6 +535,7 @@ class SalaryCalculationTests(TestCase):
         
         # Get first (2017) financial year
         fy = FinancialYear.objects.all()[0]
+        print(fy)
         
         # Test date at start of financial year (1st August 2017)
         self.assertTrue(fy.date_in_financial_year(date(2017, 8, 1)))
@@ -512,33 +565,33 @@ class SalaryCalculationTests(TestCase):
         
         # Test cost of 2017 1.1 for period without any increments
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1)).staff_cost, 84.93, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1)).staff_cost, Decimal(84.93), places=2)
         
         # Test cost of 2017 1.1 for period without any increments at 50% FTE
         # Expected behaviour is value of salary for duration of August 2017. I.e. 1000 * 31/365 *0.5
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1), percentage=50.0).staff_cost, 42.47, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2017, 9, 1), percentage=50.0).staff_cost, Decimal(42.47), places=2)
         
         # Test cost of 2017 1.1 for period with NO grade point increment (as starting salary is in last 6M of year)
         # Expected behaviour is value of salary for year duration with increment in January 
         # I.e. 1000 (2017 G1.1) * 153/365 (days in 2017 FY)
         #      1000 (2017 G1.1) * 212/365(days in 2017 after January with no increment)
-        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2018, 8, 1)).staff_cost, 1000.00, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(sgc.salary_band.year.start_date(), date(2018, 8, 1)).staff_cost, Decimal(1000.00), places=2)
         
         # Test cost of 2017 1.1 for period with financial year adjustment
         # Expected behaviour is value of salary for 2017 G7.1 July and 2018 G7.1 August 2018
         # I.e. 1000 (2017 G1.1) * 31/365 (days in August 2018 FY)
         #      1001 (2018 G1.1) * 31/365 (days in July 2017 FY)
-        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, 169.95, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 7, 1), date(2018, 9, 1)).staff_cost, Decimal(169.95), places=2)
 
         # Test cost of 2018 1.3 for period with grade point increment
         # Expected behaviour is value of salary for 2018 G1.3 August-Dec and 2018 G1.4 Dec-August 2019
         # I.e. 1001 (2017 G1.1) * 153/365 (days in 2018 FY)
         #      2001 (2017 G1.2) * 212/365(days in 2018 after January with increment)
-        self.assertAlmostEqual(sgc2.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, 3581.82, places=2)
+        self.assertAlmostEqual(sgc2.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, Decimal(3581.82), places=2)
 
         # Test cost of 2018 1.3 for period with grade point increment
         # Same as previous test however there is an explicit salary grade change to G1.3 which should be picked up from the initial salary grade change used
-        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, 3581.82, places=2)
+        self.assertAlmostEqual(sgc.rse.staff_cost(date(2018, 8, 1), date(2019, 8, 1)).staff_cost, Decimal(3581.82), places=2)
 
 
     # Remove Oncosts in settings
@@ -553,19 +606,19 @@ class SalaryCalculationTests(TestCase):
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2018, 10, 1)).staff_cost, Decimal(748.11), places=2)
 
         # Test over the time period including before of employment
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost prior to 1/1/2018
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2017, 1, 1), until_date=date(2018, 10, 1)).staff_cost, 748.11, places=2)
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2017, 1, 1), until_date=date(2018, 10, 1)).staff_cost, Decimal(748.11), places=2)
 
         # Test over the time period including after employment
         # Expected behaviour is that the cost should be 10 months salary with new financial year change in August with no cost after to 1/10/2018
         # I.e.  1000 (2017 G1.1) * 211/365 (days in 2017 FY)
         #       1001 (2018 G1.1) * 62/365 (days in 2018 FY)
-        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, 748.11, places=2) 
+        self.assertAlmostEqual(rse.staff_cost(from_date=date(2018, 1, 1), until_date=date(2020, 10, 1)).staff_cost, Decimal(748.11), places=2) 
 
 class ProjectAllocationTests(TestCase):
     """
@@ -581,22 +634,23 @@ class ProjectAllocationTests(TestCase):
         Tests for MTI polymorphism
         """
         
-        # Get an allocated project and test that the polymorphic plugin returns the correct type
+        # Get a directly incurred project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[0]
-        self.assertIsInstance(p, AllocatedProject)
+        self.assertIsInstance(p, DirectlyIncurredProject)
         
         # Get an service project and test that the polymorphic plugin returns the correct type
         # Should return correctly typed concrete implementations of abstract Project type
         p = Project.objects.all()[1]
         self.assertIsInstance(p, ServiceProject)
-    
+        
+        
     def test_project_duration(self):
         """
         Tests polymorphic function duration which differs depending on project type
         """
         
-        # Get an allocated project and test that duration function returns the correct number of days
+        # Get a directly incurred project and test that duration function returns the correct number of days
         # Should return the project duration in days. I.e. 518 days
         #   153 days in 2017 FY
         #   212 days in 2017 FY (after grade point increment in Jan)
@@ -609,6 +663,12 @@ class ProjectAllocationTests(TestCase):
         p = Project.objects.all()[1]
         self.assertEqual(p.duration, 49)
         
+        # 2018.1.1 - 2018.7.31  212 days
+        # 2018.8.1 - 2019.2.1   186 days
+        p = Project.objects.get(name="test_project_2")
+        self.assertEqual(p.duration, 396)
+    
+        
     # Remove Oncosts in settings
     @override_settings(ONCOSTS_SALARY_MULTIPLIER=1.0)
     def test_project_value(self):
@@ -616,20 +676,34 @@ class ProjectAllocationTests(TestCase):
         Tests polymorphic function value which differs depending on project type
         """
         
-        # Get an allocated project and test that the value is determined from project salary band used for staff costing
+        # Get a directly incurred project and test that the value is determined from project salary band used for staff costing
         # Should return a value based of the following calculation
         # 50% of 
         #      5000 (2017 G1.5) * 153/365 (days in 2017 FY) +
         #      5000 (2017 G1.5) * 212/365(days in 2017 FY NO January increment) +
         #      5001 (2018 G1.5) * 153/365(days in 2018 FY after January increment)
         p = Project.objects.all()[0]
-        self.assertIsInstance(p, AllocatedProject)
-        self.assertAlmostEqual(p.staff_budget(), 3548.15, places=2)
+        self.assertIsInstance(p, DirectlyIncurredProject)
+        self.assertAlmostEqual(p.staff_budget(), Decimal(3548.15), places=2)
         
         # Get a service project and test the value is calculated from the day rate
         # Should return a value of 30 days x £275
         p = Project.objects.all()[1]
-        self.assertAlmostEqual(p.value(), 8250.00, places=2)
+        self.assertAlmostEqual(p.value(), Decimal(8250.00), places=2)
+        
+        
+        """Calculate the value for a 110% FTE project
+        Cost breakdown (in project salary band rather than individual RSE salaries)
+            110% of 
+                5001 (2018 G1.5) * 212/365 (17 FY) +
+                5002 (2018 G1.5) * 153/365 (18 FY) + 
+                5002 (2019 G1.5) * 31/365
+            Increment to 5002 from Aug 2018 because we use next year's salary on Jan
+            for FY.
+        """        
+        p = Project.objects.get(name="test_project_2")
+        self.assertIsInstance(p, DirectlyIncurredProject)
+        self.assertAlmostEqual(p.staff_budget(), Decimal(5968.87), places=2)
         
    
 class EdgeCasesDivByZeros(TestCase):
@@ -657,8 +731,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero duration project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=50,
             overheads=250.00,
             salary_band=self.salary_band,
@@ -682,8 +756,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero fte project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=0,
             overheads=250.00,
             salary_band=self.salary_band,
@@ -707,8 +781,8 @@ class EdgeCasesDivByZeros(TestCase):
         Expect that a zero fte and zero duration project should not give a divide by zero error in various places where calculations occur
         """
         
-        # Create an allocated project with no duration
-        p = AllocatedProject(
+        # Create a directly incurred project with no duration
+        p = DirectlyIncurredProject(
             percentage=0,
             overheads=250.00,
             salary_band=self.salary_band,

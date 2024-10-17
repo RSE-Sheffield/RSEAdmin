@@ -1,14 +1,12 @@
-from datetime import date, datetime
-from django.utils import timezone
 from django.urls import reverse_lazy
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.test import TestCase, override_settings
-from django.test import LiveServerTestCase
-import time
 from rse.models import *
-from rse.tests.test_random_data import random_project_and_allocation_data
-from django.conf import settings
 from rse.tests.selenium_template_test import *
+from .constant import *
+
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 ########################
 ### Index (homepage) ###
@@ -215,6 +213,21 @@ class AuthenticationTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
+        if self.blank_db != True:
+            # Test filter inactive users
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 0)
+            
+            # test filter options
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_active_filter'))
+            dropdown.select_by_visible_text('No')
+            
+            el_with_inactive_username = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_USERNAME}')]") 
+            self.assertEqual(len(el_with_inactive_username), 1)
+            
+            el_with_django_username = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'django')]") 
+            self.assertEqual(len(el_with_django_username), 0)
+        
         # test rse view (login should be required)
         self.get_url_as_rse(url)
         expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
@@ -237,8 +250,8 @@ class ProjectTemplateTests(SeleniumTemplateTest):
 
             if ServiceProject.objects.all():
                 self.first_service_project = ServiceProject.objects.all()[0]
-            if AllocatedProject.objects.all():
-                self.first_allocated_project = AllocatedProject.objects.all()[0]
+            if DirectlyIncurredProject.objects.all():
+                self.first_allocated_project = DirectlyIncurredProject.objects.all()[0]
             if Project.objects.all():
                 self.first_project = Project.objects.all()[0]
 
@@ -272,27 +285,36 @@ class ProjectTemplateTests(SeleniumTemplateTest):
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
+        # test admin view dropdown option
+        # https://selenium-python.readthedocs.io/api.html?highlight=select#module-selenium.webdriver.support.select
+        dropdown = Select(self.selenium.find_element(By.ID, 'id_type'))
+        dropdown.select_by_visible_text('Service')
+        dropdown.select_by_visible_text('Directly Incurred')
+        
         # test rse view (login should be required)
         self.get_url_as_rse(url)
         expected = "RSE Group Administration Tool: New Project"
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors()  
+        dropdown = Select(self.selenium.find_element(By.ID, 'id_type'))
+        dropdown.select_by_visible_text('Service')
+        dropdown.select_by_visible_text('Directly Incurred')
 
-    def test_project_new_allocated(self):
-        """ Tests the project_new_allocated page """
+    def test_project_new_directly_incurred(self):
+        """ Tests the project_new_directly_incurred page """
 
         # test url
-        url = f"{self.live_server_url}{reverse_lazy('project_new_allocated')}"
+        url = f"{self.live_server_url}{reverse_lazy('project_new_directly_incurred')}"
 
         # test admin view
         self.get_url_as_admin(url)
-        expected = "RSE Group Administration Tool: New Allocated Project"
+        expected = "RSE Group Administration Tool: New Directly Incurred Project"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)
-        expected = "RSE Group Administration Tool: New Allocated Project"
+        expected = "RSE Group Administration Tool: New Directly Incurred Project"
         self.assertEqual(self.selenium.title, expected)  
         self.check_for_log_errors() 
 
@@ -355,18 +377,18 @@ class ProjectTemplateTests(SeleniumTemplateTest):
             self.check_for_log_errors() 
 
         # test url
-        if hasattr(self, 'first_allocated_project'):
-            url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_allocated_project.id})}"
+        if hasattr(self, 'first_directly_incurred_project'):
+            url = f"{self.live_server_url}{reverse_lazy('project_edit', kwargs={'project_id': self.first_directly_incurred_project.id})}"
 
             # test admin view
             self.get_url_as_admin(url)
-            expected = "RSE Group Administration Tool: Edit Allocated Project"
+            expected = "RSE Group Administration Tool: Edit Directly Incurred Project"
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
             
             # test rse view (login should be required)
             self.get_url_as_rse(url)
-            expected = "RSE Group Administration Tool: Edit Allocated Project"
+            expected = "RSE Group Administration Tool: Edit Directly Incurred Project"
             self.assertEqual(self.selenium.title, expected)  
             self.check_for_log_errors() 
 
@@ -659,6 +681,27 @@ class SalaryTemplateTests(SeleniumTemplateTest):
             self.assertEqual(self.selenium.title, expected)
             self.check_for_log_errors()
             
+            # test rate update
+            EXPECTED_VALUE = 500.00
+            overhead_el = self.selenium.find_element(By.NAME, 'overheads_rate')
+            prev_overhead_value = overhead_el.get_attribute('value')
+            # clear the value
+            overhead_el.clear()
+            overhead_el.send_keys(EXPECTED_VALUE)
+            
+            # Submit new values
+            submit_btn =  self.selenium.find_element(By.NAME, 'rate_form')
+            submit_btn.click()
+            
+            # Wait for page to reload
+            overhead_el = WebDriverWait(self.selenium, 2).until(
+                EC.presence_of_element_located((By.NAME, 'overheads_rate'))
+            )
+            overhead_value = float(overhead_el.get_attribute('value'))
+
+            self.assertEqual(overhead_value, EXPECTED_VALUE)
+            self.assertNotEqual(overhead_value, prev_overhead_value)
+            
             # test rse view (login should be required)
             self.get_url_as_rse(url)
             expected = SeleniumTemplateTest.PAGE_TITLE_LOGIN
@@ -785,6 +828,26 @@ class ReportingTemplateTests(SeleniumTemplateTest):
         expected = f"RSE Group Administration Tool: RSE Team Staff Costs and Liability"
         self.assertEqual(self.selenium.title, expected)
         self.check_for_log_errors()
+        
+        if self.blank_db != True:
+            # Test filter not currently employed rses
+            el_with_inactive_user = self.selenium.find_elements(By.XPATH, f"//*[contains(text(), '{INACTIVE_USER_FIRST_NAME} {INACTIVE_USER_LAST_NAME}')]") 
+            self.assertEqual(len(el_with_inactive_user), 0)
+            
+            # change filter option
+            dropdown = Select(self.selenium.find_element(By.ID, 'id_rse_in_employment'))
+            dropdown.select_by_visible_text('No')
+            date_input = self.selenium.find_element(By.ID, 'id_filter_range')
+            date_input.send_keys('01/08/2017 - 31/07/2018')
+            date_apply_btn = self.selenium.find_element(By.XPATH, "//button[contains(@class, 'applyBtn') and contains(text(), 'Apply')]")
+            date_apply_btn.click()
+            
+            apply_btn = self.selenium.find_element(By.XPATH, "//button[text()='Apply']")
+            apply_btn.click()
+
+            # expect to show only not currently employed rses
+            el_with_in_employment_rse = self.selenium.find_elements(By.XPATH, "//*[contains(text(), 'Bong Ma')]") 
+            self.assertEqual(len(el_with_in_employment_rse), 0)
         
         # test rse view (login should be required)
         self.get_url_as_rse(url)

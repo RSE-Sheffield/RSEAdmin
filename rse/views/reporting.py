@@ -68,7 +68,7 @@ def costdistributions(request: HttpRequest) -> HttpResponse:
 
     # filter to only include chargable service projects (or allocated projects)
     # additional query on status is required to include any elidible allocated projects (as is_instance can not be used on member)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
+    q &= Q(project__serviceproject__charged=True) | Q(project__directlyincurredproject__isnull=False)
     # filter by funded only projects
     q &= Q(project__status='F')
 
@@ -130,9 +130,9 @@ def costdistribution(request: HttpRequest, rse_username: str) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
 
     # internal project are included
-    # filter to only include chargable service projects (or any allocated projects)
-    # additional query (isnull) is required to include any eligible allocated projects (as is_instance can not be used on member)
-    q &= Q(project__serviceproject__charged=True) | Q(project__allocatedproject__isnull=False)
+    # filter to only include chargable service projects (or any directly incurred projects)
+    # additional query (isnull) is required to include any eligible directly incurred projects (as is_instance can not be used on member)
+    q &= Q(project__serviceproject__charged=True) | Q(project__directlyincurredproject__isnull=False)
         
     # Get RSE allocations grouped by RSE based off Q filter and save the form
     allocations = RSEAllocation.objects.filter(q)
@@ -163,8 +163,21 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
     q = Q()
     from_date = Project.min_start_date()
     until_date = Project.max_end_date()
+    
     if request.method == 'GET':
-        form = FilterProjectForm(request.GET)
+        req_get_copy = request.GET.copy()
+
+        # Set default status to 'Funded'
+        req_get_copy['status'] = req_get_copy.get('status') or 'F'
+        # Set default in employment status to 'Yes'
+        req_get_copy['rse_in_employment'] = req_get_copy.get('rse_in_employment') or 'Yes'
+
+        # Set default start and end date to current FY
+        if req_get_copy.get('filter_range') is None:
+            req_get_copy['filter_range'] = create_default_filter_range()
+            
+        form = FilterProjectForm(req_get_copy)
+        
         if form.is_valid():
             filter_range = form.cleaned_data["filter_range"]
             from_date = filter_range[0]
@@ -180,15 +193,27 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
                 q &= Q(project__status='F')|Q(project__status='R')
             elif status == 'U':
                 q &= Q(project__status='F')|Q(project__status='R')|Q(project__status='P')
+                
+            rse_in_employment = form.cleaned_data["rse_in_employment"]
 
     # save the form
     view_dict['form'] = form
 
     rses_costs = {}
     total_staff_salary = total_recovered_staff_cost = total_internal_project_staff_cost = total_non_recovered_cost = total_staff_liability = 0
-    for rse in (rse for rse in RSE.objects.all() if rse.employed_in_period(from_date, until_date)):
+    
+    rses = RSE.objects.all()
+    
+    # Filter RSEs by employment status
+    if rse_in_employment != 'All':
+        in_employment = True if rse_in_employment == 'Yes' else False
+        filtered_rses_id = [rse.id for rse in rses if rse.current_employment == in_employment]
+        rses = rses.filter(id__in=filtered_rses_id)
+
+    for rse in (rse for rse in rses if rse.employed_in_period(from_date, until_date)):
         # get any allocations for rse
         allocations = RSEAllocation.objects.filter(rse=rse).filter(q)
+        
         try:
             staff_salary = rse.staff_cost(from_date=from_date, until_date=until_date).staff_cost
         except ValueError:
@@ -200,23 +225,31 @@ def rses_staffcosts(request: HttpRequest) -> HttpResponse:
             except ValueError:
                 staff_salary = 0
                 messages.add_message(request, messages.ERROR, f'ERROR: RSE user {rse} does not have any salary information and will incur no cost.')
+        
         recovered_staff_cost = 0
         internal_project_staff_cost = 0
+        
         for a in allocations:
             # staff cost
             try:
                 value = a.staff_cost(start=from_date, end=until_date).staff_cost
+            
             except ValueError:
                 value = 0
                 messages.add_message(request, messages.ERROR, f'ERROR: RSE user {a.rse} does not have salary data for allocation on project {a.project} starting at {from_date} so will incur no cost.')
+            
             # sum staff cost from allocation
             if (a.project.internal):    # internal
                 internal_project_staff_cost += value
-            elif isinstance(a.project, AllocatedProject) or (isinstance(a.project, ServiceProject) and a.project.charged == True): # allocated or chargable service
+                
+            # allocated or chargeable service
+            elif isinstance(a.project, DirectlyIncurredProject) or (isinstance(a.project, ServiceProject) and a.project.charged == True): 
                 recovered_staff_cost += value
+        
         non_recovered_cost =  staff_salary - recovered_staff_cost
         staff_liability =  staff_salary - recovered_staff_cost - internal_project_staff_cost
         rses_costs[rse] = {'staff_salary': staff_salary, 'recovered_staff_cost': recovered_staff_cost, 'internal_project_staff_cost': internal_project_staff_cost, 'non_recovered_cost': non_recovered_cost, 'staff_liability': staff_liability}
+        
         # sum totals
         total_staff_salary += staff_salary
         total_recovered_staff_cost += recovered_staff_cost
@@ -276,7 +309,7 @@ def rse_staffcost(request: HttpRequest, rse_username) -> HttpResponse:
     view_dict['form'] = form
 
     # Get only non internal, allocated or charged service projects
-    q &= Q(instance_of=AllocatedProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
+    q &= Q(instance_of=DirectlyIncurredProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
     projects = Project.objects.filter(q)
 
     # actual staff salary costs
@@ -454,7 +487,7 @@ def projects_income_summary(request: HttpRequest) -> HttpResponse:
 
     # only non internal allocated projects or charged service projects
     q &= Q(internal=False)
-    q &= Q(instance_of=AllocatedProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
+    q &= Q(instance_of=DirectlyIncurredProject) | Q(Q(instance_of=ServiceProject) & Q(serviceproject__charged=True))
     projects = Project.objects.filter(q)
 
     # Get costs associated with each allocated project
@@ -529,7 +562,7 @@ def project_remaining_days(request: HttpRequest, project_id: int, rse_id: int, s
     # get the RSE and project
     try:
         rse = RSE.objects.get(id=rse_id)
-        project = AllocatedProject.objects.get(id=project_id)
+        project = DirectlyIncurredProject.objects.get(id=project_id)
     except ObjectDoesNotExist:
         JsonResponse({'days': 0})
 
@@ -682,7 +715,7 @@ def financial_summary(request: HttpRequest) -> HttpResponse:
             except ValueError:
                 messages.add_message(request, messages.ERROR, f'ERROR: Project {p} has allocations with missing RSE salary data in the time period starting at {from_date}.')
         # Recovered Staff Costs (allocated or charged service projects)
-        elif isinstance(p, AllocatedProject) or (isinstance(p, ServiceProject) and p.charged == True):  
+        elif isinstance(p, DirectlyIncurredProject) or (isinstance(p, ServiceProject) and p.charged == True):  
             try:
                 project_recovered_costs = p.staff_cost(from_date=from_date, until_date=until_date).staff_cost
             except ValueError:
